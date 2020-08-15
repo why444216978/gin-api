@@ -3,7 +3,7 @@
  * @Author: weihaoyu
 -->
 
-# gin-frame
+# gin-api
 
 基于 go-gin 开发的 api 框架，封装各种常用组件
 <br>
