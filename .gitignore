@@ -1,0 +1,17 @@
+.svn
+.svn/*
+*.swp
+*.swn
+*.swo
+*.tmp
+*.swm
+logs/*
+development
+.tags*
+.idea
+*node*
+.DS_Store
+test/*
+test.go
+configs/*
+go.sum

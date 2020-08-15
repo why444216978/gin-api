@@ -1,0 +1,10 @@
+Path = "../log"
+Name = "winterfell.json"
+
+Rotate = true
+#mode 1 json 0 txt
+Mode=1
+
+#
+RotatingFileHandler = "TIME"
+RotateInterval = 3600

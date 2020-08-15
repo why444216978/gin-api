@@ -1,0 +1,14 @@
+version: '3'
+
+networks:
+  basic:
+
+services:
+
+  hangqing-chandi:
+    container_name: gin-frame
+    image: gin-frame
+    ports:
+      - "777:777"
+    networks:
+      - basic
