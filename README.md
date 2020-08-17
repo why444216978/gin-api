@@ -7,7 +7,7 @@
 
 基于 go-gin 开发的 api 框架，封装各种常用组件
 <br>
-有疑问随时联系本人，验证信息放我github地址即可
+有疑问随时联系我
 <br>
 QQ：444216978
 <br>
@@ -19,7 +19,7 @@ QQ：444216978
 ```
 go run main.go
 
-curl localhost:777/ping
+curl localhost:777/test/ping
 ```
 
 # app.ini example:
@@ -29,8 +29,8 @@ curl localhost:777/ping
 env = development
 port = 777
 app_id = moments-server
-product = gin-frame
-module = gin-frame
+product = gin-api
+module = gin-api
 ```
 
 # mysql.ini example:
@@ -47,6 +47,7 @@ is_log = true
 max_open = 8
 max_idle = 4
 exec_timeout = 10000
+
 [default_write]
 host = 127.0.0.1
 user = why
