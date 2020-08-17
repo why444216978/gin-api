@@ -22,6 +22,9 @@ go run main.go
 curl localhost:777/test/ping
 ```
 
+# 配置相关
+配置放到main.go同级目录configs下
+
 # app.ini example:
 
 ```
