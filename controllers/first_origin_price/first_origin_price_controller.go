@@ -2,7 +2,6 @@ package first_origin_price
 
 import (
 	"gin-frame/controllers"
-	service "gin-frame/services"
 	"gin-frame/services/location_service"
 	"gin-frame/services/origin_price_service"
 	"gin-frame/services/product_service"
@@ -29,16 +28,11 @@ func Do(c *gin.Context) {
 }
 
 func (self *FirstOriginPriceController) load() {
-	serviceFactory := &service.ServiceFactory{}
+	self.OriginPriceService = origin_price_service.NewObj()
 
-	originPriceFactory := serviceFactory.GetInstance("OriginPriceService")
-	self.OriginPriceService = originPriceFactory["OriginPriceService"].(*origin_price_service.OriginPriceService)
+	self.locationService = location_service.NewObj()
 
-	locationInterface := serviceFactory.GetInstance("LocationService")
-	self.locationService = locationInterface["LocationService"].(*location_service.LocationService)
-
-	productInterface := serviceFactory.GetInstance("ProductService")
-	self.productService = productInterface["ProductService"].(*product_service.ProductService)
+	self.productService = product_service.NewObj()
 }
 
 func (self *FirstOriginPriceController) action() {

@@ -1,7 +1,6 @@
 package origin_price_service
 
 import (
-	"gin-frame/dao"
 	"gin-frame/dao/origin_price_dao"
 	"log"
 	"sync"
@@ -20,9 +19,7 @@ func NewObj() *OriginPriceService {
 	onceOriginPriceService.Do(func() {
 		originPriceService = &OriginPriceService{}
 
-		daoFactory := dao.DaoFactory{}
-		originPriceInterface := daoFactory.GetInstance("OriginPriceDao")
-		originPriceService.originPriceDao = originPriceInterface["OriginPriceDao"].(*origin_price_dao.OriginPriceDao)
+		originPriceService.originPriceDao = origin_price_dao.NewObj()
 
 		log.Printf("new origin_price_service")
 	})
