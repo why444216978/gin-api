@@ -4,8 +4,6 @@ import (
 	"gin-frame/models/base"
 	"log"
 	"sync"
-
-	"github.com/gin-gonic/gin"
 )
 
 type OriginPrice struct {
@@ -50,14 +48,11 @@ func NewOriginPriceModel() *OriginPriceModel {
 	return originPriceModel
 }
 
-func (instance *OriginPriceModel) GetFirst(c *gin.Context) []OriginPrice {
+func (instance *OriginPriceModel) GetFirst() []OriginPrice {
 	originPrices := []OriginPrice{}
 	orm := instance.Db.SlaveOrm()
 
-	instance.Start(c)
 	dbRes := orm.First(&originPrices)
-	sql := "select * from test where id = 1"
-	instance.End(sql)
 
 	instance.CheckRes(dbRes)
 	return originPrices

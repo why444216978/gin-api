@@ -139,6 +139,7 @@ func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args
 	}(lastModule)
 
 	defer func() {
+		return
 		logFormat.EndTime = time.Now()
 		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
 		logFormat.LatencyTime = latencyTime

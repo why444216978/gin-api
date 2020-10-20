@@ -28,7 +28,7 @@ func NewObj() *OriginPriceDao {
 }
 
 func (self *OriginPriceDao) GetFirstRow(c *gin.Context, noCache bool) map[string]interface{} {
-	dbRes := self.originPriceModel.GetFirst(c)
+	dbRes := self.originPriceModel.GetFirst()
 
 	result := make(map[string]interface{})
 	if dbRes != nil {
