@@ -9,6 +9,12 @@ import (
 	"gin-frame/libraries/util/error"
 )
 
+func JsonEncode(v interface{}) string {
+	bytes, err := json.Marshal(v)
+	error.Must(err)
+	return string(bytes)
+}
+
 func MapToJsonInt(data map[int]interface{}) string {
 	jsonStr, err := json.Marshal(data)
 	error.Must(err)
