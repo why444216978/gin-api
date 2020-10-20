@@ -84,7 +84,7 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				dst.Method = c.Request.Method
 				dst.CallerIp = c.ClientIP()
 				dst.UriPath = c.Request.RequestURI
-				dst.XHop = xhop.NextXhop(c.Request.Header, logFields["header_hop"])
+				dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
 				dst.Product = productName
 				dst.Module = moduleName
 				dst.Env = env

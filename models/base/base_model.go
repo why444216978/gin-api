@@ -55,7 +55,7 @@ func (instance *BaseModel) Start(c *gin.Context) {
 	instance.logFormat = log.LogHeaderFromContext(instance.ctx)
 	instance.logFormat.StartTime = time.Now()
 
-	instance.logFormat.XHop = xhop.NextXhop(c.Request.Header, config.GetXhopField())
+	instance.logFormat.XHop = xhop.NextXhop(c, config.GetXhopField())
 
 }
 

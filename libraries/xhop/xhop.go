@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 //
@@ -80,13 +81,13 @@ type XHop struct {
 	c   uint64 //current children rpc call counter
 }
 
-func NextXhop(header http.Header, headerXhop string) *XHop {
-	var xhopHex = header.Get(headerXhop)
+func NextXhop(c *gin.Context, headerXhop string) *XHop {
+	var xhopHex = c.Writer.Header().Get(headerXhop)
 	var xHopInfo *XHop
 	var err error
 	if xhopHex == "" {
 		xHopInfo = NewXHop()
-	} else if xHopInfo, err = NewFromHex(xhopHex); err != nil {
+	} else if xHopInfo, err = NewFromHex(xhopHex); err == nil {
 		xHopInfo = NewXHop()
 	} else {
 		xHopInfo = xHopInfo.Next()

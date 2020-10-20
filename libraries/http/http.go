@@ -2,19 +2,23 @@ package http
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
+	"gin-frame/libraries/config"
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
+	"gin-frame/libraries/xhop"
+
+	simplejson "github.com/bitly/go-simplejson"
+	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
 )
 
-func HttpSend(ctx context.Context, method, url string, data map[string]interface{}) map[string]interface{} {
+func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{}) map[string]interface{} {
 	var (
 		statement = url
 		parent    = opentracing.SpanFromContext(ctx)
@@ -31,6 +35,8 @@ func HttpSend(ctx context.Context, method, url string, data map[string]interface
 		logFormat = log.NewLog()
 	}
 
+	logFormat.LogId = ctx.Writer.Header().Get(config.GetHeaderLogIdField())
+
 	lastModule := logFormat.Module
 	lastStartTime := logFormat.StartTime
 	lastEndTime := logFormat.EndTime
@@ -45,7 +51,7 @@ func HttpSend(ctx context.Context, method, url string, data map[string]interface
 		logFormat.EndTime = endAt
 		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
 		logFormat.LatencyTime = latencyTime
-		logFormat.XHop = log.NextXhop(req.Header)
+		logFormat.XHop = xhop.NextXhop(ctx, config.GetXhopField())
 
 		logFormat.Module = "databus/http"
 
@@ -94,7 +100,10 @@ func HttpSend(ctx context.Context, method, url string, data map[string]interface
 	}
 
 	if b != nil {
-		ret["data"] = util.JsonToMap(string(b))
+		res, err := simplejson.NewJson(b)
+		util.Must(err)
+
+		ret["data"] = res
 	}
 
 	return ret

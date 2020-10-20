@@ -3,6 +3,7 @@ package routers
 import (
 	"gin-frame/controllers/first_origin_price"
 	"gin-frame/controllers/ping"
+	"gin-frame/controllers/test"
 	"gin-frame/libraries/config"
 	"gin-frame/middlewares/limiter"
 	"gin-frame/middlewares/log"
@@ -38,9 +39,14 @@ func InitRouter(port int, productName, moduleName, env string) *gin.Engine {
 		})
 	})
 
+	pingGroup := server.Group("/ping")
+	{
+		pingGroup.GET("", ping.Ping)
+	}
+
 	testGroup := server.Group("/test")
 	{
-		testGroup.GET("/ping", ping.Ping)
+		testGroup.GET("/rpc", test.Rpc)
 	}
 
 	originGroup := server.Group("/origin")

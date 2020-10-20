@@ -143,7 +143,7 @@ func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args
 		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
 		logFormat.LatencyTime = latencyTime
 
-		logFormat.XHop = xhop.NextXhop(c.Request.Header, xhopField)
+		logFormat.XHop = xhop.NextXhop(c, xhopField)
 
 		logFormat.Module = "databus/redis"
 

@@ -69,7 +69,7 @@ func LoggerMiddleware(port int, logFields map[string]string, productName, module
 		dst.Method = c.Request.Method
 		dst.CallerIp = c.ClientIP()
 		dst.UriPath = c.Request.RequestURI
-		dst.XHop = xhop.NextXhop(c.Request.Header, logFields["header_hop"])
+		dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
 		dst.Product = productName
 		dst.Module = moduleName
 
@@ -77,8 +77,12 @@ func LoggerMiddleware(port int, logFields map[string]string, productName, module
 
 		ctx = log.ContextWithLogHeader(ctx, dst)
 		c.Request = c.Request.WithContext(ctx)
-		c.Writer.Header().Set(logFields["header_id"], dst.LogId)
-		c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
+
+		c.Header(logFields["header_id"], dst.LogId)
+		c.Header(logFields["header_hop"], dst.XHop.String())
+
+		//c.Writer.Header().Set(logFields["header_id"], dst.LogId)
+		//c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read

@@ -1,9 +1,7 @@
 package config
 
 import (
-	"flag"
 	"fmt"
-	"runtime"
 
 	"gin-frame/libraries/util"
 
@@ -29,8 +27,8 @@ func GetConfig(cfgType string, cfgSection string) *ini.Section {
 }
 
 func (self *Config) getConfig(conn string, configFile string) {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	flag.Parse()
+	//runtime.GOMAXPROCS(runtime.NumCPU())
+	//flag.Parse()
 
 	cfg, err := config.ReadDefault(configFile) //读取配置文件，并返回其Config
 
