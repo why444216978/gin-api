@@ -2,6 +2,7 @@ package panic
 
 import (
 	"bytes"
+	"fmt"
 	"gin-frame/codes"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
 	"gin-frame/libraries/util/conversion"
+	"gin-frame/libraries/util/mail"
+	util_time "gin-frame/libraries/util/time"
 	"gin-frame/libraries/util/url"
 	"gin-frame/libraries/xhop"
 
@@ -47,9 +50,11 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 					"user_msg": codes.ErrorUserMsg[codes.SERVER_ERROR],
 				})
 
+				mailDebugStack := ""
 				debugStack := make(map[int]interface{})
 				for k, v := range strings.Split(string(debug.Stack()), "\n") {
 					//fmt.Println(v)
+					mailDebugStack += v + "<br>"
 					debugStack[k] = v
 				}
 
@@ -122,6 +127,27 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				/* util.WriteWithIo(file,"[" +dateTime+"]")
 				util.WriteWithIo(file, fmt.Sprintf("%v\r\n", err))
 				util.WriteWithIo(file, debugStack) */
+
+				subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")
+
+				body := strings.ReplaceAll(MailTemplate, "{ErrorMsg}", fmt.Sprintf("%s", err))
+				body = strings.ReplaceAll(body, "{RequestTime}", util_time.GetCurrentDate())
+				body = strings.ReplaceAll(body, "{RequestURL}", c.Request.Method+"  "+c.Request.Host+c.Request.RequestURI)
+				body = strings.ReplaceAll(body, "{RequestUA}", c.Request.UserAgent())
+				body = strings.ReplaceAll(body, "{RequestIP}", c.ClientIP())
+				body = strings.ReplaceAll(body, "{DebugStack}", mailDebugStack)
+
+				options := &mail.Options{
+					MailHost: "smtp.163.com",
+					MailPort: 465,
+					MailUser: "weihaoyu@163.com",
+					MailPass: "",
+					MailTo:   "weihaoyu@163.com",
+					Subject:  subject,
+					Body:     body,
+				}
+				_ = mail.Send(options)
+
 				c.Done()
 			}
 		}(c)

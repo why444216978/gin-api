@@ -1,4 +1,4 @@
-package go_util
+package mail
 
 import (
 	"fmt"
