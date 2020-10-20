@@ -83,6 +83,8 @@ func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{})
 
 	req.Header.Add("content-type", "application/json")
 
+	//trace.InjectTrace(ctx, logFormat, req)
+
 	resp, err := client.Do(req)
 	util.Must(err)
 	defer resp.Body.Close()
