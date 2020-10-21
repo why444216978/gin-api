@@ -1,16 +1,19 @@
 package trace
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go"
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const defaultComponentName = "net/http"
@@ -18,50 +21,7 @@ const JaegerOpen = 1
 const AppName = "gin-api"
 const JaegerHostPort = "127.0.0.1:6831"
 
-type Options struct {
-	tracer        opentracing.Tracer
-	opNameFunc    func(r *http.Request) string
-	spanObserver  func(span opentracing.Span, r *http.Request)
-	urlTagFunc    func(u *url.URL) string
-	componentName string
-}
-
-type OptionsFunc func(*Options)
-
-func OperationNameFunc(f func(r *http.Request) string) OptionsFunc {
-	return func(options *Options) {
-		options.opNameFunc = f
-	}
-}
-
-func WithTracer(tracer opentracing.Tracer) OptionsFunc {
-	return func(options *Options) {
-		options.tracer = tracer
-	}
-}
-
-func WithComponentName(componentName string) OptionsFunc {
-	return func(options *Options) {
-		options.componentName = componentName
-	}
-}
-
-func WithSpanObserver(f func(span opentracing.Span, r *http.Request)) OptionsFunc {
-	return func(options *Options) {
-		options.spanObserver = f
-	}
-}
-
-func WithURLTagFunc(f func(u *url.URL) string) OptionsFunc {
-	return func(options *Options) {
-		options.urlTagFunc = f
-	}
-}
-
-//OpenTracing 链路追踪中间件
-//实现了[opentracing](https://opentracing.io)协议
-//tracer默认使用jaeger.Tracer,如需修改,可用中间件WithTracer
-func OpenTracing(serviceName string, options ...OptionsFunc) gin.HandlerFunc {
+func OpenTracing(serviceName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if JaegerOpen == 1 {
 
@@ -88,48 +48,6 @@ func OpenTracing(serviceName string, options ...OptionsFunc) gin.HandlerFunc {
 		}
 		c.Next()
 	}
-	// opts := Options{
-	// 	opNameFunc: func(r *http.Request) string {
-	// 		return r.Proto + " " + r.Method
-	// 	},
-	// 	spanObserver: func(span opentracing.Span, r *http.Request) {},
-	// 	urlTagFunc: func(u *url.URL) string {
-	// 		return u.String()
-	// 	},
-	// }
-	// for _, opt := range options {
-	// 	opt(&opts)
-	// }
-
-	// if opts.tracer == nil {
-	// 	opts.tracer = opentracing.GlobalTracer()
-	// }
-
-	// return func(c *gin.Context) {
-	// 	carrier := opentracing.HTTPHeadersCarrier(c.Request.Header)
-	// 	spanContext, _ := opts.tracer.Extract(opentracing.HTTPHeaders, carrier)
-	// 	op := opts.opNameFunc(c.Request)
-	// 	sp := opts.tracer.StartSpan(op, opentracing.ChildOf(spanContext), opentracing.StartTime(time.Now()))
-	// 	defer sp.Finish()
-	// 	ext.HTTPMethod.Set(sp, c.Request.Method)
-	// 	ext.HTTPUrl.Set(sp, opts.urlTagFunc(c.Request.URL))
-	// 	opts.spanObserver(sp, c.Request)
-
-	// 	componentName := opts.componentName
-	// 	if componentName == "" {
-	// 		componentName = defaultComponentName
-	// 	}
-
-	// 	ext.Component.Set(sp, componentName)
-	// 	c.Request = c.Request.WithContext(
-	// 		opentracing.ContextWithSpan(c.Request.Context(), sp))
-	// 	//trace info 注入resp.Header
-	// 	sp.Tracer().Inject(sp.Context(), opentracing.HTTPHeaders,
-	// 		opentracing.HTTPHeadersCarrier(c.Writer.Header()))
-	// 	c.Next()
-	// 	ext.HTTPStatusCode.Set(sp, uint16(c.Writer.Status()))
-	// 	sp.FinishWithOptions(opentracing.FinishOptions{FinishTime: time.Now()})
-	// }
 }
 
 func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tracer, io.Closer) {
@@ -154,4 +72,62 @@ func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tra
 	}
 	opentracing.SetGlobalTracer(tracer)
 	return tracer, closer
+}
+
+type MDReaderWriter struct {
+	metadata.MD
+}
+
+// ForeachKey implements ForeachKey of opentracing.TextMapReader
+func (c MDReaderWriter) ForeachKey(handler func(key, val string) error) error {
+	for k, vs := range c.MD {
+		for _, v := range vs {
+			if err := handler(k, v); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Set implements Set() of opentracing.TextMapWriter
+func (c MDReaderWriter) Set(key, val string) {
+	key = strings.ToLower(key)
+	c.MD[key] = append(c.MD[key], val)
+}
+
+// ClientInterceptor grpc client
+func ClientInterceptor(tracer opentracing.Tracer, spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string,
+		req, reply interface{}, cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+
+		span := opentracing.StartSpan(
+			"call gRPC",
+			opentracing.ChildOf(spanContext),
+			opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
+			ext.SpanKindRPCClient,
+		)
+
+		defer span.Finish()
+
+		md, ok := metadata.FromOutgoingContext(ctx)
+		if !ok {
+			md = metadata.New(nil)
+		} else {
+			md = md.Copy()
+		}
+
+		err := tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
+		if err != nil {
+			span.LogFields(log.String("inject-error", err.Error()))
+		}
+
+		newCtx := metadata.NewOutgoingContext(ctx, md)
+		err = invoker(newCtx, method, req, reply, cc, opts...)
+		if err != nil {
+			span.LogFields(log.String("call-error", err.Error()))
+		}
+		return err
+	}
 }

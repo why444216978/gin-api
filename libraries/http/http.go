@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	opentracingLog "github.com/opentracing/opentracing-go/log"
 )
 
 func HttpSend(c *gin.Context, method, url, logId string, data map[string]interface{}) map[string]interface{} {
@@ -90,7 +91,7 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	injectErr := tracer.(opentracing.Tracer).Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	if injectErr != nil {
-		util.Must(err)
+		span.LogFields(opentracingLog.String("inject-error", err.Error()))
 	}
 
 	//发送请求
