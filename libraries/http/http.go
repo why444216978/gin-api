@@ -8,21 +8,19 @@ import (
 	"strconv"
 	"time"
 
-	"gin-frame/libraries/config"
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
-	"gin-frame/libraries/xhop"
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
-func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{}) map[string]interface{} {
+func HttpSend(c *gin.Context, method, url, logId string, data map[string]interface{}) map[string]interface{} {
+	ctx := c.Request.Context()
 	var (
 		statement = url
-		parent    = opentracing.SpanFromContext(ctx)
-		span      opentracing.Span
 		startAt   = time.Now()
 		endAt     time.Time
 		logFormat = log.LogHeaderFromContext(ctx)
@@ -35,7 +33,7 @@ func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{})
 		logFormat = log.NewLog()
 	}
 
-	logFormat.LogId = ctx.Writer.Header().Get(config.GetHeaderLogIdField())
+	logFormat.LogId = logId
 
 	lastModule := logFormat.Module
 	lastStartTime := logFormat.StartTime
@@ -51,7 +49,7 @@ func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{})
 		logFormat.EndTime = endAt
 		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
 		logFormat.LatencyTime = latencyTime
-		logFormat.XHop = xhop.NextXhop(ctx, config.GetXhopField())
+		logFormat.XHop = logFormat.XHop.Next()
 
 		logFormat.Module = "databus/http"
 
@@ -62,29 +60,40 @@ func HttpSend(ctx *gin.Context, method, url string, data map[string]interface{})
 		log.Infof(logFormat, "http[%s]:%s, success", method, statement)
 	}()
 
-	if parent == nil {
-		span = opentracing.StartSpan("httpDo")
-	} else {
-		span = opentracing.StartSpan("httpDo", opentracing.ChildOf(parent.Context()))
-	}
-	defer span.Finish()
-
-	span.SetTag("http.type", method)
-	span.SetTag("http.statement", url)
-	span.SetTag("error", err != nil)
-
 	client := &http.Client{}
 
+	//请求数据
 	byteDates, err := json.Marshal(data)
 	util.Must(err)
 	reader := bytes.NewReader(byteDates)
 
+	//url
+	url = url + "?logid=" + logId
+
+	//构建req
 	req, err = http.NewRequest(method, url, reader)
 
+	//设置请求header
 	req.Header.Add("content-type", "application/json")
 
-	//trace.InjectTrace(ctx, logFormat, req)
+	tracer, _ := c.Get("Tracer")
+	parentSpanContext, _ := c.Get("ParentSpanContext")
 
+	span := opentracing.StartSpan(
+		"httpDo",
+		opentracing.ChildOf(parentSpanContext.(opentracing.SpanContext)),
+		opentracing.Tag{Key: string(ext.Component), Value: "HTTP"},
+		ext.SpanKindRPCClient,
+	)
+
+	defer span.Finish()
+
+	injectErr := tracer.(opentracing.Tracer).Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	if injectErr != nil {
+		util.Must(err)
+	}
+
+	//发送请求
 	resp, err := client.Do(req)
 	util.Must(err)
 	defer resp.Body.Close()
