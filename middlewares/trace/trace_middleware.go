@@ -32,9 +32,12 @@ func OpenTracing(serviceName string) gin.HandlerFunc {
 
 			spCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.Request.Header))
 			if err != nil {
+				fmt.Println(err)
+				fmt.Println("opentracing:start")
 				parentSpan = tracer.StartSpan(c.Request.URL.Path)
 				defer parentSpan.Finish()
 			} else {
+				fmt.Println("opentracing:extract")
 				parentSpan = opentracing.StartSpan(
 					c.Request.URL.Path,
 					opentracing.ChildOf(spCtx),

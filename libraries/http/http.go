@@ -73,6 +73,7 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	//构建req
 	req, err = http.NewRequest(method, url, reader)
+	util.Must(err)
 
 	//设置请求header
 	req.Header.Add("content-type", "application/json")
@@ -86,10 +87,10 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 		opentracing.Tag{Key: string(ext.Component), Value: "HTTP"},
 		ext.SpanKindRPCClient,
 	)
-
 	defer span.Finish()
 
 	injectErr := tracer.(opentracing.Tracer).Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+
 	if injectErr != nil {
 		span.LogFields(opentracingLog.String("inject-error", err.Error()))
 	}
@@ -108,7 +109,6 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	if resp.StatusCode != http.StatusOK {
 		ret["msg"] = "http code:" + strconv.Itoa(resp.StatusCode)
-		return ret
 	}
 
 	if b != nil {
@@ -117,6 +117,10 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 		ret["data"] = res
 	}
+
+	span.SetTag("code", resp.StatusCode)
+	span.SetTag("msg", ret["msg"])
+	span.SetTag("data", ret["data"])
 
 	return ret
 }

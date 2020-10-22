@@ -43,6 +43,7 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
+				fmt.Println(err)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"errno":    codes.SERVER_ERROR,
 					"errmsg":   codes.ErrorMsg[codes.SERVER_ERROR],
