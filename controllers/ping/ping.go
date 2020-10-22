@@ -17,6 +17,7 @@ func Ping(c *gin.Context) {
 	sendUrl := "http://127.0.0.1:777/test/rpc"
 
 	ret := rpc_http.HttpSend(c, "GET", sendUrl, logId, postData)
+	ret = rpc_http.HttpSend(c, "GET", sendUrl, logId, postData)
 
 	c.JSON(http.StatusOK, gin.H{
 		"errno":  0,
