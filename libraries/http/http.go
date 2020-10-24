@@ -11,7 +11,7 @@ import (
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
 
-	simplejson "github.com/bitly/go-simplejson"
+	"github.com/bitly/go-simplejson"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -113,11 +113,14 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	if b != nil {
 		res, err := simplejson.NewJson(b)
-		util.Must(err)
-
-		ret["data"] = res
+		if err != nil {
+			ret["data"] = string(b)
+		} else {
+			ret["data"] = res
+		}
 	}
 
+	span.SetTag("url", url)
 	span.SetTag("code", resp.StatusCode)
 	span.SetTag("msg", ret["msg"])
 	span.SetTag("data", ret["data"])
