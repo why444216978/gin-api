@@ -50,7 +50,7 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 		logFormat.EndTime = endAt
 		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
 		logFormat.LatencyTime = latencyTime
-		logFormat.XHop = logFormat.XHop.Next()
+		//logFormat.XHop = logFormat.XHop.Next()
 
 		logFormat.Module = "databus/http"
 

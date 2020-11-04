@@ -8,11 +8,7 @@ import (
 	"gin-frame/libraries/config"
 	"gin-frame/libraries/log"
 	util_error "gin-frame/libraries/util/error"
-	"gin-frame/libraries/xhop"
-
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go"
-
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -118,8 +114,6 @@ func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args
 	var (
 		ctx       = c.Request.Context()
 		conn      = db.pool.Get()
-		parent    = opentracing.SpanFromContext(ctx)
-		span      opentracing.Span
 		logFormat = log.LogHeaderFromContext(ctx)
 		argsStr   []string
 	)
@@ -139,13 +133,6 @@ func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args
 	}(lastModule)
 
 	defer func() {
-		return
-		logFormat.EndTime = time.Now()
-		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
-		logFormat.LatencyTime = latencyTime
-
-		logFormat.XHop = xhop.NextXhop(c, xhopField)
-
 		logFormat.Module = "databus/redis"
 
 		ctx = log.ContextWithLogHeader(ctx, logFormat)
@@ -154,22 +141,8 @@ func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args
 			log.Errorf(logFormat, "redis do:[%s], error: %s",
 				fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")),
 				err)
-		} else if db.Config.IsLog == true || logFormat.LatencyTime > db.Config.ExecTimeout {
-			log.Infof(logFormat, "redis do:[%s], used: %d Microseconds",
-				fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")),
-				logFormat.EndTime.Sub(logFormat.StartTime).Milliseconds())
 		}
 	}()
 
-	if parent == nil {
-		span = opentracing.StartSpan("redisDo")
-	} else {
-		span = opentracing.StartSpan("redisDo", opentracing.ChildOf(parent.Context()))
-	}
-	defer span.Finish()
-
-	span.SetTag("db.type", "redis")
-	span.SetTag("db.statement", fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")))
-	span.SetTag("error", err != nil)
 	return
 }

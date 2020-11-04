@@ -14,8 +14,6 @@ import (
 	"gin-frame/libraries/mysql"
 	"gin-frame/libraries/util"
 	util_err "gin-frame/libraries/util/error"
-	"gin-frame/libraries/xhop"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"github.com/opentracing/opentracing-go"
@@ -55,7 +53,7 @@ func (instance *BaseModel) Start(c *gin.Context) {
 	instance.logFormat = log.LogHeaderFromContext(instance.ctx)
 	instance.logFormat.StartTime = time.Now()
 
-	instance.logFormat.XHop = xhop.NextXhop(c, config.GetXhopField())
+	//instance.logFormat.XHop = xhop.NextXhop(c, config.GetXhopField())
 
 }
 

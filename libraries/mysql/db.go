@@ -3,17 +3,11 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"gin-frame/libraries/config"
-	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
 	util_err "gin-frame/libraries/util/error"
-	"gin-frame/libraries/xhop"
-
-	"github.com/opentracing/opentracing-go"
-
 	//_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"
@@ -22,7 +16,6 @@ import (
 
 type (
 	DB struct {
-		IsLog    bool
 		masterDB *gorm.DB
 		slaveDB  *gorm.DB
 		Config   *Config
@@ -32,7 +25,6 @@ type (
 func New(c *Config) (db *DB, err error) {
 	db = new(DB)
 	db.Config = c
-	db.IsLog = GetIsLog()
 	db.masterDB, err = gorm.Open("mysql", c.Master.DSN)
 	util_err.Must(err)
 	db.masterDB.DB().SetMaxOpenConns(c.Master.MaxOpen)
@@ -98,55 +90,6 @@ var operationNames = map[operate]string{
 }
 
 func (db *DB) operate(ctx context.Context, op operate, query string, args ...interface{}) (i interface{}, err error) {
-	var (
-		parent        = opentracing.SpanFromContext(ctx)
-		operationName = operationNames[op]
-		span          = func() opentracing.Span {
-			if parent == nil {
-				return opentracing.StartSpan(operationName)
-			}
-			return opentracing.StartSpan(operationName, opentracing.ChildOf(parent.Context()))
-		}()
-		logFormat = log.LogHeaderFromContext(ctx)
-		startAt   = time.Now()
-		endAt     time.Time
-	)
-
-	lastModule := logFormat.Module
-	lastStartTime := logFormat.StartTime
-	lastEndTime := logFormat.EndTime
-	lastXHop := logFormat.XHop
-	defer func() {
-		logFormat.Module = lastModule
-		logFormat.StartTime = lastStartTime
-		logFormat.EndTime = lastEndTime
-		logFormat.XHop = lastXHop
-	}()
-
-	defer span.Finish()
-	defer func() {
-		endAt = time.Now()
-
-		logFormat.StartTime = startAt
-		logFormat.EndTime = endAt
-		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
-		logFormat.LatencyTime = latencyTime
-		logFormat.XHop = xhop.NewXhopNull()
-
-		span.SetTag("error", err != nil)
-		span.SetTag("db.type", "sql")
-		span.SetTag("db.statement", query)
-		logFormat.Module = "databus/mysql"
-
-		if err != nil {
-			db.writeError(err.Error())
-			panic(err.Error())
-		} else if db.IsLog == true {
-			log.Infof(logFormat, "%s:[%s], params:%s, used: %d milliseconds", operationName, query,
-				args, endAt.Sub(startAt).Milliseconds())
-		}
-	}()
-
 	switch op {
 	case operateMasterQuery:
 		i, err = db.MasterDB().QueryContext(ctx, query, args...)
@@ -196,10 +139,6 @@ func (db *DB) SlaveDBQueryRowContext(ctx context.Context, query string, args ...
 	return r.(*sql.Row)
 }
 
-func errorsWrap(err error, msg string) error {
-	return fmt.Errorf("%s: %w", msg, err)
-}
-
 func (db *DB) writeError(errMsg string) {
 	errLogSection := "error"
 	errorLogConfig := config.GetConfig("log", errLogSection)
@@ -211,9 +150,3 @@ func (db *DB) writeError(errMsg string) {
 	util.WriteWithIo(file, "["+dateTime+"]"+errMsg)
 }
 
-func GetIsLog() bool {
-	cfg := config.GetConfig("log", "mysql_open")
-	res, err := cfg.Key("turn").Bool()
-	util.Must(err)
-	return res
-}

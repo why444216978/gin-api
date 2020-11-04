@@ -2,20 +2,20 @@ package log
 
 import (
 	"bytes"
+	"fmt"
+	"gin-frame/configs"
+	"gin-frame/libraries/apollo"
+	"gin-frame/libraries/util/random"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
-	"gin-frame/libraries/config"
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util/conversion"
 	"gin-frame/libraries/util/dir"
-	"gin-frame/libraries/util/random"
 	"gin-frame/libraries/util/sys"
 	"gin-frame/libraries/util/url"
-	"gin-frame/libraries/xhop"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,22 +34,29 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func LoggerMiddleware(port int, logFields map[string]string, productName, moduleName, env string) gin.HandlerFunc {
-	runLogSection := "run"
-	runLogConfig := config.GetConfig("log", runLogSection)
-	runLogDir := runLogConfig.Key("dir").String()
-	logArea, _ := runLogConfig.Key("area").Int()
+	//runLogSection := "run"
+	//runLogConfig := config.GetConfig("log", runLogSection)
+	//runLogDir := runLogConfig.Key("dir").String()
+	//logArea, _ := runLogConfig.Key("area").Int()
+
+	cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+	logCfg := conversion.JsonToMap(cfg["log"])
+	runLogDir := logCfg["run_dir"]
+	logArea, _ := logCfg["run_area"]
 
 	return func(c *gin.Context) {
-		file := dir.CreateHourLogFile(runLogDir, moduleName+".log."+sys.HostName()+".")
-		file = file + "/" + strconv.Itoa(random.RandomN(logArea))
+		file := dir.CreateHourLogFile(runLogDir.(string), moduleName+".log."+sys.HostName()+".")
+		fmt.Println(file)
+		//file = file + "/" + strconv.Itoa(random.RandomN(logArea))
+		file = file + "/" + strconv.Itoa(random.RandomN(int(logArea.(float64))))
 
 		log.InitRun(&log.LogConfig{
 			File:           file,
-			Path:           runLogDir,
+			Path:           runLogDir.(string),
 			Mode:           1,
 			AsyncFormatter: false,
 			Debug:          true,
-		}, runLogDir, file)
+		}, runLogDir.(string), file)
 
 		var logID string
 		switch {
@@ -69,7 +76,7 @@ func LoggerMiddleware(port int, logFields map[string]string, productName, module
 		dst.Method = c.Request.Method
 		dst.CallerIp = c.ClientIP()
 		dst.UriPath = c.Request.RequestURI
-		dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
+		//dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
 		dst.Product = productName
 		dst.Module = moduleName
 
@@ -79,7 +86,7 @@ func LoggerMiddleware(port int, logFields map[string]string, productName, module
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Header(logFields["header_id"], dst.LogId)
-		c.Header(logFields["header_hop"], dst.XHop.String())
+		//c.Header(logFields["header_hop"], dst.XHop.String())
 
 		//c.Writer.Header().Set(logFields["header_id"], dst.LogId)
 		//c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())

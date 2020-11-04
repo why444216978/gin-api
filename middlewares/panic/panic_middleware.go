@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"gin-frame/codes"
+	"gin-frame/configs"
+	"gin-frame/libraries/apollo"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
@@ -11,15 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"gin-frame/libraries/config"
 	"gin-frame/libraries/log"
 	"gin-frame/libraries/util"
 	"gin-frame/libraries/util/conversion"
-	"gin-frame/libraries/util/mail"
-	util_time "gin-frame/libraries/util/time"
 	"gin-frame/libraries/util/url"
-	"gin-frame/libraries/xhop"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,11 +31,17 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ThrowPanic(port int, logFields map[string]string, productName, moduleName, env string) gin.HandlerFunc {
-	errLogSection := "error"
-	errorLogConfig := config.GetConfig("log", errLogSection)
-	dir := errorLogConfig.Key("dir").String()
-	area, err := errorLogConfig.Key("area").Int()
-	util.Must(err)
+	//errLogSection := "error"
+	//errorLogConfig := config.GetConfig("log", errLogSection)
+	//dir := errorLogConfig.Key("dir").String()
+	//area, err := errorLogConfig.Key("area").Int()
+	//util.Must(err)
+
+	cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+	logCfg := conversion.JsonToMap(cfg["log"])
+	fmt.Println(logCfg)
+	dir := logCfg["err_dir"]
+	area, _ := logCfg["err_area"]
 
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
@@ -59,16 +62,17 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 					debugStack[k] = v
 				}
 
-				file := util.CreateDateDir(dir, moduleName+".err."+util.HostName()+".")
-				file = file + "/" + strconv.Itoa(util.RandomN(area))
+				file := util.CreateDateDir(dir.(string), moduleName+".err."+util.HostName()+".")
+				//file = file + "/" + strconv.Itoa(util.RandomN(area))
+				file = file + "/" + strconv.Itoa(util.RandomN(int(area.(float64))))
 
 				log.InitError(&log.LogConfig{
 					File:           file,
-					Path:           dir,
+					Path:           dir.(string),
 					Mode:           1,
 					AsyncFormatter: false,
 					Debug:          true,
-				}, dir, file)
+				}, dir.(string), file)
 
 				var logID string
 				switch {
@@ -90,7 +94,7 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				dst.Method = c.Request.Method
 				dst.CallerIp = c.ClientIP()
 				dst.UriPath = c.Request.RequestURI
-				dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
+				//dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
 				dst.Product = productName
 				dst.Module = moduleName
 				dst.Env = env
@@ -98,7 +102,7 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				ctx = log.ContextWithLogHeader(ctx, dst)
 				c.Request = c.Request.WithContext(ctx)
 				c.Writer.Header().Set(logFields["header_id"], dst.LogId)
-				c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
+				//c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
 
 				reqBody := []byte{}
 				if c.Request.Body != nil { // Read
@@ -129,25 +133,25 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				util.WriteWithIo(file, fmt.Sprintf("%v\r\n", err))
 				util.WriteWithIo(file, debugStack) */
 
-				subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")
-
-				body := strings.ReplaceAll(MailTemplate, "{ErrorMsg}", fmt.Sprintf("%s", err))
-				body = strings.ReplaceAll(body, "{RequestTime}", util_time.GetCurrentDate())
-				body = strings.ReplaceAll(body, "{RequestURL}", c.Request.Method+"  "+c.Request.Host+c.Request.RequestURI)
-				body = strings.ReplaceAll(body, "{RequestUA}", c.Request.UserAgent())
-				body = strings.ReplaceAll(body, "{RequestIP}", c.ClientIP())
-				body = strings.ReplaceAll(body, "{DebugStack}", mailDebugStack)
-
-				options := &mail.Options{
-					MailHost: "smtp.163.com",
-					MailPort: 465,
-					MailUser: "weihaoyu@163.com",
-					MailPass: "",
-					MailTo:   "weihaoyu@163.com",
-					Subject:  subject,
-					Body:     body,
-				}
-				_ = mail.Send(options)
+				//subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")
+				//
+				//body := strings.ReplaceAll(MailTemplate, "{ErrorMsg}", fmt.Sprintf("%s", err))
+				//body = strings.ReplaceAll(body, "{RequestTime}", util_time.GetCurrentDate())
+				//body = strings.ReplaceAll(body, "{RequestURL}", c.Request.Method+"  "+c.Request.Host+c.Request.RequestURI)
+				//body = strings.ReplaceAll(body, "{RequestUA}", c.Request.UserAgent())
+				//body = strings.ReplaceAll(body, "{RequestIP}", c.ClientIP())
+				//body = strings.ReplaceAll(body, "{DebugStack}", mailDebugStack)
+				//
+				//options := &mail.Options{
+				//	MailHost: "smtp.163.com",
+				//	MailPort: 465,
+				//	MailUser: "weihaoyu@163.com",
+				//	MailPass: "",
+				//	MailTo:   "weihaoyu@163.com",
+				//	Subject:  subject,
+				//	Body:     body,
+				//}
+				//_ = mail.Send(options)
 
 				c.Done()
 			}

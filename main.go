@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gin-frame/configs"
 	"log"
 	"runtime"
 	"strconv"
@@ -9,9 +10,7 @@ import (
 
 	"gin-frame/routers"
 
-	"gin-frame/libraries/config"
 	"gin-frame/libraries/endless"
-	"gin-frame/libraries/util/error"
 )
 
 var (
@@ -19,6 +18,7 @@ var (
 	productName string
 	moduleName  string
 	env         string
+	err         error
 )
 
 func init() {
@@ -26,13 +26,10 @@ func init() {
 }
 
 func main() {
-	appSection := "app"
-	appConfig := config.GetConfig("app", appSection)
-	port, err := appConfig.Key("port").Int()
-	error.Must(err)
-	env = appConfig.Key("env").String()
-	productName = appConfig.Key("product").String()
-	moduleName = appConfig.Key("module").String()
+	port = configs.SERVICE_PORT
+	env = configs.ENV
+	productName = configs.PRODUCT
+	moduleName = configs.MODULE
 
 	server := routers.InitRouter(port, productName, moduleName, env)
 

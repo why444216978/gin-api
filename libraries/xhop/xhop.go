@@ -5,9 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"strconv"
-
-	"github.com/gin-gonic/gin"
 )
 
 //
@@ -47,12 +44,12 @@ import (
 //                     X   Y   Z
 //
 // Suppose Hop(i) indicates the module i's Hop, then:
-// Hop(A) = (00000001)b 1
-// Hop(B) = (00000011)b 3
-// Hop(C) = (00000101)b 5
-// Hop(D) = (00000111)b 7
-// Hop(E) = (00001011)b 11
-// Hop(F) = (00001101)b 13
+// Hop(A) = (00000001)b
+// Hop(B) = (00000011)b
+// Hop(C) = (00000101)b
+// Hop(D) = (00000111)b
+// Hop(E) = (00001011)b
+// Hop(F) = (00001101)b
 // Hop(G) = (00001111)b
 // Hop(G2) = (00010111)b
 // Hop(H) = (00011101)b
@@ -81,31 +78,7 @@ type XHop struct {
 	c   uint64 //current children rpc call counter
 }
 
-func NextXhop(c *gin.Context, headerXhop string) *XHop {
-	var xhopHex = c.Writer.Header().Get(headerXhop)
-	var xHopInfo *XHop
-	var err error
-	if xhopHex == "" {
-		xHopInfo = NewXHop()
-	} else if xHopInfo, err = NewFromHex(xhopHex); err == nil {
-		xHopInfo = NewXHop()
-	} else {
-		xHopInfo = xHopInfo.Next()
-	}
-
-	return xHopInfo
-}
-
-func NewXhopNull() *XHop {
-	b := &XHop{
-		buf: make([]byte, 1),
-	}
-	b.buf[0] = byte(0)
-
-	return b
-}
-
-func NewXHop() *XHop {
+func New() *XHop {
 	b := &XHop{
 		buf: make([]byte, 1),
 	}
@@ -161,7 +134,7 @@ func NewFromHex(s string) (*XHop, error) {
 
 func (x *XHop) Dup() *XHop {
 	if x == nil {
-		return NewXHop()
+		return New()
 	}
 
 	xhop := &XHop{
@@ -209,7 +182,6 @@ func (x *XHop) String() string {
 	return string(s[:len(s)-1]) //strip the last extra space
 }
 
-//to hex
 func (x *XHop) Hex() string {
 	if x == nil {
 		return ""
@@ -224,24 +196,17 @@ func (x *XHop) Hex() string {
 	return hex.EncodeToString(buf)
 }
 
-//to decimal
-func (x *XHop) Decimal() int64 {
+//https://leetcode.com/problems/counting-bits/#/description
+func (x *XHop) Hierarchy() (n int) {
 	if x == nil {
-		return 0
+		return
 	}
 
-	//create a new buf in BigEndian
-	var buf = make([]byte, len(x.buf))
-	for i := 0; i < len(buf); i++ {
-		buf[i] = x.buf[len(buf)-1-i]
+	for _, b := range []byte(x.buf) {
+		n += byteBits(b)
 	}
 
-	hexRes := hex.EncodeToString(buf)
-	res, err := strconv.ParseInt(hexRes, 16, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	return res
+	return
 }
 
 // 1. strip the leftmost positive bit.
@@ -249,7 +214,7 @@ func (x *XHop) Decimal() int64 {
 //little endian
 func (x *XHop) Parent() *XHop {
 	if x == nil {
-		return NewXHop()
+		return New()
 	}
 
 	//Root XHop's Parent is always itself.
@@ -278,7 +243,7 @@ func (x *XHop) Parent() *XHop {
 //pading 100...0(seq 0) the x
 func (x *XHop) Next() *XHop {
 	if x == nil {
-		return NewXHop().Next()
+		return New().Next()
 	}
 
 	xhop := x.Dup()
@@ -308,10 +273,11 @@ func (x *XHop) Next() *XHop {
 
 //pading 100...0(n 0 in total) the x
 //different to Next(), NextN do not touch x.c
-//use to current node rpc count add one(param is c.n)
+//used for Test_Smoke
+//used for Test_Hierarchy
 func (x *XHop) NextN(n uint64) *XHop {
 	if x == nil {
-		return NewXHop().NextN(n)
+		return New().NextN(n)
 	}
 
 	xhop := x.Dup()
@@ -319,21 +285,6 @@ func (x *XHop) NextN(n uint64) *XHop {
 	return xhop.Next()
 }
 
-//https://leetcode.com/problems/counting-bits/#/description
-//获得当前节点等级（遍历byte数组，分别判断每个）
-func (x *XHop) Hierarchy() (n int) {
-	if x == nil {
-		return
-	}
-
-	for _, b := range x.buf {
-		n += byteBits(b)
-	}
-
-	return
-}
-
-//返回byte数中1的位数
 func byteBits(b byte) (c int) {
 	n := uint8(b)
 	for n > 0 {
@@ -363,20 +314,4 @@ func leftMostBitPos(b byte) uint8 {
 	}
 
 	return pos
-}
-
-func (x *XHop) GetCount() uint64 {
-	return x.c
-}
-
-func (node *XHop) GetNext() *XHop {
-	return node.NextN(node.c)
-}
-
-func Test() {
-	node := NewXHop()
-	fmt.Println(node)
-	fmt.Println(node.Next())   //当前node第1次调用
-	fmt.Println(node.NextN(1)) //当前node第2次调用
-	fmt.Println(node.NextN(2)) //当前node第3次调用
 }

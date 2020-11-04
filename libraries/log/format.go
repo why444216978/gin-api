@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gin-frame/libraries/xhop"
 )
 
 type LogLevel int
@@ -65,7 +64,7 @@ type LogFormat struct {
 	//ServiceId  string        `json:"service_id"`
 	//InstanceId string        `json:"instance_id"`
 	UriPath string     `json:"uri_path"`
-	XHop    *xhop.XHop `json:"x_hop"`
+	//XHop    *xhop.XHop `json:"x_hop"`
 	//Tag        string        `json:"tag"`
 	Env string `json:"env"`
 	//SVersion   string        `json:"sversion"`
@@ -77,7 +76,7 @@ func NewLog() *LogFormat {
 	logHeader := &LogFormat{
 		LogId: NewObjectId().Hex(),
 	}
-	logHeader.XHop = xhop.NewXHop()
+	//logHeader.XHop = xhop.NewXHop()
 
 	return logHeader
 }
@@ -96,7 +95,7 @@ func (h *LogFormat) Dup() *LogFormat {
 		UriPath: h.UriPath,
 		//ServiceId:  h.ServiceId,
 		//InstanceId: h.InstanceId,
-		XHop: h.XHop.Dup(),
+		//XHop: h.XHop.Dup(),
 		//Stag:       h.Stag,
 		//Tag:        h.Tag,
 		Env: h.Env,
