@@ -31,7 +31,7 @@ curl localhost:777/test/ping
 [app]
 env = development
 port = 777
-app_id = moments-server
+app_id = gin-api
 product = gin-api
 module = gin-api
 ```
@@ -46,7 +46,6 @@ password = why123
 port = 3306
 db = why
 charset = utf8
-is_log = true
 max_open = 8
 max_idle = 4
 exec_timeout = 10000
@@ -58,7 +57,6 @@ password = why123
 port = 3306
 db = why
 charset = utf8
-is_log = true
 max_open = 8
 max_idle = 4
 exec_timeout = 10000
@@ -74,7 +72,6 @@ db = 0
 auth =
 max_active = 600
 max_idle = 10
-is_log = true
 exec_timeout = 100000
 ```
 
@@ -82,31 +79,16 @@ exec_timeout = 100000
 
 ```
 [run]
-run_dir = ./logs/run/
 dir = ./logs/run/
 area = 1
 
 [error]
-error_dir = ./logs/error/
 dir = ./logs/error/
 area = 1
 
 [amqp]
-amqp_dir = ./logs/amqp/
 dir = ./logs/amqp/
 area = 1
-
-[mysql_open]
-turn = true
-
-[redis_open]
-turn = true
-
-[rabbitmq_open]
-turn = true
-
-[es_open]
-turn = true
 ```
 
 # es.ini example:
