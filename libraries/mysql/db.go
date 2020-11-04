@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"time"
 
-	"gin-frame/libraries/config"
-	"gin-frame/libraries/util"
-	util_err "gin-frame/libraries/util/error"
+	"gin-api/libraries/config"
+	"gin-api/libraries/util"
+	util_err "gin-api/libraries/util/error"
 	//_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"

@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"gin-frame/libraries/util"
+	"gin-api/libraries/util"
 )
 
 type logContextKey string

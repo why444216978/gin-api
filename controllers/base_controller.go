@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"gin-frame/libraries/util"
+	"gin-api/libraries/util"
 )
 
 var lock sync.RWMutex

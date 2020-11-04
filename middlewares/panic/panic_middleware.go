@@ -3,9 +3,9 @@ package panic
 import (
 	"bytes"
 	"fmt"
-	"gin-frame/codes"
-	"gin-frame/configs"
-	"gin-frame/libraries/apollo"
+	"gin-api/codes"
+	"gin-api/configs"
+	"gin-api/libraries/apollo"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"gin-frame/libraries/log"
-	"gin-frame/libraries/util"
-	"gin-frame/libraries/util/conversion"
-	"gin-frame/libraries/util/url"
+	"gin-api/libraries/log"
+	"gin-api/libraries/util"
+	"gin-api/libraries/util/conversion"
+	"gin-api/libraries/util/url"
 	"github.com/gin-gonic/gin"
 )
 

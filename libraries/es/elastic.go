@@ -12,9 +12,9 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
-	"gin-frame/libraries/config"
-	"gin-frame/libraries/log"
-	"gin-frame/libraries/util"
+	"gin-api/libraries/config"
+	"gin-api/libraries/log"
+	"gin-api/libraries/util"
 )
 
 type Elastic struct {

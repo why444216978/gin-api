@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"gin-frame/libraries/config"
-	"gin-frame/libraries/log"
-	util_error "gin-frame/libraries/util/error"
+	"gin-api/libraries/config"
+	"gin-api/libraries/log"
+	util_error "gin-api/libraries/util/error"
 	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
 )

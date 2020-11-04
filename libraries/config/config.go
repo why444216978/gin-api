@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"gin-frame/libraries/util"
+	"gin-api/libraries/util"
 
 	"github.com/larspensjo/config"
 	"gopkg.in/ini.v1"

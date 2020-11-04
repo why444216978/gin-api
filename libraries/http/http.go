@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"gin-frame/libraries/log"
-	"gin-frame/libraries/util"
+	"gin-api/libraries/log"
+	"gin-api/libraries/util"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/gin-gonic/gin"

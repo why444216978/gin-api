@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	util_dir "gin-frame/libraries/util/dir"
+	util_dir "gin-api/libraries/util/dir"
 )
 
 //url的path转文件名

@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"gin-frame/configs"
+	"gin-api/configs"
 	"log"
 	"runtime"
 	"strconv"
 	"syscall"
 
-	"gin-frame/routers"
+	"gin-api/routers"
 
-	"gin-frame/libraries/endless"
+	"gin-api/libraries/endless"
 )
 
 var (

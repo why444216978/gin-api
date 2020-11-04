@@ -1,11 +1,11 @@
 package origin_price_dao
 
 import (
-	"gin-frame/models/hangqing/origin_price_model"
+	"gin-api/models/hangqing/origin_price_model"
 	"log"
 	"sync"
 
-	"gin-frame/libraries/util/conversion"
+	"gin-api/libraries/util/conversion"
 
 	"github.com/gin-gonic/gin"
 )

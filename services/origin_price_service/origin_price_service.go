@@ -1,7 +1,7 @@
 package origin_price_service
 
 import (
-	"gin-frame/dao/origin_price_dao"
+	"gin-api/dao/origin_price_dao"
 	"log"
 	"sync"
 

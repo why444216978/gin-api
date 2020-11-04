@@ -16,7 +16,7 @@ package apollo
 import (
 	"encoding/json"
 	"fmt"
-	"gin-frame/configs"
+	"gin-api/configs"
 	"io/ioutil"
 	"net/http"
 	"os"

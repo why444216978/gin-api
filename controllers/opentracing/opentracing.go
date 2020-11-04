@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gin-frame/libraries/config"
-	rpc_http "gin-frame/libraries/http"
+	"gin-api/libraries/config"
+	rpc_http "gin-api/libraries/http"
 )
 
 func Rpc(c *gin.Context) {

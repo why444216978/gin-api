@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	utli_err "gin-frame/libraries/util/error"
+	utli_err "gin-api/libraries/util/error"
 )
 
 func ExternalIP() (string, error) {

@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	util_err "gin-frame/libraries/util/error"
+	util_err "gin-api/libraries/util/error"
 )
 
 //使用io.WriteString()函数进行数据的写入，不存在则创建

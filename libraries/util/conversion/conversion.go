@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"gin-frame/libraries/util/error"
+	"gin-api/libraries/util/error"
 )
 
 func JsonEncode(v interface{}) string {

@@ -1,10 +1,10 @@
 package first_origin_price
 
 import (
-	"gin-frame/controllers"
-	"gin-frame/services/location_service"
-	"gin-frame/services/origin_price_service"
-	"gin-frame/services/product_service"
+	"gin-api/controllers"
+	"gin-api/services/location_service"
+	"gin-api/services/origin_price_service"
+	"gin-api/services/product_service"
 	"sync"
 
 	"github.com/gin-gonic/gin"

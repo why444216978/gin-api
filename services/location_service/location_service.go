@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"sync"
 
-	"gin-frame/libraries/config"
-	"gin-frame/libraries/redis"
-	"gin-frame/libraries/util/conversion"
+	"gin-api/libraries/config"
+	"gin-api/libraries/redis"
+	"gin-api/libraries/util/conversion"
 
 	"github.com/gin-gonic/gin"
 

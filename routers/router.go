@@ -1,14 +1,14 @@
 package routers
 
 import (
-	"gin-frame/controllers/first_origin_price"
-	"gin-frame/controllers/opentracing"
-	"gin-frame/controllers/ping"
-	"gin-frame/libraries/config"
-	"gin-frame/middlewares/limiter"
-	"gin-frame/middlewares/log"
-	"gin-frame/middlewares/panic"
-	"gin-frame/middlewares/trace"
+	"gin-api/controllers/first_origin_price"
+	"gin-api/controllers/opentracing"
+	"gin-api/controllers/ping"
+	"gin-api/libraries/config"
+	"gin-api/middlewares/limiter"
+	"gin-api/middlewares/log"
+	"gin-api/middlewares/panic"
+	"gin-api/middlewares/trace"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

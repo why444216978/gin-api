@@ -1,7 +1,7 @@
 package origin_price_model
 
 import (
-	"gin-frame/models/base"
+	"gin-api/models/base"
 	"log"
 	"sync"
 )

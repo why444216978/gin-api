@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	beego_config "github.com/astaxie/beego/config"
-	"gin-frame/libraries/agollo/env"
-	library_config "gin-frame/libraries/config"
-	util_err "gin-frame/libraries/util/error"
+	"gin-api/libraries/agollo/env"
+	library_config "gin-api/libraries/config"
+	util_err "gin-api/libraries/util/error"
 	"github.com/why444216978/http-agollo/agollo"
 )
 

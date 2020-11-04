@@ -3,19 +3,19 @@ package log
 import (
 	"bytes"
 	"fmt"
-	"gin-frame/configs"
-	"gin-frame/libraries/apollo"
-	"gin-frame/libraries/util/random"
+	"gin-api/configs"
+	"gin-api/libraries/apollo"
+	"gin-api/libraries/util/random"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
-	"gin-frame/libraries/log"
-	"gin-frame/libraries/util/conversion"
-	"gin-frame/libraries/util/dir"
-	"gin-frame/libraries/util/sys"
-	"gin-frame/libraries/util/url"
+	"gin-api/libraries/log"
+	"gin-api/libraries/util/conversion"
+	"gin-api/libraries/util/dir"
+	"gin-api/libraries/util/sys"
+	"gin-api/libraries/util/url"
 	"github.com/gin-gonic/gin"
 )
 
