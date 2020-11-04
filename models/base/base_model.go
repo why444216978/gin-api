@@ -6,9 +6,6 @@ package base
 
 import (
 	"context"
-	"fmt"
-	"time"
-
 	"gin-api/libraries/config"
 	"gin-api/libraries/log"
 	"gin-api/libraries/mysql"
@@ -32,8 +29,6 @@ type BaseModel struct {
 	span      opentracing.Span
 	logFormat *log.LogFormat
 
-	readIsLog        bool
-	writeIsLog       bool
 	readExecTimeout  int64
 	writeExecTimeout int64
 
@@ -43,50 +38,6 @@ type BaseModel struct {
 func (instance *BaseModel) CheckRes(dbRes *gorm.DB) {
 	if dbRes.Error != nil {
 		panic(dbRes.Error)
-	}
-}
-
-func (instance *BaseModel) Start(c *gin.Context) {
-	instance.c = c
-	instance.ctx = c.Request.Context()
-	instance.parent = opentracing.SpanFromContext(instance.ctx)
-	instance.logFormat = log.LogHeaderFromContext(instance.ctx)
-	instance.logFormat.StartTime = time.Now()
-
-	//instance.logFormat.XHop = xhop.NextXhop(c, config.GetXhopField())
-
-}
-
-func (instance *BaseModel) End(sql string) {
-	if instance.parent == nil {
-		instance.span = opentracing.StartSpan("mysqlDo")
-	} else {
-		instance.span = opentracing.StartSpan("mysqlDo", opentracing.ChildOf(instance.parent.Context()))
-	}
-
-	lastModule := instance.logFormat.Module
-	defer func(lastModule string) {
-		instance.logFormat.Module = lastModule
-	}(lastModule)
-
-	defer instance.span.Finish()
-
-	instance.span.SetTag("db.type", "mysql")
-	instance.span.SetTag("db.statement", fmt.Sprint("mysql command", " ", sql))
-	//span.SetTag("error", err != nil)
-
-	instance.logFormat.EndTime = time.Now()
-	latencyTime := instance.logFormat.EndTime.Sub(instance.logFormat.StartTime).Microseconds() // 执行时间
-	instance.logFormat.LatencyTime = latencyTime
-
-	instance.logFormat.Module = "databus/mysql"
-
-	instance.ctx = log.ContextWithLogHeader(instance.ctx, instance.logFormat)
-
-	if instance.readIsLog == true || instance.logFormat.LatencyTime > instance.readExecTimeout {
-		log.Infof(instance.logFormat, "mysql do:[%s], used: %d Microseconds",
-			fmt.Sprint("mysql command", " ", sql),
-			instance.logFormat.EndTime.Sub(instance.logFormat.StartTime).Milliseconds())
 	}
 }
 
@@ -113,9 +64,6 @@ func (instance *BaseModel) GetConn(database string) {
 		Slave:  readObj,
 	}
 
-	instance.readIsLog = instance.getIsLog(read)
-	instance.writeIsLog = instance.getIsLog(write)
-
 	instance.readExecTimeout = instance.getExecTimeout(read)
 	instance.writeExecTimeout = instance.getExecTimeout(write)
 
@@ -130,13 +78,6 @@ func (instance *BaseModel) getExecTimeout(conn string) int64 {
 	execTimeout, err := cfg.Key("exec_timeout").Int64()
 	util_err.Must(err)
 	return execTimeout
-}
-
-func (instance *BaseModel) getIsLog(conn string) bool {
-	cfg := instance.getCfg(conn)
-	isLog, err := cfg.Key("is_log").Bool()
-	util_err.Must(err)
-	return isLog
 }
 
 func (instance *BaseModel) getMaxOpen(conn string) int {

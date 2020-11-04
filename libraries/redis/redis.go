@@ -28,17 +28,16 @@ func GetRedis(redisName string) *RedisDB {
 	dbCfg, err := fileCfg.Key("db").Int()
 	maxActiveCfg, err := fileCfg.Key("max_active").Int()
 	maxIdleCfg, err := fileCfg.Key("max_idle").Int()
-	logCfg, err := fileCfg.Key("is_log").Bool()
 	execTime, err := fileCfg.Key("exec_timeout").Int64()
 	util_error.Must(err)
 
-	db, err := conn(redisName, hostCfg, passwordCfg, portCfg, dbCfg, maxActiveCfg, maxIdleCfg, logCfg, execTime)
+	db, err := conn(redisName, hostCfg, passwordCfg, portCfg, dbCfg, maxActiveCfg, maxIdleCfg, execTime)
 	util_error.Must(err)
 
 	return db
 }
 
-func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, isLog bool, execTimeout int64) (db *RedisDB, err error) {
+func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, execTimeout int64) (db *RedisDB, err error) {
 	if len(obj) == 0 {
 		obj = make(map[string]*RedisDB)
 	}
@@ -54,7 +53,6 @@ func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, isLo
 		DB:          dbNum,
 		MaxActive:   maxActive,
 		MaxIdle:     maxIdle,
-		IsLog:       isLog,
 		ExecTimeout: execTimeout,
 	}
 
