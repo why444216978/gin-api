@@ -19,7 +19,8 @@ QQ：444216978
 ```
 go run main.go
 
-curl localhost:777/test/ping
+curl localhost:777/ping
+curl localhost:777/test/rpc
 ```
 
 # 配置相关
