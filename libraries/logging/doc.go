@@ -4,7 +4,7 @@
 
 /*
 Package logging implements YMT logging standard. The design ideas are derived from Python's
-logging gin-api/librariesrary.
+logging library.
 
 
 LogConfig
@@ -35,4 +35,4 @@ Usage
 
 
 */
-package log
+package logging

@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"fmt"
-	"gin-api/libraries/log"
+	"gin-api/libraries/logging"
 	"gin-api/libraries/util"
 	"github.com/streadway/amqp"
 	srcLog "log"
@@ -13,7 +13,7 @@ import (
 // 定义接收者接口
 type ConsumeMsg interface {
 	// 消费逻辑
-	Do(d amqp.Delivery, header *log.LogFormat) error
+	Do(d amqp.Delivery, header *logging.LogHeader) error
 }
 
 // 定义RabbitMQ对象
@@ -75,9 +75,9 @@ func NewConsumer(amqpURI, queueName, tag string, consumeMsg ConsumeMsg) (*Consum
 }
 
 func consume(d amqp.Delivery, consumeMsg ConsumeMsg) {
-	logId := log.NewObjectId().Hex()
+	logId := logging.NewObjectId().Hex()
 
-	logFormat := &log.LogFormat{
+	logFormat := &logging.LogHeader{
 		LogId:    logId,
 		CallerIp: "",
 		HostIp:   "",
@@ -98,7 +98,7 @@ func consume(d amqp.Delivery, consumeMsg ConsumeMsg) {
 	util.Must(err)
 
 	if err != nil {
-		log.Errorf(logFormat, "failed to consumer msg:%s, err%s", d.Body, err.Error())
+		logging.Errorf(logFormat, "failed to consumer msg:%s, err%s", d.Body, err.Error())
 		util.Must(err)
 		return
 	}

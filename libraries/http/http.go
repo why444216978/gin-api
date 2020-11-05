@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 
-	"gin-api/libraries/log"
+	"gin-api/libraries/logging"
 	"gin-api/libraries/util"
 
 	"github.com/bitly/go-simplejson"
@@ -21,45 +20,17 @@ import (
 func HttpSend(c *gin.Context, method, url, logId string, data map[string]interface{}) map[string]interface{} {
 	ctx := c.Request.Context()
 	var (
-		statement = url
-		startAt   = time.Now()
-		endAt     time.Time
-		logFormat = log.LogHeaderFromContext(ctx)
+		logFormat = logging.LogHeaderFromContext(ctx)
 		err       error
 		ret       = make(map[string]interface{})
 		req       *http.Request
 	)
 
 	if logFormat == nil {
-		logFormat = log.NewLog()
+		logFormat = &logging.LogHeader{}
 	}
 
 	logFormat.LogId = logId
-
-	lastModule := logFormat.Module
-	lastStartTime := logFormat.StartTime
-	lastEndTime := logFormat.EndTime
-	defer func() {
-		logFormat.Module = lastModule
-		lastStartTime = lastStartTime
-		lastEndTime = lastEndTime
-	}()
-	defer func() {
-		endAt = time.Now()
-		logFormat.StartTime = startAt
-		logFormat.EndTime = endAt
-		latencyTime := logFormat.EndTime.Sub(logFormat.StartTime).Microseconds() // 执行时间
-		logFormat.LatencyTime = latencyTime
-		//logFormat.XHop = logFormat.XHop.Next()
-
-		logFormat.Module = "databus/http"
-
-		if err != nil {
-			log.Errorf(logFormat, "http[%s]:[%s], error: %s", method, statement, err)
-			return
-		}
-		log.Infof(logFormat, "http[%s]:%s, success", method, statement)
-	}()
 
 	client := &http.Client{}
 

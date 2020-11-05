@@ -1,4 +1,4 @@
-package log
+package logging
 
 import (
 	"encoding/json"
@@ -42,7 +42,7 @@ var (
 )
 
 type Formatter interface {
-	Format(format *LogFormat) ([]byte, error)
+	Format(*Record) ([]byte, error)
 }
 
 type SimpleFormatter struct {
@@ -54,7 +54,7 @@ func NewSimpleFormatter(prefix string, flag int) *SimpleFormatter {
 	return &SimpleFormatter{prefix: prefix, flag: flag}
 }
 
-func (f *SimpleFormatter) Format(record *LogFormat) ([]byte, error) {
+func (f *SimpleFormatter) Format(record *Record) ([]byte, error) {
 	var (
 		buf []byte = []byte{}
 	)
@@ -63,7 +63,7 @@ func (f *SimpleFormatter) Format(record *LogFormat) ([]byte, error) {
 		buf = append(buf, []byte(fmt.Sprintf("\033[%dm", DEFAULT_COLOR[record.Level]))...)
 	}
 
-	//f.formatHeader(&buf, time.Time(record.MilliSecond), record.File, record.Line)
+	f.formatHeader(&buf, time.Time(record.MilliSecond), record.File, record.Line)
 	buf = append(buf, []byte(fmt.Sprintf("%s", record.Msg))...)
 
 	if (f.flag | Lcolor) != 0 {
@@ -145,7 +145,7 @@ type JSONFormatter struct {
 //
 // https://github.com/golang/go/issues/8592
 //
-func (f *JSONFormatter) Format(record *LogFormat) (buf []byte, err error) {
+func (f *JSONFormatter) Format(record *Record) (buf []byte, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("%s\n", debug.Stack())

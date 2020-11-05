@@ -1,4 +1,4 @@
-package log
+package logging
 
 // StreamHandler
 // FileHandler
@@ -20,8 +20,8 @@ const (
 
 type LogHandler interface {
 	Run()
-	Receive(format *LogFormat)
-	SyncFormatterReceive(format *LogFormat)
+	Receive(*Record)
+	SyncFormatterReceive(*Record)
 	Notify(*LogSignal)
 	Shutdown() <-chan bool
 }
@@ -34,7 +34,7 @@ var (
 
 type StreamHandler struct {
 	formatter  Formatter
-	logChan    chan *LogFormat //消息处理队列
+	logChan    chan *Record    //消息处理队列
 	logBufChan chan []byte     //buf消息处理队列
 	sigChan    chan *LogSignal //信号处理队列
 	sigCb      map[int][]func(*LogSignal) error
@@ -51,7 +51,7 @@ type StreamHandler struct {
 
 func NewStreamHandler() *StreamHandler {
 	s := &StreamHandler{
-		logChan:    make(chan *LogFormat, 10*1024),
+		logChan:    make(chan *Record, 10*1024),
 		logBufChan: make(chan []byte, 10*1024),
 		sigChan:    make(chan *LogSignal, 32),
 		shutdownC:  make(chan bool, 1),
@@ -115,7 +115,7 @@ func (sh *StreamHandler) setWriter(w io.Writer) {
 }
 
 //Async formatter Receive receive msg for logChan
-func (sh *StreamHandler) Receive(r *LogFormat) {
+func (sh *StreamHandler) Receive(r *Record) {
 	sh.RLock()
 	if sh.shutdown {
 		sh.RUnlock()
@@ -133,7 +133,7 @@ func (sh *StreamHandler) Receive(r *LogFormat) {
 }
 
 //sync formatter Receive receive msg for logChan
-func (sh *StreamHandler) SyncFormatterReceive(r *LogFormat) {
+func (sh *StreamHandler) SyncFormatterReceive(r *Record) {
 	sh.RLock()
 	if sh.shutdown {
 		sh.RUnlock()
@@ -191,7 +191,7 @@ func (sh *StreamHandler) Run() {
 	sh.runonce.Do(func() {
 		var (
 			timer  = time.NewTimer(HANDLE_TIMEOUT)
-			record *LogFormat
+			record *Record
 		)
 
 		for {

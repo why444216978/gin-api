@@ -2,11 +2,12 @@ package redis
 
 import (
 	"fmt"
+	"gin-api/configs"
+	"gin-api/libraries/logging"
 	"strings"
 	"time"
 
 	"gin-api/libraries/config"
-	"gin-api/libraries/log"
 	util_error "gin-api/libraries/util/error"
 	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
@@ -110,14 +111,23 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 		return
 	}
 	var (
-		ctx       = c.Request.Context()
-		conn      = db.pool.Get()
-		logFormat = log.LogHeaderFromContext(ctx)
-		argsStr   []string
+		ctx     = c.Request.Context()
+		conn    = db.pool.Get()
+		argsStr []string
 	)
-	logFormat.StartTime = time.Now()
 
 	defer conn.Close()
+
+	header := &logging.LogHeader{
+		LogId:     c.Writer.Header().Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)),
+		CallerIp:  c.ClientIP(),
+		Port:      configs.SERVICE_PORT,
+		Product:   configs.PRODUCT,
+		Module:    "databus/redis",
+		ServiceId: configs.SERVICE_NAME,
+		UriPath:   c.Request.RequestURI,
+		Env:       configs.ENV,
+	}
 
 	reply, err = conn.Do(commandName, args...)
 
@@ -125,20 +135,11 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 		argsStr = append(argsStr, fmt.Sprint(arg))
 	}
 
-	lastModule := logFormat.Module
-	defer func(lastModule string) {
-		logFormat.Module = lastModule
-	}(lastModule)
-
 	defer func() {
-		logFormat.Module = "databus/redis"
-
-		ctx = log.ContextWithLogHeader(ctx, logFormat)
+		ctx = logging.ContextWithLogHeader(ctx, header)
 
 		if err != nil {
-			log.Errorf(logFormat, "redis do:[%s], error: %s",
-				fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")),
-				err)
+			logging.Errorf(header, "redis do:[%s], error: %s", fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")), err)
 		}
 	}()
 

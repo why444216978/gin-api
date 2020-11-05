@@ -7,7 +7,7 @@ package base
 import (
 	"context"
 	"gin-api/libraries/config"
-	"gin-api/libraries/log"
+	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
 	"gin-api/libraries/util"
 	util_err "gin-api/libraries/util/error"
@@ -27,7 +27,7 @@ type BaseModel struct {
 	ctx       context.Context
 	parent    opentracing.Span
 	span      opentracing.Span
-	logFormat *log.LogFormat
+	logFormat *logging.LogHeader
 
 	readExecTimeout  int64
 	writeExecTimeout int64

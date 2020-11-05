@@ -1,10 +1,10 @@
-package log
+package logging
 
 type LogConfig struct {
-	Path                string `default:"Users/why/Desktop/go"` // default to ./
-	File                string `default:"default.log"`          // default to log.log
-	Rotate              bool   `default:"false"`                // whether to rotate file,default to false
-	RotatingFileHandler string `default:"TIME"`                 // SIZE/CRON/TIME
+	Path                string `default:"./"`         // default to ./
+	File                string `default:"log4go.log"` // default to log.log
+	Rotate              bool   `default:"false"`      // whether to rotate file,default to false
+	RotatingFileHandler string `default:"TIME"`       // SIZE/CRON/TIME
 	RotateSize          int64
 	RotateInterval      int64 `default:"3600"`  // unit: second
 	Mode                int   `default:"1"`     // 0 text 1 json

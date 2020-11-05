@@ -1,21 +1,16 @@
 package log
 
+import "C"
 import (
 	"bytes"
 	"gin-api/configs"
 	"gin-api/libraries/config"
-	"gin-api/libraries/util/random"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-	"time"
-
-	"gin-api/libraries/log"
 	"gin-api/libraries/util/conversion"
-	"gin-api/libraries/util/dir"
 	"gin-api/libraries/util/sys"
 	"gin-api/libraries/util/url"
+	"gin-api/libraries/logging"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -33,47 +28,20 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func LoggerMiddleware() gin.HandlerFunc {
-	logDir, logArea := config.GetLogConfig(configs.LOG_SOURCE)
 	return func(c *gin.Context) {
-		file := dir.CreateHourLogFile(logDir, configs.SERVICE_NAME+".log."+sys.HostName()+".")
-		file = file + "/" + strconv.Itoa(random.RandomN(logArea))
-
-		log.InitRun(&log.LogConfig{
-			File:           file,
-			Path:           logDir,
-			Mode:           1,
-			AsyncFormatter: false,
-			Debug:          true,
-		}, logDir, file)
-
-		var logID string
+		var logId string
 		switch {
 		case c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE)) != "":
-			logID = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
+			logId = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
 		case c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)) != "":
-			logID = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
+			logId = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
 		default:
-			logID = log.NewObjectId().Hex()
+			logId = logging.NewObjectId().Hex()
 		}
 
-		ctx := c.Request.Context()
-		dst := new(log.LogFormat)
+		c.Header(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
 
-		dst.Port = configs.SERVICE_PORT
-		dst.LogId = logID
-		dst.Method = c.Request.Method
-		dst.CallerIp = c.ClientIP()
-		dst.UriPath = c.Request.RequestURI
-		dst.Product = configs.PRODUCT
-		dst.Module = configs.MODULE
-		dst.Env = configs.ENV
-
-		ctx = log.ContextWithLogHeader(ctx, dst)
-		c.Request = c.Request.WithContext(ctx)
-
-		c.Header(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
-
-		c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
+		c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read
@@ -85,21 +53,30 @@ func LoggerMiddleware() gin.HandlerFunc {
 		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 		c.Writer = responseWriter
 
-		dst.StartTime = time.Now()
-
 		c.Next() // 处理请求
-
-		dst.HttpCode = c.Writer.Status()
 
 		responseBody := responseWriter.body.String()
 
-		if dst.HttpCode == http.StatusOK {
-			log.Info(dst, map[string]interface{}{
-				"requestHeader": c.Request.Header,
-				"requestBody":   conversion.JsonToMap(strReqBody),
-				"responseBody":  conversion.JsonToMap(responseBody),
-				"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
-			})
+		hostIp,_ := sys.ExternalIP()
+
+		header := &logging.LogHeader{
+			LogId: logId,
+			CallerIp: c.ClientIP(),
+			HostIp: hostIp,
+			Port: configs.SERVICE_PORT,
+			Product: configs.PRODUCT,
+			Module: configs.MODULE,
+			ServiceId: configs.SERVICE_NAME,
+			UriPath: c.Request.RequestURI,
+			Env: configs.ENV,
 		}
+		logging.Info(header,  map[string]interface{}{
+			"requestHeader": c.Request.Header,
+			"requestBody":   conversion.JsonToMap(strReqBody),
+			"responseBody":  conversion.JsonToMap(responseBody),
+			"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
+			"http_code": c.Writer.Status(),
+		})
 	}
 }
+

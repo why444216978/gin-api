@@ -1,4 +1,4 @@
-package log
+package logging
 
 const (
 	MOD_NORMAL = iota

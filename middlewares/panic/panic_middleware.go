@@ -2,23 +2,18 @@ package panic
 
 import (
 	"bytes"
-	"fmt"
 	"gin-api/codes"
 	"gin-api/configs"
 	"gin-api/libraries/config"
-	"gin-api/libraries/util/dir"
+	"gin-api/libraries/util/conversion"
+	"gin-api/libraries/util/sys"
+	"gin-api/libraries/util/url"
+	"gin-api/libraries/logging"
+	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
-	"strconv"
 	"strings"
-	"time"
-
-	"gin-api/libraries/log"
-	"gin-api/libraries/util"
-	"gin-api/libraries/util/conversion"
-	"gin-api/libraries/util/url"
-	"github.com/gin-gonic/gin"
 )
 
 type bodyLogWriter struct {
@@ -32,11 +27,9 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ThrowPanic() gin.HandlerFunc {
-	logDir, logArea := config.GetLogConfig(configs.LOG_SOURCE)
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
-				fmt.Println(err)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"errno":    codes.SERVER_ERROR,
 					"errmsg":   codes.ErrorMsg[codes.SERVER_ERROR],
@@ -52,44 +45,19 @@ func ThrowPanic() gin.HandlerFunc {
 					debugStack[k] = v
 				}
 
-				file := dir.CreateHourLogFile(logDir, configs.SERVICE_NAME+".err."+util.HostName()+".")
-				file = file + "/" + strconv.Itoa(util.RandomN(logArea))
-
-				log.InitError(&log.LogConfig{
-					File:           file,
-					Path:           logDir,
-					Mode:           1,
-					AsyncFormatter: false,
-					Debug:          true,
-				}, logDir, file)
-
-				var logID string
+				var logId string
 				switch {
 				case c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE)) != "":
-					logID = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
+					logId = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
 				case c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)) != "":
-					logID = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
+					logId = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
 				default:
-					logID = log.NewObjectId().Hex()
+					logId = logging.NewObjectId().Hex()
 				}
 
-				logHeader := &log.LogFormat{}
-				ctx := c.Request.Context()
-				dst := new(log.LogFormat)
-				*dst = *logHeader
+				c.Header(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
 
-				dst.Port = configs.SERVICE_PORT
-				dst.LogId = logID
-				dst.Method = c.Request.Method
-				dst.CallerIp = c.ClientIP()
-				dst.UriPath = c.Request.RequestURI
-				dst.Product = configs.PRODUCT
-				dst.Module = configs.MODULE
-				dst.Env = configs.ENV
-
-				ctx = log.ContextWithLogHeader(ctx, dst)
-				c.Request = c.Request.WithContext(ctx)
-				c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
+				c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
 
 				reqBody := []byte{}
 				if c.Request.Body != nil { // Read
@@ -101,13 +69,25 @@ func ThrowPanic() gin.HandlerFunc {
 				responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 				c.Writer = responseWriter
 
-				dst.StartTime = time.Now()
-
-				dst.HttpCode = c.Writer.Status()
+				c.Next() // 处理请求
 
 				responseBody := responseWriter.body.String()
 
-				log.Error(dst, map[string]interface{}{
+				hostIp,_ := sys.ExternalIP()
+
+				header := &logging.LogHeader{
+					LogId: logId,
+					CallerIp: c.ClientIP(),
+					HostIp: hostIp,
+					Port: configs.SERVICE_PORT,
+					Product: configs.PRODUCT,
+					Module: configs.MODULE,
+					ServiceId: configs.SERVICE_NAME,
+					UriPath: c.Request.RequestURI,
+					Env: configs.ENV,
+				}
+
+				logging.Error(header, map[string]interface{}{
 					"requestHeader": c.Request.Header,
 					"requestBody":   conversion.JsonToMap(strReqBody),
 					"responseBody":  conversion.JsonToMap(responseBody),

@@ -1,6 +1,7 @@
-package log
+package logging
 
 import (
+	"gin-api/libraries/util/sys"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,13 +15,12 @@ type LogFile struct {
 }
 
 func (f *LogFile) FilePath() string {
-	return filepath.Join(f.path, f.file)
-	//return filepath.Join(f.path, f.file) + "." + misc.HostNamePrefix()
+	return filepath.Join(f.path, f.file) + "." + sys.HostName()
 }
 
 //open for write only
 func (f *LogFile) OpenFile() error {
-	if file, err := os.OpenFile(f.file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777); err != nil {
+	if file, err := os.OpenFile(f.FilePath(), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644); err != nil {
 		return err
 	} else {
 		f.logFile = file
