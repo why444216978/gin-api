@@ -24,7 +24,7 @@ func init() {
 		Rotate: true,
 		AsyncFormatter:true,
 		RotatingFileHandler: logging.TIMED_ROTATING_FILE_HANDLER,
-		RotateInterval: 1,
+		RotateInterval: 3600,
 		Debug:  true,
 	}
 	logging.Init(&c)
