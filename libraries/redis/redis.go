@@ -105,7 +105,7 @@ func (db *RedisDB) Close() error {
 
 // Do 执行 redis 命令
 // NOTE 除非有必要(比如在一个函数内部需要执行多次 redis 操作), 否则请用该函数执行所有的操作, 这样能有效避免忘记释放资源.
-func (db *RedisDB) Do(c *gin.Context, xhopField string, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
 	if commandName == "PING" {
 		return
 	}

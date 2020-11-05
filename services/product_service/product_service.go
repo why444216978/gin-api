@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"sync"
 
-	"gin-api/libraries/config"
 	"gin-api/libraries/redis"
 	"gin-api/libraries/util/conversion"
 
@@ -16,8 +15,7 @@ import (
 )
 
 type ProductService struct {
-	xhopField string
-	redis     *redis.RedisDB
+	redis *redis.RedisDB
 }
 
 var product *ProductService
@@ -33,7 +31,6 @@ func NewObj() *ProductService {
 	onceServiceLocation.Do(func() {
 		product = &ProductService{}
 
-		product.xhopField = config.GetXhopField()
 		product.redis = redis.GetRedis(redisName)
 
 		log.Printf("new service product")
@@ -42,7 +39,7 @@ func NewObj() *ProductService {
 }
 
 func (self *ProductService) GetProductDetail(ctx *gin.Context, id int) map[string]interface{} {
-	data, _ := redigo.String(self.redis.Do(ctx, product.xhopField, "GET", productDetailKey+strconv.Itoa(id)))
+	data, _ := redigo.String(self.redis.Do(ctx, "GET", productDetailKey+strconv.Itoa(id)))
 	fmt.Println(data)
 
 	return conversion.JsonToMap(data)
@@ -54,7 +51,7 @@ func (self *ProductService) BatchProductDetail(ctx *gin.Context, ids []int) []st
 		args = append(args, productDetailKey+strconv.Itoa(v))
 	}
 
-	data, _ := redigo.Strings(self.redis.Do(ctx, product.xhopField, "MGET", args...))
+	data, _ := redigo.Strings(self.redis.Do(ctx, "MGET", args...))
 
 	return data
 }

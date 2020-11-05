@@ -1,6 +1,7 @@
 package dir
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -70,12 +71,12 @@ func GetDateDir(path string) string {
 
 //根据当前小时创建目录和日志文件
 func CreateHourLogFile(path string, prex string) string {
-	folderName := time.Now().Format("20060102")
+	folderName := time.Now().Format("2006010215")
 	if prex != "" {
 		folderName = prex + folderName
 	}
-	hourDir := time.Now().Format("2006010215")
-	folderPath := filepath.Join(path, folderName, hourDir)
+	folderPath := filepath.Join(path, folderName)
+	fmt.Println(folderPath)
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 		// 必须分成两步：先创建文件夹、再修改权限
 		os.MkdirAll(folderPath, 0777) //0777也可以os.ModePerm
@@ -83,3 +84,4 @@ func CreateHourLogFile(path string, prex string) string {
 	}
 	return folderPath
 }
+

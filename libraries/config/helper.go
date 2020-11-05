@@ -1,59 +1,96 @@
 package config
 
-func GetLogFields() map[string]string {
-	logFields := make(map[string]string, 3)
-	logFieldsSection := "log_fields"
-	logFieldsConfig := GetConfig("log", logFieldsSection)
+import (
+	"gin-api/configs"
+	"gin-api/libraries/apollo"
+	"gin-api/libraries/util/conversion"
+)
 
-	logFields["query_id"] = logFieldsConfig.Key("query_id").String()
-	if logFields["query_id"] == "" {
-		logFields["query_id"] = "logid"
+const (
+	SOURCE_APOLLO = "apollo"
+	SOURCE_FILE   = "file"
+)
+
+var (
+	queryLogIdField  string
+	headerLogIdField string
+	logDir           string
+	logArea          int
+)
+
+func GetLogConfig(source string) (string, int) {
+	if logDir != "" && logArea != 0 {
+		return logDir, logArea
 	}
 
-	logFields["header_id"] = logFieldsConfig.Key("header_id").String()
-	if logFields["header_id"] == "" {
-		logFields["header_id"] = "LOG-ID"
+	if source == SOURCE_APOLLO {
+		//apollo获取
+		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		logCfg := conversion.JsonToMap(cfg["log"])
+		runLogDir := logCfg["dir"]
+		tmpLogArea, _ := logCfg["area"]
+		logArea := int(tmpLogArea.(float64))
+		logDir := runLogDir.(string) + "/" + configs.SERVICE_NAME
+		return logDir, logArea
+	} else if source == SOURCE_FILE {
+		errLogSection := "log"
+		errorLogConfig := GetConfig("log", errLogSection)
+		logDir := errorLogConfig.Key("dir").String()
+		logDir = logDir + "/" + configs.SERVICE_NAME
+		logArea, err := errorLogConfig.Key("area").Int()
+		if err != nil {
+			panic(err)
+		}
+		return logDir, logArea
+	} else {
+		panic("log source type error")
 	}
-
-	logFields["header_hop"] = logFieldsConfig.Key("header_hop").String()
-	if logFields["header_hop"] == "" {
-		logFields["header_hop"] = "X-HOP"
-	}
-
-	return logFields
 }
 
-func GetHeaderLogIdField() string {
-	logFieldsSection := "log_fields"
-	logFieldsConfig := GetConfig("log", logFieldsSection)
-
-	field := logFieldsConfig.Key("header_id").String()
-	if field == "" {
-		field = "LOG-ID"
+func GetHeaderLogIdField(source string) string {
+	if headerLogIdField != "" {
+		return headerLogIdField
 	}
 
-	return field
+	if source == SOURCE_APOLLO {
+		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		logCfg := conversion.JsonToMap(cfg["log"])
+		headerLogIdField = logCfg["header_field"].(string)
+	} else if source == SOURCE_FILE {
+		logFieldsConfig := GetConfig("log", "log")
+
+		headerLogIdField = logFieldsConfig.Key("header_field").String()
+	} else {
+		panic("log source type error")
+	}
+
+	if headerLogIdField == "" {
+		headerLogIdField = "X-Logid"
+	}
+
+	return headerLogIdField
 }
 
-func GetLogIdField() string {
-	logFieldsSection := "log_fields"
-	logFieldsConfig := GetConfig("log", logFieldsSection)
-
-	field := logFieldsConfig.Key("query_id").String()
-	if field == "" {
-		field = "logid"
+func GetQueryLogIdField(source string) string {
+	if queryLogIdField != "" {
+		return queryLogIdField
 	}
 
-	return field
-}
+	if source == SOURCE_APOLLO {
+		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		logCfg := conversion.JsonToMap(cfg["log"])
+		queryLogIdField = logCfg["query_field"].(string)
+	} else if source == SOURCE_FILE {
+		logFieldsConfig := GetConfig("log", "log")
 
-func GetXhopField() string {
-	logFieldsSection := "log_fields"
-	logFieldsConfig := GetConfig("log", logFieldsSection)
-
-	field := logFieldsConfig.Key("header_hop").String()
-	if field == "" {
-		field = "X-HOP"
+		queryLogIdField = logFieldsConfig.Key("query_field").String()
+	} else {
+		panic("log source type error")
 	}
-	return field
+
+	if queryLogIdField == "" {
+		queryLogIdField = "X-Logid"
+	}
+
+	return queryLogIdField
 }

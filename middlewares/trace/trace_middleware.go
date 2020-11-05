@@ -3,6 +3,7 @@ package trace
 import (
 	"context"
 	"fmt"
+	"gin-api/configs"
 	"io"
 	"strings"
 
@@ -16,18 +17,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const defaultComponentName = "net/http"
 const JaegerOpen = 1
-const AppName = "gin-api"
 const JaegerHostPort = "127.0.0.1:6831"
 
-func OpenTracing(serviceName string) gin.HandlerFunc {
+func OpenTracing() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if JaegerOpen == 1 {
 
 			var parentSpan opentracing.Span
 
-			tracer, closer := NewJaegerTracer(AppName, JaegerHostPort)
+			tracer, closer := NewJaegerTracer(JaegerHostPort)
 			defer closer.Close()
 
 			spCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.Request.Header))
@@ -53,7 +52,7 @@ func OpenTracing(serviceName string) gin.HandlerFunc {
 	}
 }
 
-func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tracer, io.Closer) {
+func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
 
 	cfg := &jaegerConfig.Configuration{
 		Sampler: &jaegerConfig.SamplerConfig{
@@ -66,7 +65,7 @@ func NewJaegerTracer(serviceName string, jaegerHostPort string) (opentracing.Tra
 			LocalAgentHostPort: jaegerHostPort,
 		},
 
-		ServiceName: serviceName,
+		ServiceName: configs.SERVICE_NAME,
 	}
 
 	tracer, closer, err := cfg.NewTracer(jaegerConfig.Logger(jaeger.StdLogger))

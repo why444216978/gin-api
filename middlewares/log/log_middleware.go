@@ -2,9 +2,8 @@ package log
 
 import (
 	"bytes"
-	"fmt"
 	"gin-api/configs"
-	"gin-api/libraries/apollo"
+	"gin-api/libraries/config"
 	"gin-api/libraries/util/random"
 	"io/ioutil"
 	"net/http"
@@ -33,37 +32,26 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func LoggerMiddleware(port int, logFields map[string]string, productName, moduleName, env string) gin.HandlerFunc {
-	//runLogSection := "run"
-	//runLogConfig := config.GetConfig("log", runLogSection)
-	//runLogDir := runLogConfig.Key("dir").String()
-	//logArea, _ := runLogConfig.Key("area").Int()
-
-	cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
-	logCfg := conversion.JsonToMap(cfg["log"])
-	runLogDir := logCfg["run_dir"]
-	logArea, _ := logCfg["run_area"]
-
+func LoggerMiddleware() gin.HandlerFunc {
+	logDir, logArea := config.GetLogConfig(configs.LOG_SOURCE)
 	return func(c *gin.Context) {
-		file := dir.CreateHourLogFile(runLogDir.(string), moduleName+".log."+sys.HostName()+".")
-		fmt.Println(file)
-		//file = file + "/" + strconv.Itoa(random.RandomN(logArea))
-		file = file + "/" + strconv.Itoa(random.RandomN(int(logArea.(float64))))
+		file := dir.CreateHourLogFile(logDir, configs.SERVICE_NAME+".log."+sys.HostName()+".")
+		file = file + "/" + strconv.Itoa(random.RandomN(logArea))
 
 		log.InitRun(&log.LogConfig{
 			File:           file,
-			Path:           runLogDir.(string),
+			Path:           logDir,
 			Mode:           1,
 			AsyncFormatter: false,
 			Debug:          true,
-		}, runLogDir.(string), file)
+		}, logDir, file)
 
 		var logID string
 		switch {
-		case c.Query(logFields["query_id"]) != "":
-			logID = c.Query(logFields["query_id"])
-		case c.Request.Header.Get(logFields["header_id"]) != "":
-			logID = c.Request.Header.Get(logFields["header_id"])
+		case c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE)) != "":
+			logID = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
+		case c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)) != "":
+			logID = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
 		default:
 			logID = log.NewObjectId().Hex()
 		}
@@ -71,25 +59,21 @@ func LoggerMiddleware(port int, logFields map[string]string, productName, module
 		ctx := c.Request.Context()
 		dst := new(log.LogFormat)
 
-		dst.Port = port
+		dst.Port = configs.SERVICE_PORT
 		dst.LogId = logID
 		dst.Method = c.Request.Method
 		dst.CallerIp = c.ClientIP()
 		dst.UriPath = c.Request.RequestURI
-		//dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
-		dst.Product = productName
-		dst.Module = moduleName
-
-		dst.Env = env
+		dst.Product = configs.PRODUCT
+		dst.Module = configs.MODULE
+		dst.Env = configs.ENV
 
 		ctx = log.ContextWithLogHeader(ctx, dst)
 		c.Request = c.Request.WithContext(ctx)
 
-		c.Header(logFields["header_id"], dst.LogId)
-		//c.Header(logFields["header_hop"], dst.XHop.String())
+		c.Header(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
 
-		//c.Writer.Header().Set(logFields["header_id"], dst.LogId)
-		//c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
+		c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read

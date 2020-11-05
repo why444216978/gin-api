@@ -4,7 +4,6 @@ import (
 	"gin-api/controllers/first_origin_price"
 	"gin-api/controllers/opentracing"
 	"gin-api/controllers/ping"
-	"gin-api/libraries/config"
 	"gin-api/middlewares/limiter"
 	"gin-api/middlewares/log"
 	"gin-api/middlewares/panic"
@@ -14,21 +13,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter(port int, productName, moduleName, env string) *gin.Engine {
-	logFields := config.GetLogFields()
-
+func InitRouter() *gin.Engine {
 	server := gin.New()
 
 	server.Use(gin.Recovery())
 
-	server.Use(trace.OpenTracing(productName))
+	server.Use(trace.OpenTracing())
 
 	server.Use(limiter.Limiter(10))
 
-	server.Use(log.LoggerMiddleware(port, logFields, productName, moduleName, env))
+	server.Use(log.LoggerMiddleware())
 
-	server.Use(panic.ThrowPanic(port, logFields, productName, moduleName, env))
-	//server.Use(dump.BodyDump())
+	server.Use(panic.ThrowPanic())
 
 	server.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -47,6 +43,7 @@ func InitRouter(port int, productName, moduleName, env string) *gin.Engine {
 	testGroup := server.Group("/test")
 	{
 		testGroup.GET("/rpc", opentracing.Rpc)
+		testGroup.GET("/panic", opentracing.Panic)
 	}
 
 	originGroup := server.Group("/origin")

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"gin-api/codes"
 	"gin-api/configs"
-	"gin-api/libraries/apollo"
+	"gin-api/libraries/config"
+	"gin-api/libraries/util/dir"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
@@ -30,19 +31,8 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func ThrowPanic(port int, logFields map[string]string, productName, moduleName, env string) gin.HandlerFunc {
-	//errLogSection := "error"
-	//errorLogConfig := config.GetConfig("log", errLogSection)
-	//dir := errorLogConfig.Key("dir").String()
-	//area, err := errorLogConfig.Key("area").Int()
-	//util.Must(err)
-
-	cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
-	logCfg := conversion.JsonToMap(cfg["log"])
-	fmt.Println(logCfg)
-	dir := logCfg["err_dir"]
-	area, _ := logCfg["err_area"]
-
+func ThrowPanic() gin.HandlerFunc {
+	logDir, logArea := config.GetLogConfig(configs.LOG_SOURCE)
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
@@ -62,24 +52,23 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 					debugStack[k] = v
 				}
 
-				file := util.CreateDateDir(dir.(string), moduleName+".err."+util.HostName()+".")
-				//file = file + "/" + strconv.Itoa(util.RandomN(area))
-				file = file + "/" + strconv.Itoa(util.RandomN(int(area.(float64))))
+				file := dir.CreateHourLogFile(logDir, configs.SERVICE_NAME+".err."+util.HostName()+".")
+				file = file + "/" + strconv.Itoa(util.RandomN(logArea))
 
 				log.InitError(&log.LogConfig{
 					File:           file,
-					Path:           dir.(string),
+					Path:           logDir,
 					Mode:           1,
 					AsyncFormatter: false,
 					Debug:          true,
-				}, dir.(string), file)
+				}, logDir, file)
 
 				var logID string
 				switch {
-				case c.Query(logFields["query_id"]) != "":
-					logID = c.Query(logFields["query_id"])
-				case c.Request.Header.Get(logFields["header_id"]) != "":
-					logID = c.Request.Header.Get(logFields["header_id"])
+				case c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE)) != "":
+					logID = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
+				case c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)) != "":
+					logID = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
 				default:
 					logID = log.NewObjectId().Hex()
 				}
@@ -89,20 +78,18 @@ func ThrowPanic(port int, logFields map[string]string, productName, moduleName, 
 				dst := new(log.LogFormat)
 				*dst = *logHeader
 
-				dst.Port = port
+				dst.Port = configs.SERVICE_PORT
 				dst.LogId = logID
 				dst.Method = c.Request.Method
 				dst.CallerIp = c.ClientIP()
 				dst.UriPath = c.Request.RequestURI
-				//dst.XHop = xhop.NextXhop(c, logFields["header_hop"])
-				dst.Product = productName
-				dst.Module = moduleName
-				dst.Env = env
+				dst.Product = configs.PRODUCT
+				dst.Module = configs.MODULE
+				dst.Env = configs.ENV
 
 				ctx = log.ContextWithLogHeader(ctx, dst)
 				c.Request = c.Request.WithContext(ctx)
-				c.Writer.Header().Set(logFields["header_id"], dst.LogId)
-				//c.Writer.Header().Set(logFields["header_hop"], dst.XHop.String())
+				c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), dst.LogId)
 
 				reqBody := []byte{}
 				if c.Request.Body != nil { // Read
