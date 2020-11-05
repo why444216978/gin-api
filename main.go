@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gin-api/configs"
+	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/routers"
 	"gin-api/libraries/logging"
@@ -14,8 +14,8 @@ import (
 )
 
 func init() {
-	logDir, _ := config.GetLogConfig(configs.LOG_SOURCE)
-	file := configs.SERVICE_NAME + ".log"
+	logDir, _ := config.GetLogConfig(app_const.LOG_SOURCE)
+	file := app_const.SERVICE_NAME + ".log"
 
 	c := logging.LogConfig{
 		Path:   logDir,
@@ -33,7 +33,7 @@ func init() {
 func main() {
 	server := routers.InitRouter()
 
-	tmpServer := endless.NewServer(fmt.Sprintf(":%s", strconv.Itoa(configs.SERVICE_PORT)), server)
+	tmpServer := endless.NewServer(fmt.Sprintf(":%s", strconv.Itoa(app_const.SERVICE_PORT)), server)
 	tmpServer.BeforeBegin = func(add string) {
 		log.Printf("Actual pid is %d", syscall.Getpid())
 	}

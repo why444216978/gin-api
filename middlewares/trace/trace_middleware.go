@@ -3,7 +3,7 @@ package trace
 import (
 	"context"
 	"fmt"
-	"gin-api/configs"
+	"gin-api/app_const"
 	"io"
 	"strings"
 
@@ -65,7 +65,7 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
 			LocalAgentHostPort: jaegerHostPort,
 		},
 
-		ServiceName: configs.SERVICE_NAME,
+		ServiceName: app_const.SERVICE_NAME,
 	}
 
 	tracer, closer, err := cfg.NewTracer(jaegerConfig.Logger(jaeger.StdLogger))

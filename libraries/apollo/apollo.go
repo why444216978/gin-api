@@ -16,7 +16,7 @@ package apollo
 import (
 	"encoding/json"
 	"fmt"
-	"gin-api/configs"
+	"gin-api/app_const"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -95,7 +95,7 @@ func LoadApolloConf(service string, space []string) (map[string]string) {
 }
 
 func Test() {
-	service := configs.SERVICE_NAME
+	service := app_const.SERVICE_NAME
 	space := []string{"application"}
 	conf := LoadApolloConf(service, space)
 	fmt.Println(conf)

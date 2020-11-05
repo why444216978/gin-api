@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gin-api/configs"
+	"gin-api/app_const"
 	"gin-api/libraries/apollo"
 	"gin-api/libraries/util/conversion"
 )
@@ -25,18 +25,18 @@ func GetLogConfig(source string) (string, int) {
 
 	if source == SOURCE_APOLLO {
 		//apollo获取
-		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
 		logCfg := conversion.JsonToMap(cfg["log"])
 		runLogDir := logCfg["dir"]
 		tmpLogArea, _ := logCfg["area"]
 		logArea := int(tmpLogArea.(float64))
-		logDir := runLogDir.(string) + "/" + configs.SERVICE_NAME
+		logDir := runLogDir.(string) + "/" + app_const.SERVICE_NAME
 		return logDir, logArea
 	} else if source == SOURCE_FILE {
 		errLogSection := "log"
 		errorLogConfig := GetConfig("log", errLogSection)
 		logDir := errorLogConfig.Key("dir").String()
-		logDir = logDir + "/" + configs.SERVICE_NAME
+		logDir = logDir + "/" + app_const.SERVICE_NAME
 		logArea, err := errorLogConfig.Key("area").Int()
 		if err != nil {
 			panic(err)
@@ -53,7 +53,7 @@ func GetHeaderLogIdField(source string) string {
 	}
 
 	if source == SOURCE_APOLLO {
-		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
 		logCfg := conversion.JsonToMap(cfg["log"])
 		headerLogIdField = logCfg["header_field"].(string)
 	} else if source == SOURCE_FILE {
@@ -77,7 +77,7 @@ func GetQueryLogIdField(source string) string {
 	}
 
 	if source == SOURCE_APOLLO {
-		cfg := apollo.LoadApolloConf(configs.SERVICE_NAME, []string{"application"})
+		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
 		logCfg := conversion.JsonToMap(cfg["log"])
 		queryLogIdField = logCfg["query_field"].(string)
 	} else if source == SOURCE_FILE {

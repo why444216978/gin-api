@@ -3,7 +3,7 @@ package log
 import "C"
 import (
 	"bytes"
-	"gin-api/configs"
+	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/util/conversion"
 	"gin-api/libraries/util/sys"
@@ -31,17 +31,17 @@ func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var logId string
 		switch {
-		case c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE)) != "":
-			logId = c.Query(config.GetQueryLogIdField(configs.LOG_SOURCE))
-		case c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)) != "":
-			logId = c.Request.Header.Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
+		case c.Query(config.GetQueryLogIdField(app_const.LOG_SOURCE)) != "":
+			logId = c.Query(config.GetQueryLogIdField(app_const.LOG_SOURCE))
+		case c.Request.Header.Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE)) != "":
+			logId = c.Request.Header.Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE))
 		default:
 			logId = logging.NewObjectId().Hex()
 		}
 
-		c.Header(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
+		c.Header(config.GetHeaderLogIdField(app_const.LOG_SOURCE), logId)
 
-		c.Writer.Header().Set(config.GetHeaderLogIdField(configs.LOG_SOURCE), logId)
+		c.Writer.Header().Set(config.GetHeaderLogIdField(app_const.LOG_SOURCE), logId)
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read
@@ -63,12 +63,12 @@ func LoggerMiddleware() gin.HandlerFunc {
 			LogId: logId,
 			CallerIp: c.ClientIP(),
 			HostIp: hostIp,
-			Port: configs.SERVICE_PORT,
-			Product: configs.PRODUCT,
-			Module: configs.MODULE,
-			ServiceId: configs.SERVICE_NAME,
+			Port: app_const.SERVICE_PORT,
+			Product: app_const.PRODUCT,
+			Module: app_const.MODULE,
+			ServiceId: app_const.SERVICE_NAME,
 			UriPath: c.Request.RequestURI,
-			Env: configs.ENV,
+			Env: app_const.ENV,
 		}
 		logging.Info(header,  map[string]interface{}{
 			"requestHeader": c.Request.Header,

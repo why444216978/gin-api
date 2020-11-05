@@ -2,7 +2,7 @@ package redis
 
 import (
 	"fmt"
-	"gin-api/configs"
+	"gin-api/app_const"
 	"gin-api/libraries/logging"
 	"strings"
 	"time"
@@ -119,14 +119,14 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	defer conn.Close()
 
 	header := &logging.LogHeader{
-		LogId:     c.Writer.Header().Get(config.GetHeaderLogIdField(configs.LOG_SOURCE)),
+		LogId:     c.Writer.Header().Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE)),
 		CallerIp:  c.ClientIP(),
-		Port:      configs.SERVICE_PORT,
-		Product:   configs.PRODUCT,
+		Port:      app_const.SERVICE_PORT,
+		Product:   app_const.PRODUCT,
 		Module:    "databus/redis",
-		ServiceId: configs.SERVICE_NAME,
+		ServiceId: app_const.SERVICE_NAME,
 		UriPath:   c.Request.RequestURI,
-		Env:       configs.ENV,
+		Env:       app_const.ENV,
 	}
 
 	reply, err = conn.Do(commandName, args...)

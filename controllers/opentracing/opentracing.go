@@ -1,7 +1,7 @@
 package opentracing
 
 import (
-	"gin-api/configs"
+	"gin-api/app_const"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +14,7 @@ func Rpc(c *gin.Context) {
 	postData := make(map[string]interface{})
 	postData["query"] = [1]string{"猕猴桃"}
 
-	logId := c.Writer.Header().Get(config.GetHeaderLogIdField(configs.LOG_SOURCE))
+	logId := c.Writer.Header().Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE))
 	sendUrl := "https://www.baidu.com"
 
 	ret := rpc_http.HttpSend(c, "GET", sendUrl, logId, postData)
