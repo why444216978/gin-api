@@ -5,10 +5,10 @@ import (
 	"bytes"
 	"gin-api/app_const"
 	"gin-api/libraries/config"
+	"gin-api/libraries/logging"
 	"gin-api/libraries/util/conversion"
 	"gin-api/libraries/util/sys"
 	"gin-api/libraries/util/url"
-	"gin-api/libraries/logging"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 )
@@ -57,26 +57,25 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		responseBody := responseWriter.body.String()
 
-		hostIp,_ := sys.ExternalIP()
+		hostIp, _ := sys.ExternalIP()
 
 		header := &logging.LogHeader{
-			LogId: logId,
-			CallerIp: c.ClientIP(),
-			HostIp: hostIp,
-			Port: app_const.SERVICE_PORT,
-			Product: app_const.PRODUCT,
-			Module: app_const.MODULE,
+			LogId:     logId,
+			CallerIp:  c.ClientIP(),
+			HostIp:    hostIp,
+			Port:      app_const.SERVICE_PORT,
+			Product:   app_const.PRODUCT,
+			Module:    app_const.MODULE,
 			ServiceId: app_const.SERVICE_NAME,
-			UriPath: c.Request.RequestURI,
-			Env: app_const.ENV,
+			UriPath:   c.Request.RequestURI,
+			Env:       config.GetEnv(app_const.LOG_SOURCE),
 		}
-		logging.Info(header,  map[string]interface{}{
+		logging.Info(header, map[string]interface{}{
 			"requestHeader": c.Request.Header,
 			"requestBody":   conversion.JsonToMap(strReqBody),
 			"responseBody":  conversion.JsonToMap(responseBody),
 			"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
-			"http_code": c.Writer.Status(),
+			"http_code":     c.Writer.Status(),
 		})
 	}
 }
-

@@ -16,6 +16,7 @@ var (
 	headerLogIdField string
 	logDir           string
 	logArea          int
+	env              string
 )
 
 func GetLogConfig(source string) (string, int) {
@@ -93,4 +94,28 @@ func GetQueryLogIdField(source string) string {
 	}
 
 	return queryLogIdField
+}
+
+func GetEnv(source string) string {
+	if env != "" {
+		return env
+	}
+
+	if source == SOURCE_APOLLO {
+		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
+		envCfg := conversion.JsonToMap(cfg["env"])
+		env = envCfg["env"].(string)
+	} else if source == SOURCE_FILE {
+		logFieldsConfig := GetConfig("env", "env")
+
+		env = logFieldsConfig.Key("env").String()
+	} else {
+		panic("log source type error")
+	}
+
+	if env == "" {
+		env = "development"
+	}
+
+	return env
 }

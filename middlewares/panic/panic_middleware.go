@@ -84,7 +84,7 @@ func ThrowPanic() gin.HandlerFunc {
 					Module: app_const.MODULE,
 					ServiceId: app_const.SERVICE_NAME,
 					UriPath: c.Request.RequestURI,
-					Env: app_const.ENV,
+					Env:       config.GetEnv(app_const.LOG_SOURCE),
 				}
 
 				logging.Error(header, map[string]interface{}{
