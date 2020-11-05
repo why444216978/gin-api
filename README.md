@@ -26,15 +26,11 @@ curl localhost:777/test/rpc
 # 配置相关
 配置放到main.go同级目录configs下
 
-# app.ini example:
+# env.ini example:
 
 ```
-[app]
+[env]
 env = development
-port = 777
-app_id = gin-api
-product = gin-api
-module = gin-api
 ```
 
 # mysql.ini example:
@@ -79,17 +75,11 @@ exec_timeout = 100000
 # log.ini example:
 
 ```
-[run]
-dir = ./logs/run/
+[log]
+dir = /data/logs/
 area = 1
-
-[error]
-dir = ./logs/error/
-area = 1
-
-[amqp]
-dir = ./logs/amqp/
-area = 1
+query_field = "logid"
+header_field = "X-Logid"
 ```
 
 # es.ini example:
