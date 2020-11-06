@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"gin-api/app_const"
 	"gin-api/libraries/config"
-	"gin-api/routers"
 	"gin-api/libraries/logging"
+	"gin-api/libraries/util/dir"
+	"gin-api/routers"
 	"log"
 	"strconv"
 	"syscall"
@@ -16,6 +17,7 @@ import (
 func init() {
 	logDir, _ := config.GetLogConfig(app_const.LOG_SOURCE)
 	file := app_const.SERVICE_NAME + ".log"
+	dir.CreateDir(logDir + "/" + file);
 
 	c := logging.LogConfig{
 		Path:   logDir,
