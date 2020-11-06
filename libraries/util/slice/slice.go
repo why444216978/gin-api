@@ -68,18 +68,24 @@ func sliceInsertAndDelete() {
 	i := 1
 	a := []int{1, 2, 3}
 	fmt.Println(a)
-	res, err := util.InsertSliceByIndex(a , i, 9)
-	util.Must(err)
+	res, err := slice.InsertSliceByIndex(a , i, 9)
+	if err != nil{
+		panic(err)
+	}
 	data := res.([]int)
 	fmt.Println(data)
 
-	res, err = util.DeleteSliceByPos(data, i)
-	util.Must(err)
+	res, err = slice.DeleteSliceByPos(data, i)
+	if err != nil{
+		panic(err)
+	}
 	data = res.([]int)
 	fmt.Println(data)
 
-	res, err = util.UpdateSliceByIndex(data, i , 6)
-	util.Must(err)
+	res, err = slice.UpdateSliceByIndex(data, i , 6)
+	if err != nil{
+		panic(err)
+	}
 	data = res.([]int)
 	fmt.Println(data)
 */
