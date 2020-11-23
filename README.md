@@ -16,15 +16,6 @@ QQ群：909211071
 微信：AbleYu_
 <br>
 
-# run
-
-```
-go run main.go
-
-curl localhost:777/ping
-curl localhost:777/test/rpc
-```
-
 # 配置相关
 配置放到main.go同级目录configs下
 
@@ -90,4 +81,15 @@ header_field = "X-Logid"
 [default]
 host = http://127.0.0.1
 port = 9200
+```
+
+**注意：log.ini中的dir目录确保本地存在且有写入权限。**
+
+# run
+
+```
+go run main.go
+
+curl localhost:777/ping
+curl localhost:777/test/rpc
 ```
