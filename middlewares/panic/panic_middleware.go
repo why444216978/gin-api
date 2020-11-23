@@ -2,13 +2,13 @@ package panic
 
 import (
 	"bytes"
-	"gin-api/codes"
 	"gin-api/app_const"
+	"gin-api/codes"
 	"gin-api/libraries/config"
+	"gin-api/libraries/logging"
 	"gin-api/libraries/util/conversion"
 	"gin-api/libraries/util/sys"
 	"gin-api/libraries/util/url"
-	"gin-api/libraries/logging"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
@@ -95,10 +95,6 @@ func ThrowPanic() gin.HandlerFunc {
 					"err":           err,
 					"trace":         debugStack,
 				})
-
-				/* util.WriteWithIo(file,"[" +dateTime+"]")
-				util.WriteWithIo(file, fmt.Sprintf("%v\r\n", err))
-				util.WriteWithIo(file, debugStack) */
 
 				//subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")
 				//

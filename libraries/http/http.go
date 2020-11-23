@@ -8,8 +8,6 @@ import (
 	"strconv"
 
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util"
-
 	"github.com/bitly/go-simplejson"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
@@ -36,7 +34,9 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	//请求数据
 	byteDates, err := json.Marshal(data)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 	reader := bytes.NewReader(byteDates)
 
 	//url
@@ -44,7 +44,9 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	//构建req
 	req, err = http.NewRequest(method, url, reader)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	//设置请求header
 	req.Header.Add("content-type", "application/json")
@@ -68,11 +70,15 @@ func HttpSend(c *gin.Context, method, url, logId string, data map[string]interfa
 
 	//发送请求
 	resp, err := client.Do(req)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	ret["code"] = resp.StatusCode
 	ret["msg"] = "success"

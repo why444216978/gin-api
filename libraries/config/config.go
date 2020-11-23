@@ -3,8 +3,6 @@ package config
 import (
 	"fmt"
 
-	"gin-api/libraries/util"
-
 	"github.com/larspensjo/config"
 	"gopkg.in/ini.v1"
 )
@@ -20,7 +18,9 @@ func GetConfig(cfgType string, cfgSection string) *ini.Section {
 	configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
 
 	cfgIni, err := ini.Load(configFile)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 	section := cfgIni.Section(cfgSection)
 
 	return section

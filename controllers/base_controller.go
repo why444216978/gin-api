@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-
 	"github.com/gin-gonic/gin"
-	"gin-api/libraries/util"
+	"gin-api/libraries/util/error"
 )
 
 var lock sync.RWMutex
@@ -66,7 +65,7 @@ func (self *BaseController) setCid() {
 	res := self.GetHeader("X-Customer-Id")
 	if res != "" {
 		res, err := strconv.Atoi(res)
-		util.Must(err)
+		error.Must(err)
 		cid = res
 	}
 
@@ -78,7 +77,7 @@ func (self *BaseController) setAppUid() {
 	res := self.GetHeader("X-User-Id")
 	if res != "" {
 		res, err := strconv.Atoi(res)
-		util.Must(err)
+		error.Must(err)
 		appUid = res
 	}
 
@@ -90,7 +89,7 @@ func (self *BaseController) setAppId() {
 	res := self.GetHeader("X-User-Agent")
 	if res != "" {
 		res, err := strconv.Atoi(res)
-		util.Must(err)
+		error.Must(err)
 		AppId = res
 	}
 

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gin-api/libraries/config"
-	"gin-api/libraries/util"
+	"gin-api/libraries/util/file"
 	util_err "gin-api/libraries/util/error"
 	//_ "github.com/go-sql-driver/mysql"
 
@@ -146,7 +146,7 @@ func (db *DB) writeError(errMsg string) {
 
 	date := time.Now().Format("2006-01-02")
 	dateTime := time.Now().Format("2006-01-02 15:04:05")
-	file := errorLogdir + "/mysql/" + date + ".err"
-	util.WriteWithIo(file, "["+dateTime+"]"+errMsg)
+	fileDir := errorLogdir + "/mysql/" + date + ".err"
+	file.WriteWithIo(fileDir, "["+dateTime+"]"+errMsg)
 }
 

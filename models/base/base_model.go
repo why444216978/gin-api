@@ -9,7 +9,6 @@ import (
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
-	"gin-api/libraries/util"
 	util_err "gin-api/libraries/util/error"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -68,7 +67,7 @@ func (instance *BaseModel) GetConn(database string) {
 	instance.writeExecTimeout = instance.getExecTimeout(write)
 
 	conn, err := mysql.New(cfg)
-	util.Must(err)
+	util_err.Must(err)
 
 	instance.Db = conn
 }

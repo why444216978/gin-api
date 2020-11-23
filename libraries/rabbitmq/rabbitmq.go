@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util"
 	"github.com/streadway/amqp"
 	srcLog "log"
 	"net/http"
@@ -95,11 +94,15 @@ func consume(d amqp.Delivery, consumeMsg ConsumeMsg) {
 	}
 
 	err := consumeMsg.Do(d, logFormat)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	if err != nil {
 		logging.Errorf(logFormat, "failed to consumer msg:%s, err%s", d.Body, err.Error())
-		util.Must(err)
+		if err != nil{
+			panic(err)
+		}
 		return
 	}
 }
@@ -127,7 +130,9 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 	defer c.channel.Close()
 
 	err = c.channel.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, nil)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	_, err = c.channel.QueueDeclare(
 		queueName, // routing_key
@@ -137,10 +142,15 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 		false,     // no-wait
 		nil,       // arguments
 	)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	err = c.channel.QueueBind(queueName, routeName, exchangeName, false, nil)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
+
 	err = c.channel.Publish(
 		exchangeName, // exchange
 		routeName,    // routing key
@@ -150,7 +160,9 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 			ContentType: "text/plain",
 			Body:        []byte(msg),
 		})
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	return nil
 }
@@ -199,10 +211,14 @@ func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeNa
 		false,     // no-wait
 		nil,       // arguments
 	)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	err = c.channel.QueueBind(queueName, routeName, exchangeName, false, nil)
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	err = c.channel.Publish(
 		exchangeName, // exchange
@@ -213,7 +229,9 @@ func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeNa
 			ContentType: "text/plain",
 			Body:        []byte(msg),
 		})
-	util.Must(err)
+	if err != nil{
+		panic(err)
+	}
 
 	return nil
 }

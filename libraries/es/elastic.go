@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/uber/jaeger-client-go/log"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -15,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
+	"gin-api/libraries/util/conversion"
+	util_err "gin-api/libraries/util/error"
 	"gin-api/libraries/util"
 )
 
@@ -38,19 +39,14 @@ func InitES(name string) *Elastic {
 	host := confES.Key("host").String() + ":" + confES.Key("port").String()
 	var err error
 	client, err := elastic.NewClient(elastic.SetURL(host))
-	if err != nil {
-		panic(err)
-	}
+	util_err.Must(err)
+
 	info, code, err := client.Ping(host).Do(context.Background())
-	if err != nil {
-		panic(err)
-	}
+	util_err.Must(err)
 	fmt.Printf("Elasticsearch returned with code %d and version %s\n", code, info.Version.Number)
 
 	esVersion, err := client.ElasticsearchVersion(host)
-	if err != nil {
-		panic(err)
-	}
+	util_err.Must(err)
 	fmt.Printf("Elasticsearch version %s\n", esVersion)
 	es := &Elastic{
 		Client: client,
@@ -184,7 +180,7 @@ func (self *Elastic) TermQueryMap(index, typ string, term *elastic.TermQuery, st
 		logging.Errorf(logHeader, "<TermQuery> some error occurred when search. index:%s, term:%v,  err:%s", index, term, err.Error())
 		return make(map[string]interface{})
 	}
-	return util.JsonToMap(searchResult)
+	return conversion.JsonToMap(searchResult)
 }
 
 func (self *Elastic) TermQuery(index, typ string, term *elastic.TermQuery, start, end int, logHeader *logging.LogHeader) *elastic.SearchResult {
@@ -221,7 +217,7 @@ func (self *Elastic) QueryStringMap(index, typ, query string, start, end int, he
 		logging.Errorf(header, "<QueryString> some error occurred when search. index:%s, query:%v,  err:%s", index, query, err.Error())
 		return nil
 	}
-	return util.JsonToMap(searchResult)
+	return conversion.JsonToMap(searchResult)
 }
 
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/query-dsl-query-string-query.html
@@ -279,7 +275,7 @@ func (self *Elastic) MultiMatchQueryBestFieldsMap(index, typ, text string, start
 		logging.Errorf(logHeader, "<MultiMatchQueryBestFields> some error occurred when search. index:%s, text:%v,  err:%s", index, text, err.Error())
 		return nil
 	}
-	return util.JsonToMap(searchResult)
+	return conversion.JsonToMap(searchResult)
 }
 
 func (self *Elastic) QueryStringRandomSearch(client *elastic.Client, index, typ, query string, size int, header *logging.LogHeader) *elastic.SearchResult {
@@ -350,24 +346,24 @@ func (self *Elastic) JsonMap(index, typ, query string, fields []string, from, si
 	}
 
 	byteDates, err := json.Marshal(data)
-	util.Must(err)
+	util_err.Must(err)
 	reader := bytes.NewReader(byteDates)
 
 	client := &http.Client{}
 	url := self.host + "/" + index + "/" + typ + "/_search"
 	req, err := http.NewRequest("POST", url, reader)
-	util.Must(err)
+	util_err.Must(err)
 
 	req.Header.Add("content-type", "application/json")
 
 	resp, err := client.Do(req)
-	util.Must(err)
+	util_err.Must(err)
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
-	util.Must(err)
+	util_err.Must(err)
 
-	ret := util.JsonToMap(string(b))
+	ret := conversion.JsonToMap(string(b))
 	if ret["error"] != nil {
 		fmt.Println(fmt.Sprintf("%s", string(b)))
 		logging.Errorf(logHeader, fmt.Sprintf("%s", string(b)))
@@ -464,24 +460,24 @@ func (self *Elastic) JsonMapHttp(index, typ, query string, fields []string, from
 	}
 
 	byteDates, err := json.Marshal(data)
-	util.Must(err)
+	util_err.Must(err)
 	reader := bytes.NewReader(byteDates)
 
 	client := &http.Client{}
 	url := self.host + "/" + index + "/" + typ + "/_search"
 	req, err := http.NewRequest("POST", url, reader)
-	util.Must(err)
+	util_err.Must(err)
 
 	req.Header.Add("content-type", "application/json")
 
 	resp, err := client.Do(req)
-	util.Must(err)
+	util_err.Must(err)
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
-	util.Must(err)
+	util_err.Must(err)
 
-	ret := util.JsonToMap(string(b))
+	ret := conversion.JsonToMap(string(b))
 	if ret["error"] != nil {
 		err = errors.New(fmt.Sprintf("%s", string(b)))
 		logging.Errorf(logHeader, fmt.Sprintf("%s", string(b)))

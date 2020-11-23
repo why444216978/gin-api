@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util"
 
 	"github.com/streadway/amqp"
 )
@@ -15,6 +14,8 @@ type TestConsumer struct{}
 func (self *TestConsumer) Do(d amqp.Delivery, header *logging.LogHeader) error {
 	fmt.Println(string(d.Body))
 	err := d.Ack(false)
-	util.Must(err)
+	if err != nil {
+		panic(err)
+	}
 	return err
 }
