@@ -16,7 +16,6 @@ import (
 	"gin-api/libraries/logging"
 	"gin-api/libraries/util/conversion"
 	util_err "gin-api/libraries/util/error"
-	"gin-api/libraries/util"
 )
 
 type Elastic struct {
