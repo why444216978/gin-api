@@ -9,6 +9,7 @@ logs/*
 development
 .tags*
 .idea
+.vscode
 *node*
 .DS_Store
 test/*
