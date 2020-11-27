@@ -2,8 +2,6 @@ package origin_price_model
 
 import (
 	"gin-api/models/base"
-	"log"
-	"sync"
 )
 
 type OriginPrice struct {
@@ -35,15 +33,20 @@ type OriginPriceModel struct {
 	base.BaseModel
 }
 
-var onceOriginPriceModel sync.Once
+//var onceOriginPriceModel sync.Once
 var originPriceModel *OriginPriceModel
 
+func init(){
+	originPriceModel = &OriginPriceModel{}
+	originPriceModel.GetConn("hangqing")
+}
+
 func NewOriginPriceModel() *OriginPriceModel {
-	onceOriginPriceModel.Do(func() {
-		originPriceModel = &OriginPriceModel{}
-		originPriceModel.GetConn("hangqing")
-		log.Printf("new origin_price_model")
-	})
+	//onceOriginPriceModel.Do(func() {
+	//	originPriceModel = &OriginPriceModel{}
+	//	originPriceModel.GetConn("hangqing")
+	//	log.Printf("new origin_price_model")
+	//})
 
 	return originPriceModel
 }

@@ -2,12 +2,9 @@ package location_service
 
 import (
 	"fmt"
-	"log"
-	"strconv"
-	"sync"
-
 	"gin-api/libraries/redis"
 	"gin-api/libraries/util/conversion"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -19,7 +16,7 @@ type LocationService struct {
 }
 
 var location *LocationService
-var onceServiceLocation sync.Once
+//var onceServiceLocation sync.Once
 
 const (
 	redisName         = "location"
@@ -27,14 +24,18 @@ const (
 	locationNameKey   = "location::id_name:"
 )
 
+func init(){
+	location = &LocationService{}
+	location.redis = redis.GetRedis(redisName)
+}
+
 func NewObj() *LocationService {
-	onceServiceLocation.Do(func() {
-		location = &LocationService{}
-
-		location.redis = redis.GetRedis(redisName)
-
-		log.Printf("new service location")
-	})
+	//onceServiceLocation.Do(func() {
+	//	location = &LocationService{}
+	//	location.redis = redis.GetRedis(redisName)
+	//
+	//	log.Printf("new service location")
+	//})
 	return location
 }
 

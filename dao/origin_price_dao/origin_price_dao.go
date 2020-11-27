@@ -1,11 +1,8 @@
 package origin_price_dao
 
 import (
-	"gin-api/models/hangqing/origin_price_model"
-	"log"
-	"sync"
-
 	"gin-api/libraries/util/conversion"
+	"gin-api/models/hangqing/origin_price_model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,15 +11,20 @@ type OriginPriceDao struct {
 	originPriceModel *origin_price_model.OriginPriceModel
 }
 
-var onceOriginPriceDao sync.Once
+//var onceOriginPriceDao sync.Once
 var originPriceDao *OriginPriceDao
 
+func init(){
+	originPriceDao = &OriginPriceDao{}
+	originPriceDao.originPriceModel = origin_price_model.NewOriginPriceModel()
+}
+
 func NewObj() *OriginPriceDao {
-	onceOriginPriceDao.Do(func() {
-		originPriceDao = &OriginPriceDao{}
-		originPriceDao.originPriceModel = origin_price_model.NewOriginPriceModel()
-		log.Printf("new origin_price_dao")
-	})
+	//onceOriginPriceDao.Do(func() {
+	//	originPriceDao = &OriginPriceDao{}
+	//	originPriceDao.originPriceModel = origin_price_model.NewOriginPriceModel()
+	//	log.Printf("new origin_price_dao")
+	//})
 
 	return originPriceDao
 }

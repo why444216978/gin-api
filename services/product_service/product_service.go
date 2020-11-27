@@ -2,12 +2,9 @@ package product_service
 
 import (
 	"fmt"
-	"log"
-	"strconv"
-	"sync"
-
 	"gin-api/libraries/redis"
 	"gin-api/libraries/util/conversion"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -19,7 +16,7 @@ type ProductService struct {
 }
 
 var product *ProductService
-var onceServiceLocation sync.Once
+//var onceServiceLocation sync.Once
 
 const (
 	redisName        = "product"
@@ -27,14 +24,19 @@ const (
 	productNameKey   = "product::id_name:"
 )
 
+func init(){
+	product = &ProductService{}
+	product.redis = redis.GetRedis(redisName)
+}
+
 func NewObj() *ProductService {
-	onceServiceLocation.Do(func() {
-		product = &ProductService{}
+	//onceServiceLocation.Do(func() {
+	//	product = &ProductService{}
+	//	product.redis = redis.GetRedis(redisName)
+	//
+	//	log.Printf("new service product")
+	//})
 
-		product.redis = redis.GetRedis(redisName)
-
-		log.Printf("new service product")
-	})
 	return product
 }
 
