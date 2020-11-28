@@ -3,9 +3,9 @@ package config
 import (
 	"fmt"
 	"gin-api/app_const"
-
 	"github.com/larspensjo/config"
 	"gopkg.in/ini.v1"
+	"log"
 )
 
 type Config struct {
@@ -17,29 +17,26 @@ const path = "./configs/"
 
 var (
 	cfgList     map[string]*ini.File
-	sectionList map[string]*ini.Section
 )
 
 func init() {
 	cfgList = make(map[string]*ini.File, app_const.CONFIGS_NUM)
-	sectionList = make(map[string]*ini.Section, app_const.CONFIGS_SECTION)
 }
 
 func GetConfig(cfgType string, cfgSection string) *ini.Section {
-	if cfgList[cfgType] != nil && sectionList[cfgSection] != nil {
-		return sectionList[cfgSection]
+	if cfgList[cfgType] == nil {
+		log.Println(fmt.Sprintf("load %s config file ", cfgType))
+		var err error
+		configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
+		cfgList[cfgType], err = ini.Load(configFile)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	var err error
-	configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
-	cfgList[cfgType], err = ini.Load(configFile)
-	if err != nil {
-		panic(err)
-	}
+	section := cfgList[cfgType].Section(cfgSection)
 
-	sectionList[cfgSection] = cfgList[cfgType].Section(cfgSection)
-
-	return sectionList[cfgSection]
+	return section
 }
 
 func (self *Config) getConfig(conn string, configFile string) {
