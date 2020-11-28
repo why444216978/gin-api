@@ -31,17 +31,17 @@ func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var logId string
 		switch {
-		case c.Query(config.GetQueryLogIdField(app_const.LOG_SOURCE)) != "":
-			logId = c.Query(config.GetQueryLogIdField(app_const.LOG_SOURCE))
-		case c.Request.Header.Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE)) != "":
-			logId = c.Request.Header.Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE))
+		case c.Query(config.GetQueryLogIdField(app_const.CONFIG_SOURCE)) != "":
+			logId = c.Query(config.GetQueryLogIdField(app_const.CONFIG_SOURCE))
+		case c.Request.Header.Get(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE)) != "":
+			logId = c.Request.Header.Get(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE))
 		default:
 			logId = logging.NewObjectId().Hex()
 		}
 
-		c.Header(config.GetHeaderLogIdField(app_const.LOG_SOURCE), logId)
+		c.Header(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE), logId)
 
-		c.Writer.Header().Set(config.GetHeaderLogIdField(app_const.LOG_SOURCE), logId)
+		c.Writer.Header().Set(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE), logId)
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read
@@ -68,7 +68,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			Module:    app_const.MODULE,
 			ServiceId: app_const.SERVICE_NAME,
 			UriPath:   c.Request.RequestURI,
-			Env:       config.GetEnv(app_const.LOG_SOURCE),
+			Env:       config.GetEnv(app_const.CONFIG_SOURCE),
 		}
 		logging.Info(header, map[string]interface{}{
 			"requestHeader": c.Request.Header,

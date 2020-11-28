@@ -119,7 +119,7 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	defer conn.Close()
 
 	header := &logging.LogHeader{
-		LogId:     c.Writer.Header().Get(config.GetHeaderLogIdField(app_const.LOG_SOURCE)),
+		LogId:     c.Writer.Header().Get(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE)),
 		CallerIp:  c.ClientIP(),
 		Port:      app_const.SERVICE_PORT,
 		Product:   app_const.PRODUCT,

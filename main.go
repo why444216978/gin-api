@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	logDir, _ := config.GetLogConfig(app_const.LOG_SOURCE)
+	logDir, _ := config.GetLogConfig(app_const.CONFIG_SOURCE)
 	file := app_const.SERVICE_NAME + ".log"
 	dir.CreateDir(logDir + "/" + file);
 
