@@ -34,8 +34,7 @@ func GetLogConfig(source string) (string, int) {
 		logDir := runLogDir.(string) + "/" + app_const.SERVICE_NAME
 		return logDir, logArea
 	} else if source == SOURCE_FILE {
-		errLogSection := "log"
-		errorLogConfig := GetConfig("log", errLogSection)
+		errorLogConfig := GetConfig("log", "log")
 		logDir := errorLogConfig.Key("dir").String()
 		logDir = logDir + "/" + app_const.SERVICE_NAME
 		logArea, err := errorLogConfig.Key("area").Int()
