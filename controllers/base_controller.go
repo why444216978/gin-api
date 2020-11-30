@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"net/http"
-	"strconv"
-	"sync"
 	"github.com/gin-gonic/gin"
-	"gin-api/libraries/util/error"
+	"net/http"
+	"sync"
 )
 
 var lock sync.RWMutex
@@ -46,52 +44,10 @@ func (self *BaseController) GetHeader(key string) string {
 	return self.C.Request.Header.Get(key)
 }
 
-func (self *BaseController) SetYmt() {
-	self.setCid()
-	self.setAppId()
-	self.setAppUid()
-}
-
 func (self *BaseController) initResult() {
 	data := make(map[string]interface{})
 	self.Code = 0
 	self.Msg = "success"
 	self.Data = data
 	self.UserMsg = ""
-}
-
-func (self *BaseController) setCid() {
-	var cid = 0
-	res := self.GetHeader("X-Customer-Id")
-	if res != "" {
-		res, err := strconv.Atoi(res)
-		error.Must(err)
-		cid = res
-	}
-
-	self.Cid = cid
-}
-
-func (self *BaseController) setAppUid() {
-	var appUid = 0
-	res := self.GetHeader("X-User-Id")
-	if res != "" {
-		res, err := strconv.Atoi(res)
-		error.Must(err)
-		appUid = res
-	}
-
-	self.AppUid = appUid
-}
-
-func (self *BaseController) setAppId() {
-	var AppId = 0
-	res := self.GetHeader("X-User-Agent")
-	if res != "" {
-		res, err := strconv.Atoi(res)
-		error.Must(err)
-		AppId = res
-	}
-
-	self.AppId = AppId
 }

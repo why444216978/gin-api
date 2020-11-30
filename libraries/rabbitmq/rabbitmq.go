@@ -86,11 +86,7 @@ func consume(d amqp.Delivery, consumeMsg ConsumeMsg) {
 		//ServiceId:  serviceId,
 		//InstanceId: host,
 		UriPath: "",
-		//XHop:    nil,
-		//Tag:        "",
 		Env: "",
-		//SVersion:   "",
-		//Stag: app.Stag{},
 	}
 
 	err := consumeMsg.Do(d, logFormat)
