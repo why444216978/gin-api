@@ -1,5 +1,5 @@
 FROM golang:1.13 as builder
-ENV GOPROXY=http://goproxy.ymt360.com
+ENV GOPROXY=https://goproxy.io,direct
 ENV GOSUMDB=off
 
 WORKDIR /gin-api/
