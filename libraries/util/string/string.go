@@ -1,6 +1,9 @@
 package string
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 //在字符串中查找指定字串，并返回left或right部分
 func Substr(str string, target string, turn string, hasPos bool) string {
@@ -24,3 +27,8 @@ func Substr(str string, target string, turn string, hasPos bool) string {
 		panic("params 3 error")
 	}
 }
+
+func GetStringUtf8Len(str string) int{
+	return utf8.RuneCountInString(str)
+}
+

@@ -1,12 +1,10 @@
 package conversion
 
 import (
-	"bytes"
 	"encoding/json"
+	"gin-api/libraries/util/error"
 	"reflect"
 	"strings"
-
-	"gin-api/libraries/util/error"
 )
 
 func JsonEncode(v interface{}) string {
@@ -62,18 +60,7 @@ func StructToMap(obj interface{}) map[string]interface{} {
 	return data
 }
 
-/*func StructToByte(tmp struct{}){
-	tmp := &Test{Name: "why", Age: 34, Id: 1}
-	length := unsafe.Sizeof(tmp)
-	data := &SliceMock{
-		addr: uintptr(unsafe.Pointer(tmp)),
-		cap : int(length),
-		len : int(length),
-	}
-	ret := *(*[]byte)(unsafe.Pointer(data))
-}*/
-
-//断言
+//基本类型断言
 func Assertion(data interface{}) interface{} {
 	switch data.(type) {
 	case string:
@@ -96,8 +83,14 @@ func Assertion(data interface{}) interface{} {
 	return nil
 }
 
-func BytesToString(b *[]byte) *string {
-	s := bytes.NewBuffer(*b)
-	r := s.String()
-	return &r
-}
+/*func StructToByte(tmp struct{}){
+	tmp := &Test{Name: "why", Age: 34, Id: 1}
+	length := unsafe.Sizeof(tmp)
+	data := &SliceMock{
+		addr: uintptr(unsafe.Pointer(tmp)),
+		cap : int(length),
+		len : int(length),
+	}
+	ret := *(*[]byte)(unsafe.Pointer(data))
+}*/
+
