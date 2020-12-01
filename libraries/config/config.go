@@ -32,7 +32,7 @@ func init() {
 }
 
 func GetConfigToJson(file, section string) map[string]interface{} {
-	ret = make(map[string]interface{}, 10)
+	ret := make(map[string]interface{}, 10)
 
 	if app_const.CONFIG_SOURCE == SOURCE_APOLLO {
 		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
