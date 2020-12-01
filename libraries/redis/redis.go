@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-api/app_const"
 	"gin-api/libraries/logging"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,18 +22,28 @@ type RedisDB struct {
 var obj map[string]*RedisDB
 
 func GetRedis(redisName string) *RedisDB {
-	fileCfg := config.GetConfig("redis", redisName)
+	cfg := config.GetConfigToJson("redis", redisName)
 
-	hostCfg := fileCfg.Key("host").String()
-	passwordCfg := fileCfg.Key("auth").String()
-	portCfg, err := fileCfg.Key("port").Int()
-	dbCfg, err := fileCfg.Key("db").Int()
-	maxActiveCfg, err := fileCfg.Key("max_active").Int()
-	maxIdleCfg, err := fileCfg.Key("max_idle").Int()
-	execTime, err := fileCfg.Key("exec_timeout").Int64()
+	hostCfg := cfg["host"].(string)
+	authCfg := cfg["auth"].(string)
+	portCfg := cfg["port"].(string)
+	port,err := strconv.Atoi(portCfg)
 	util_error.Must(err)
+	tmpDbCfg := cfg["db"].(string)
+	dbCfg,err := strconv.Atoi(tmpDbCfg)
+	util_error.Must(err)
+	maxActiveCfg := cfg["max_active"].(string)
+	maxActive,err := strconv.Atoi(maxActiveCfg)
+	util_error.Must(err)
+	maxIdleCfg := cfg["max_idle"].(string)
+	maxIdle,err := strconv.Atoi(maxIdleCfg)
+	util_error.Must(err)
+	execTimeCfg := cfg["exec_timeout"].(string)
+	execTimeInt,err := strconv.Atoi(execTimeCfg)
+	util_error.Must(err)
+	execTime := int64(execTimeInt)
 
-	db, err := conn(redisName, hostCfg, passwordCfg, portCfg, dbCfg, maxActiveCfg, maxIdleCfg, execTime)
+	db, err := conn(redisName, hostCfg, authCfg, port, dbCfg, maxActive, maxIdle, execTime)
 	util_error.Must(err)
 
 	return db
