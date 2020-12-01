@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"gin-api/app_const"
-	"github.com/larspensjo/config"
+	"gin-api/libraries/apollo"
+	"gin-api/libraries/util/conversion"
+	util_file "gin-api/libraries/util/file"
 	"gopkg.in/ini.v1"
 	"log"
 )
@@ -13,14 +15,62 @@ type Config struct {
 	Err    string
 }
 
+const (
+	SOURCE_APOLLO = "apollo"
+	SOURCE_JSON   = "json"
+	SOURCE_INI    = "ini"
+)
+
 const path = "./configs/"
 
 var (
-	cfgList     map[string]*ini.File
+	cfgList map[string]*ini.File
 )
 
 func init() {
 	cfgList = make(map[string]*ini.File, app_const.CONFIGS_NUM)
+}
+
+func GetConfigToJson(file, section string) map[string]interface{} {
+	ret = make(map[string]interface{}, 10)
+
+	if app_const.CONFIG_SOURCE == SOURCE_APOLLO {
+		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
+		cfgMap := conversion.JsonToMap(cfg[file])
+		ret = cfgMap[section].(map[string]interface{})
+	} else if app_const.CONFIG_SOURCE == SOURCE_JSON {
+		return getJsonConfig(file, section)
+	} else if app_const.CONFIG_SOURCE == SOURCE_INI {
+		return getIniConfig(file, section)
+	} else {
+		panic("log source type error")
+	}
+	return ret
+}
+
+func getJsonConfig(file, section string) map[string]interface{}{
+	jsonStr := util_file.ReadJsonFile(path + file + ".json")
+	cfgMap := conversion.JsonToMap(jsonStr)
+	return cfgMap[section].(map[string]interface{})
+}
+
+func getIniConfig(cfgType string, cfgSection string) map[string]interface{} {
+	ret := make(map[string]interface{})
+
+	configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
+	file,err := ini.Load(configFile)
+	if err != nil{
+		panic(err)
+	}
+	section := file.Section(cfgSection)
+
+	cfgFields := section.KeyStrings()
+	length := len(cfgFields)
+	for i := 0; i < length; i++ {
+		ret[cfgFields[i]] = section.Key(cfgFields[i]).String()
+	}
+
+	return ret
 }
 
 func GetConfig(cfgType string, cfgSection string) *ini.Section {
@@ -37,36 +87,4 @@ func GetConfig(cfgType string, cfgSection string) *ini.Section {
 	section := cfgList[cfgType].Section(cfgSection)
 
 	return section
-}
-
-func (self *Config) getConfig(conn string, configFile string) {
-	//runtime.GOMAXPROCS(runtime.NumCPU())
-	//flag.Parse()
-
-	cfg, err := config.ReadDefault(configFile) //读取配置文件，并返回其Config
-
-	if err != nil {
-		logMsg := fmt.Sprintf("Fail to find %v,%v", configFile, err)
-		self.Err = logMsg
-	}
-
-	self.Result = map[string]string{}
-	if cfg.HasSection(conn) { //判断配置文件中是否有section（一级标签）
-		options, err := cfg.SectionOptions(conn) //获取一级标签的所有子标签options（只有标签没有值）
-		if err == nil {
-			for _, v := range options {
-				optionValue, err := cfg.String(conn, v) //根据一级标签section和option获取对应的值
-				if err == nil {
-					self.Result[v] = optionValue
-				}
-			}
-		}
-	}
-}
-
-func GetConfigEntrance(cfgType string, cfgSection string) map[string]string {
-	cfg := new(Config)
-	cfg.getConfig(cfgSection, path+cfgType+".ini")
-
-	return cfg.Result
 }

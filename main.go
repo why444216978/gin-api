@@ -15,19 +15,19 @@ import (
 )
 
 func init() {
-	logDir, _ := config.GetLogConfig(app_const.CONFIG_SOURCE)
+	logCfg := config.GetConfigToJson("log", "log")
+	logDir := logCfg["dir"].(string) + "/" + app_const.SERVICE_NAME
 	file := app_const.SERVICE_NAME + ".log"
-	dir.CreateDir(logDir + "/" + file);
-
+	dir.CreateDir(logDir)
 	c := logging.LogConfig{
-		Path:   logDir,
-		File:   file,
-		Mode:   1,
-		Rotate: true,
-		AsyncFormatter:true,
+		Path:                logDir,
+		File:                file,
+		Mode:                1,
+		Rotate:              true,
+		AsyncFormatter:      true,
 		RotatingFileHandler: logging.TIMED_ROTATING_FILE_HANDLER,
-		RotateInterval: 3600,
-		Debug:  true,
+		RotateInterval:      3600,
+		Debug:               true,
 	}
 	logging.Init(&c)
 }

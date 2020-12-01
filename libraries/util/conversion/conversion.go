@@ -60,29 +60,6 @@ func StructToMap(obj interface{}) map[string]interface{} {
 	return data
 }
 
-//基本类型断言
-func Assertion(data interface{}) interface{} {
-	switch data.(type) {
-	case string:
-		return data.(string)
-	case int:
-		return data.(int)
-	case int8:
-		return data.(int8)
-	case int32:
-		return data.(int32)
-	case int64:
-		return data.(int64)
-	case float32:
-		return data.(float32)
-	case float64:
-		return data.(float64)
-	default:
-		return data
-	}
-	return nil
-}
-
 /*func StructToByte(tmp struct{}){
 	tmp := &Test{Name: "why", Age: 34, Id: 1}
 	length := unsafe.Sizeof(tmp)

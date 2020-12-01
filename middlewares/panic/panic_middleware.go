@@ -27,6 +27,11 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ThrowPanic() gin.HandlerFunc {
+	envCfg := config.GetConfigToJson("env", "env")
+	logCfg := config.GetConfigToJson("log", "log")
+	queryLogField := logCfg["query_field"].(string)
+	headerLogField := logCfg["header_field"].(string)
+
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
@@ -47,17 +52,15 @@ func ThrowPanic() gin.HandlerFunc {
 
 				var logId string
 				switch {
-				case c.Query(config.GetQueryLogIdField(app_const.CONFIG_SOURCE)) != "":
-					logId = c.Query(config.GetQueryLogIdField(app_const.CONFIG_SOURCE))
-				case c.Request.Header.Get(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE)) != "":
-					logId = c.Request.Header.Get(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE))
+				case c.Query(queryLogField) != "":
+					logId = c.Query(queryLogField)
+				case c.Request.Header.Get(headerLogField) != "":
+					logId = c.Request.Header.Get(headerLogField)
 				default:
 					logId = logging.NewObjectId().Hex()
 				}
 
-				c.Header(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE), logId)
-
-				c.Writer.Header().Set(config.GetHeaderLogIdField(app_const.CONFIG_SOURCE), logId)
+				c.Header(headerLogField, logId)
 
 				reqBody := []byte{}
 				if c.Request.Body != nil { // Read
@@ -84,7 +87,7 @@ func ThrowPanic() gin.HandlerFunc {
 					Module: app_const.MODULE,
 					ServiceId: app_const.SERVICE_NAME,
 					UriPath: c.Request.RequestURI,
-					Env:       config.GetEnv(app_const.CONFIG_SOURCE),
+					Env:        envCfg["env"].(string),
 				}
 
 				logging.Error(header, map[string]interface{}{

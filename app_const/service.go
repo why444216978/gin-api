@@ -1,11 +1,11 @@
 package app_const
 
 const (
-	SERVICE_NAME  = "gin-api"
+	SERVICE_NAME  = "purchase-server"
 	SERVICE_PORT  = 777
 	PRODUCT       = "gin-api"
 	MODULE        = "gin-api"
 	ENV           = "development"
-	CONFIG_SOURCE = "file" //apollo or file
+	CONFIG_SOURCE = "ini" //apollo、json、ini
 	CONFIGS_NUM   = 10     //配置文件数，影响配置file享元map初始化大小
 )

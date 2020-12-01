@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 
 	util_err "gin-api/libraries/util/error"
@@ -56,4 +57,14 @@ func ReadFile(dir string) map[int]string {
 		i++
 	}
 	return res
+}
+
+func ReadJsonFile(dir string) string {
+	jsonFile, err := os.Open(dir)
+	util_err.Must(err)
+
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	return string(byteValue)
 }
