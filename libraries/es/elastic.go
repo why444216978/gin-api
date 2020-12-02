@@ -34,8 +34,8 @@ func InitES(name string) *Elastic {
 	if es, ok := ElasticPool[name]; ok {
 		return es
 	}
-	confES := config.GetConfig("es", name)
-	host := confES.Key("host").String() + ":" + confES.Key("port").String()
+	confES := config.GetConfigToJson("es", name)
+	host := confES["host"].(string) + ":" + confES["port"].(string)
 	var err error
 	client, err := elastic.NewClient(elastic.SetURL(host))
 	util_err.Must(err)

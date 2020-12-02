@@ -7,7 +7,6 @@ import (
 	"gin-api/libraries/util/conversion"
 	util_file "gin-api/libraries/util/file"
 	"gopkg.in/ini.v1"
-	"log"
 )
 
 type Config struct {
@@ -71,20 +70,4 @@ func getIniConfig(cfgType string, cfgSection string) map[string]interface{} {
 	}
 
 	return ret
-}
-
-func GetConfig(cfgType string, cfgSection string) *ini.Section {
-	if cfgList[cfgType] == nil {
-		log.Println(fmt.Sprintf("load %s config file ", cfgType))
-		var err error
-		configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
-		cfgList[cfgType], err = ini.Load(configFile)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	section := cfgList[cfgType].Section(cfgSection)
-
-	return section
 }
