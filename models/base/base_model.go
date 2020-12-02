@@ -13,10 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"github.com/opentracing/opentracing-go"
-	"gopkg.in/ini.v1"
+	"strconv"
 )
 
-var cfgs map[string]*ini.Section
+var cfgs map[string]interface{}
 var dbInstance map[string]*mysql.DB
 
 var modelInstance map[string]*BaseModel
@@ -74,37 +74,40 @@ func (instance *BaseModel) GetConn(database string) {
 
 func (instance *BaseModel) getExecTimeout(conn string) int64 {
 	cfg := instance.getCfg(conn)
-	execTimeout, err := cfg.Key("exec_timeout").Int64()
+	execTimeoutCfg := cfg["exec_timeout"].(string)
+	execTimeoutCfgInt,err := strconv.Atoi(execTimeoutCfg)
 	util_err.Must(err)
-	return execTimeout
+	return int64(execTimeoutCfgInt)
 }
 
 func (instance *BaseModel) getMaxOpen(conn string) int {
 	cfg := instance.getCfg(conn)
-	masterNum, err := cfg.Key("max_open").Int()
+	maxCfg := cfg["max_open"].(string)
+	maxOpen,err := strconv.Atoi(maxCfg)
 	util_err.Must(err)
-	return masterNum
+	return maxOpen
 }
 
 func (instance *BaseModel) getMaxIdle(conn string) int {
 	cfg := instance.getCfg(conn)
-	masterNum, err := cfg.Key("max_idle").Int()
+	maxCfg := cfg["max_idle"].(string)
+	maxIdle,err := strconv.Atoi(maxCfg)
 	util_err.Must(err)
-	return masterNum
+	return maxIdle
 }
 
 func (instance *BaseModel) getDSN(conn string) string {
 	cfg := instance.getCfg(conn)
-	dsn := cfg.Key("user").String() + ":" + cfg.Key("password").String() + "@tcp(" + cfg.Key("host").String() + ":" + cfg.Key("port").String() + ")/" + cfg.Key("db").String() + "?charset=" + cfg.Key("charset").String()
+	dsn := cfg["user"].(string) + ":" + cfg["password"].(string) + "@tcp(" + cfg["host"].(string) + ":" + cfg["port"].(string) + ")/" + cfg["db"].(string) + "?charset=" + cfg["charset"].(string)
 	return dsn
 }
 
-func (instance *BaseModel) getCfg(conn string) *ini.Section {
+func (instance *BaseModel) getCfg(conn string) map[string]interface{} {
 	if cfgs == nil {
-		cfgs = make(map[string]*ini.Section, 30)
+		cfgs = make(map[string]interface{}, 10)
 	}
 	if cfgs[conn] == nil {
-		cfgs[conn] = config.GetConfig("mysql", conn)
+		cfgs[conn] = config.GetConfigToJson("mysql", conn)
 	}
-	return cfgs[conn]
+	return cfgs[conn].(map[string]interface{})
 }

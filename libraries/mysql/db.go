@@ -3,10 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"time"
-
-	"gin-api/libraries/config"
-	"gin-api/libraries/util/file"
 	util_err "gin-api/libraries/util/error"
 	//_ "github.com/go-sql-driver/mysql"
 
@@ -139,14 +135,4 @@ func (db *DB) SlaveDBQueryRowContext(ctx context.Context, query string, args ...
 	return r.(*sql.Row)
 }
 
-func (db *DB) writeError(errMsg string) {
-	errLogSection := "error"
-	errorLogConfig := config.GetConfig("log", errLogSection)
-	errorLogdir := errorLogConfig.Key("dir").String()
-
-	date := time.Now().Format("2006-01-02")
-	dateTime := time.Now().Format("2006-01-02 15:04:05")
-	fileDir := errorLogdir + "/mysql/" + date + ".err"
-	file.WriteWithIo(fileDir, "["+dateTime+"]"+errMsg)
-}
 
