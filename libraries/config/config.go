@@ -7,6 +7,7 @@ import (
 	"gin-api/libraries/util/conversion"
 	util_file "gin-api/libraries/util/file"
 	"gopkg.in/ini.v1"
+	"log"
 )
 
 type Config struct {
@@ -23,11 +24,11 @@ const (
 const path = "./configs/"
 
 var (
-	cfgList map[string]*ini.File
+	cfgList map[string]interface{}
 )
 
 func init() {
-	cfgList = make(map[string]*ini.File, app_const.CONFIGS_NUM)
+	cfgList = make(map[string]interface{}, app_const.CONFIGS_NUM)
 }
 
 func GetConfigToJson(file, section string) map[string]interface{} {
@@ -47,27 +48,41 @@ func GetConfigToJson(file, section string) map[string]interface{} {
 	return ret
 }
 
-func getJsonConfig(file, section string) map[string]interface{}{
+func getJsonConfig(file, section string) map[string]interface{} {
+	if cfgList[file] != nil {
+		return cfgList[file].(map[string]interface{})
+	}
+
 	jsonStr := util_file.ReadJsonFile(path + file + ".json")
 	cfgMap := conversion.JsonToMap(jsonStr)
-	return cfgMap[section].(map[string]interface{})
+	cfgList[file] = cfgMap[section].(map[string]interface{})
+
+	log.Println(fmt.Sprintf("load %s.json", file))
+
+	return cfgList[file].(map[string]interface{})
 }
 
-func getIniConfig(cfgType string, cfgSection string) map[string]interface{} {
-	ret := make(map[string]interface{})
+func getIniConfig(file string, cfgSection string) map[string]interface{} {
+	if cfgList[file] != nil {
+		return cfgList[file].(map[string]interface{})
+	}
 
-	configFile := fmt.Sprintf("%s%s.ini", path, cfgType)
-	file,err := ini.Load(configFile)
-	if err != nil{
+	configFile := fmt.Sprintf("%s%s.ini", path, file)
+	iniFile, err := ini.Load(configFile)
+	if err != nil {
 		panic(err)
 	}
-	section := file.Section(cfgSection)
+	section := iniFile.Section(cfgSection)
 
+	ret := make(map[string]interface{})
 	cfgFields := section.KeyStrings()
 	length := len(cfgFields)
 	for i := 0; i < length; i++ {
 		ret[cfgFields[i]] = section.Key(cfgFields[i]).String()
 	}
+	cfgList[file] = ret
 
-	return ret
+	log.Println(fmt.Sprintf("load %s.json", file))
+
+	return cfgList[file].(map[string]interface{})
 }
