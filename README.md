@@ -19,11 +19,12 @@ QQ群：909211071
 # 配置相关
 配置放到main.go同级目录configs下，支持apollo、json、ini三种格式
 <br>
+- apollo：嵌套json格式，用于兼容mysql、redis等多实例
+- json：嵌套json格式，用于兼容mysql、redis等多实例
+- ini：section格式，用于兼容mysql、redis等多实例
+<br>
 通过 app_const.server.CONFIG_SOURCE 变量切换
 <br>
-*apollo：嵌套json格式，用于兼容mysql、redis等多实例
-*json：嵌套json格式，用于兼容mysql、redis等多实例
-*ini：section格式，用于兼容mysql、redis等多实例
 
 ```
 package app_const
@@ -41,13 +42,13 @@ const (
 ```
 
 
-# env.ini example:
+## env.ini example:
 
 ```
 [env]
 env = development
 ```
-# env.json example：
+## env.json example：
 ```
 {
   "env":{
@@ -56,7 +57,7 @@ env = development
 }
 ```
 
-# log.ini example：
+## log.ini example：
 ```
 [log]
 dir = /data/logs
@@ -64,7 +65,7 @@ area = 1
 query_field = "logid"
 header_field = "X-Logid"
 ```
-# log.json example：
+## log.json example：
 ```
 {
   "log":{
@@ -77,7 +78,7 @@ header_field = "X-Logid"
 ```
 
 
-# mysql.ini example:
+## mysql.ini example:
 
 ```
 [default_read]
@@ -103,7 +104,7 @@ max_idle = 4
 exec_timeout = 10000
 ```
 
-# redis.ini example:
+## redis.ini example:
 
 ```
 [default]
@@ -116,7 +117,7 @@ max_idle = 10
 exec_timeout = 100000
 ```
 
-# log.ini example:
+## log.ini example:
 
 ```
 [log]
@@ -126,7 +127,7 @@ query_field = "logid"
 header_field = "X-Logid"
 ```
 
-# es.ini example:
+## es.ini example:
 
 ```
 [default]
@@ -136,7 +137,7 @@ port = 9200
 
 **注意：log.ini中的dir目录确保本地存在且有写入权限。**
 
-# run
+# 运行
 
 ```
 go run main.go
