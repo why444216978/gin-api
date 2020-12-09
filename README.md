@@ -17,7 +17,7 @@ QQ群：909211071
 <br>
 
 # 配置相关
-配置放到main.go同级目录configs下，支持apollo、json、ini三种格式
+支持apollo、json、ini三种格式，文件配置需放到main.go同级目录configs下
 <br>
 - apollo：嵌套json格式，用于兼容mysql、redis等多实例
 - json：嵌套json格式，用于兼容mysql、redis等多实例
@@ -41,23 +41,16 @@ const (
 
 ```
 
+## ini（默认格式）
 
-## env.ini example:
+### env.ini example:
 
 ```
 [env]
 env = development
 ```
-## env.json example：
-```
-{
-  "env":{
-    "env": "development"
-  }
-}
-```
 
-## log.ini example：
+### log.ini example：
 ```
 [log]
 dir = /data/logs
@@ -65,20 +58,9 @@ area = 1
 query_field = "logid"
 header_field = "X-Logid"
 ```
-## log.json example：
-```
-{
-  "log":{
-    "dir":"/data/logs",
-    "area":1,
-    "query_field":"logid",
-    "header_field":"X-Logid"
-  }
-}
-```
 
 
-## mysql.ini example:
+### mysql.ini example:
 
 ```
 [default_read]
@@ -104,7 +86,7 @@ max_idle = 4
 exec_timeout = 10000
 ```
 
-## redis.ini example:
+### redis.ini example:
 
 ```
 [default]
@@ -117,7 +99,7 @@ max_idle = 10
 exec_timeout = 100000
 ```
 
-## log.ini example:
+### log.ini example:
 
 ```
 [log]
@@ -127,7 +109,7 @@ query_field = "logid"
 header_field = "X-Logid"
 ```
 
-## es.ini example:
+### es.ini example:
 
 ```
 [default]
@@ -137,9 +119,31 @@ port = 9200
 
 **注意：log.ini中的dir目录确保本地存在且有写入权限。**
 
+### env.json example：
+```
+{
+  "env":{
+    "env": "development"
+  }
+}
+```
+
+### log.json example：
+```
+{
+  "log":{
+    "dir":"/data/logs",
+    "area":1,
+    "query_field":"logid",
+    "header_field":"X-Logid"
+  }
+}
+```
+
 # 运行
 
 ```
+
 go run main.go
 
 curl localhost:777/ping
