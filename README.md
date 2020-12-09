@@ -117,8 +117,6 @@ host = http://127.0.0.1
 port = 9200
 ```
 
-**注意：log.ini中的dir目录确保本地存在且有写入权限。**
-
 ### env.json example：
 ```
 {
@@ -142,10 +140,8 @@ port = 9200
 
 # 运行
 
-```
+1. 创建上述基础配置文件
+2. log.ini中的dir目录确保本地存在且有写入权限
+3. go run main.go
+4. curl localhost:777/ping
 
-go run main.go
-
-curl localhost:777/ping
-curl localhost:777/test/rpc
-```
