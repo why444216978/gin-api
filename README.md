@@ -17,7 +17,10 @@ QQ群：909211071
 <br>
 
 # 配置相关
-配置放到main.go同级目录configs下，支持apollo、json、ini三种格式，通过 app_const.server.CONFIG_SOURCE 变量切换
+配置放到main.go同级目录configs下，支持apollo、json、ini三种格式
+<br>
+通过 app_const.server.CONFIG_SOURCE 变量切换
+<br>
 *apollo：嵌套json格式，用于兼容mysql、redis等多实例
 *json：嵌套json格式，用于兼容mysql、redis等多实例
 *ini：section格式，用于兼容mysql、redis等多实例
