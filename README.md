@@ -17,7 +17,26 @@ QQ群：909211071
 <br>
 
 # 配置相关
-配置放到main.go同级目录configs下
+配置放到main.go同级目录configs下，支持apollo、json、ini三种格式，通过 app_const.server.CONFIG_SOURCE 变量切换
+*apollo：嵌套json格式，用于兼容mysql、redis等多实例
+*json：嵌套json格式，用于兼容mysql、redis等多实例
+*ini：section格式，用于兼容mysql、redis等多实例
+
+```
+package app_const
+
+const (
+	SERVICE_NAME  = "purchase-server"
+	SERVICE_PORT  = 777
+	PRODUCT       = "gin-api"
+	MODULE        = "gin-api"
+	ENV           = "development"
+	CONFIG_SOURCE = "ini" //apollo、json、ini
+	CONFIGS_NUM   = 10     //配置文件数，影响配置file享元map初始化大小
+)
+
+```
+
 
 # env.ini example:
 
@@ -25,6 +44,35 @@ QQ群：909211071
 [env]
 env = development
 ```
+# env.json example：
+```
+{
+  "env":{
+    "env": "development"
+  }
+}
+```
+
+# log.ini example：
+```
+[log]
+dir = /data/logs
+area = 1
+query_field = "logid"
+header_field = "X-Logid"
+```
+# log.json example：
+```
+{
+  "log":{
+    "dir":"/data/logs",
+    "area":1,
+    "query_field":"logid",
+    "header_field":"X-Logid"
+  }
+}
+```
+
 
 # mysql.ini example:
 
