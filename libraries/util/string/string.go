@@ -32,3 +32,11 @@ func GetStringUtf8Len(str string) int{
 	return utf8.RuneCountInString(str)
 }
 
+func Utf8Index(str, substr string) int {
+	index := strings.Index(str, substr)
+	if index < 0{
+		return -1
+	}
+	return utf8.RuneCountInString(str[:index])
+}
+
