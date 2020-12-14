@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	util_err "gin-api/libraries/util/error"
 )
@@ -33,7 +34,32 @@ func WriteWithIo(filePath, content string) error {
 	return nil
 }
 
-func ReadFile(dir string) map[int]string {
+//读取指定字节
+func ReadLimit(str string, len int64) string {
+	reader := strings.NewReader(str)
+	limitReader := &io.LimitedReader{R: reader, N: len}
+
+	var res string
+	for limitReader.N > 0 {
+		tmp := make([]byte, 1)
+		limitReader.Read(tmp)
+		res += string(tmp)
+	}
+	return res
+}
+
+//读取整个文件
+func ReadFile(dir string) string{
+	data, err := ioutil.ReadFile(dir)
+	if err != nil {
+		panic(err)
+		return ""
+	}
+	return string(data)
+}
+
+//按行读取文件
+func ReadFileLine(dir string) map[int]string {
 	file, err := os.OpenFile(dir, os.O_RDWR, 0666)
 	util_err.Must(err)
 	defer file.Close()
