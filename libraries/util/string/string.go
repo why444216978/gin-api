@@ -1,12 +1,30 @@
 package string
 
 import (
+	"bytes"
+	"io"
 	"strings"
 	"unicode/utf8"
 )
 
-//在字符串中查找指定字串，并返回left或right部分
-func Substr(str string, target string, turn string, hasPos bool) string {
+//截取字符串，并返回实际截取的长度和子串
+func SubStr(str string, start, end int64 )(int64, string){
+	reader:= strings.NewReader(str)
+
+	// Calling NewSectionReader method with its parameters
+	r:= io.NewSectionReader(reader, start, end)
+
+	// Calling Copy method with its parameters
+	var buf bytes.Buffer
+	n, err:= io.Copy(&buf, r)
+	if err != nil {
+		panic(err)
+	}
+	return n, buf.String()
+}
+
+//在字符串中查找指定子串，并返回left或right部分
+func SubstrTarget(str string, target string, turn string, hasPos bool) string {
 	pos := strings.Index(str, target)
 
 	if pos == -1 {
