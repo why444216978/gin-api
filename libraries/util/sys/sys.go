@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	utli_err "gin-api/libraries/util/error"
 )
 
 //执行系统命令
@@ -85,7 +83,9 @@ func ExternalIP() (string, error) {
 func HostName() string {
 	hostNamePrefix := ""
 	host, err := os.Hostname()
-	utli_err.Must(err)
+	if err != nil{
+		panic(err)
+	}
 	if err == nil {
 		parts := strings.SplitN(host, ".", 2)
 		if len(parts) > 0 {
