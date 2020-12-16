@@ -14,7 +14,7 @@ import (
 //使用io.WriteString()函数进行数据的写入，不存在则创建
 func WriteWithIo(filePath, content string) error {
 	//os.O_WRONLY | os.O_CREATE | O_EXCL    【如果已经存在，则失败】
-	//os.O_WRONLY | os.O_CREATE    【如果已经存在，会覆盖写，不会清空原来的文件，而是从头直接覆盖写】
+	//os.O_WRONLY | os.O_CREATE    【如果已经存在，会清空原来的文件，而是从头直接覆盖写】
 	//os.O_WRONLY | os.O_CREATE | os.O_APPEND    【如果已经存在，则在尾部添加写】
 
 	fileObj, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)

@@ -2,6 +2,7 @@ package string
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"unicode/utf8"
@@ -57,4 +58,11 @@ func Utf8Index(str, substr string) int {
 	}
 	return utf8.RuneCountInString(str[:index])
 }
+
+//连接字符串和其他类型
+//fmt.Println(JoinStringAndInt("why", 123))
+func JoinStringAndInt(val... interface{}) string {
+	return fmt.Sprint(val...)
+}
+
 

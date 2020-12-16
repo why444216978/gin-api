@@ -2,6 +2,7 @@ package dir
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -83,5 +84,27 @@ func CreateHourLogFile(path string, prex string) string {
 		os.Chmod(folderPath, 0777)
 	}
 	return folderPath
+}
+
+//读取目录
+//ReadDirAll("/Users/why/Desktop/go/test", 0)
+func ReadDirAll(path string, curHier int) {
+	fileInfos, err := ioutil.ReadDir(path)
+	if err != nil{fmt.Println(err); return}
+
+	for _, info := range fileInfos{
+		if info.IsDir(){
+			for tmpHier := curHier; tmpHier > 0; tmpHier--{
+				fmt.Printf("|\t")
+			}
+			fmt.Println(info.Name(),"\\")
+			ReadDirAll(path + "/" + info.Name(),curHier + 1)
+		}else{
+			for tmpHier := curHier; tmpHier > 0; tmpHier--{
+				fmt.Printf("|\t")
+			}
+			fmt.Println(info.Name())
+		}
+	}
 }
 
