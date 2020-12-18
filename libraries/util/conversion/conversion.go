@@ -1,27 +1,39 @@
 package conversion
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
-	"gin-api/libraries/util/error"
 	"reflect"
 	"strings"
+
+	util_err "gin-api/libraries/util/error"
 )
 
+//深拷贝转换
+func DeepCopy(dst, src interface{}) error {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
+		return err
+	}
+	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
+}
+
 func JsonEncode(v interface{}) string {
-	bytes, err := json.Marshal(v)
-	error.Must(err)
-	return string(bytes)
+	b, err := json.Marshal(v)
+	util_err.Must(err)
+	return string(b)
 }
 
 func MapToJsonInt(data map[int]interface{}) string {
 	jsonStr, err := json.Marshal(data)
-	error.Must(err)
+	util_err.Must(err)
 	return string(jsonStr)
 }
 
 func MapToJson(data map[string]interface{}) string {
 	jsonStr, err := json.Marshal(data)
-	error.Must(err)
+	util_err.Must(err)
 	return string(jsonStr)
 }
 
@@ -32,7 +44,7 @@ func JsonToMapArray(data string) []map[string]interface{} {
 		return res
 	}
 	err := json.Unmarshal([]byte(data), &res)
-	error.Must(err)
+	util_err.Must(err)
 
 	return res
 }
@@ -44,7 +56,7 @@ func JsonToMap(data string) map[string]interface{} {
 		return res
 	}
 	err := json.Unmarshal([]byte(data), &res)
-	error.Must(err)
+	util_err.Must(err)
 	return res
 }
 
@@ -70,4 +82,3 @@ func StructToMap(obj interface{}) map[string]interface{} {
 	}
 	ret := *(*[]byte)(unsafe.Pointer(data))
 }*/
-
