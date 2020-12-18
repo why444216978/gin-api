@@ -60,9 +60,10 @@ func Utf8Index(str, substr string) int {
 }
 
 //连接字符串和其他类型
-//fmt.Println(JoinStringAndInt("why", 123))
-func JoinStringAndInt(val... interface{}) string {
+//fmt.Println(JoinStringAndOther("why", 123))
+func JoinStringAndOther(val... interface{}) string {
 	return fmt.Sprint(val...)
 }
+
 
 
