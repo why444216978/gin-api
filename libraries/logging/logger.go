@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"gin-api/libraries/util/sys"
+	"github.com/why444216978/go-util/sys"
 )
 
 const (

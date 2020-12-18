@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"gin-api/app_const"
 	"gin-api/libraries/apollo"
-	"gin-api/libraries/util/conversion"
-	util_file "gin-api/libraries/util/file"
+	"github.com/why444216978/go-util/conversion"
+	util_file "github.com/why444216978/go-util/file"
 	"gopkg.in/ini.v1"
 	"log"
 )

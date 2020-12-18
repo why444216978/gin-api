@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util/conversion"
-	util_err "gin-api/libraries/util/error"
+	"github.com/why444216978/go-util/conversion"
+	util_err "github.com/why444216978/go-util/error"
 )
 
 type Elastic struct {

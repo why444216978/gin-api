@@ -9,7 +9,7 @@ import (
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
-	util_err "gin-api/libraries/util/error"
+	util_err "github.com/why444216978/go-util/error"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"github.com/opentracing/opentracing-go"

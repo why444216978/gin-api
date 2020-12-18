@@ -14,6 +14,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
+	github.com/why444216978/go-util v0.0.0-20201218091823-8532135395a8
 	github.com/xinliangnote/go-util v0.0.0-20200323134426-527984dc34bf
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4

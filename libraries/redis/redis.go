@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gin-api/libraries/config"
-	util_error "gin-api/libraries/util/error"
+	util_error "github.com/why444216978/go-util/error"
 	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
 )

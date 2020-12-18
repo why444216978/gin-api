@@ -5,7 +5,7 @@ import (
 	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util/dir"
+	"github.com/why444216978/go-util/dir"
 	"gin-api/routers"
 	"log"
 	"strconv"

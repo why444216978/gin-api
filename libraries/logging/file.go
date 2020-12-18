@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"gin-api/libraries/util/sys"
+	"github.com/why444216978/go-util/sys"
 	"io"
 	"os"
 	"path/filepath"

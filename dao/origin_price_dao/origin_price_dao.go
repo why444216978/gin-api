@@ -1,7 +1,7 @@
 package origin_price_dao
 
 import (
-	"gin-api/libraries/util/conversion"
+	"github.com/why444216978/go-util/conversion"
 	"gin-api/models/hangqing/origin_price_model"
 
 	"github.com/gin-gonic/gin"

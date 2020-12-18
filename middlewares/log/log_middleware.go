@@ -6,9 +6,9 @@ import (
 	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"gin-api/libraries/util/conversion"
-	"gin-api/libraries/util/sys"
-	"gin-api/libraries/util/url"
+	"github.com/why444216978/go-util/conversion"
+	"github.com/why444216978/go-util/sys"
+	"github.com/why444216978/go-util/url"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 )

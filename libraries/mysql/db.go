@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	util_err "gin-api/libraries/util/error"
+	util_err "github.com/why444216978/go-util/error"
 	//_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"

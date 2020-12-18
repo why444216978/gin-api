@@ -3,7 +3,7 @@ package location_service
 import (
 	"fmt"
 	"gin-api/libraries/redis"
-	"gin-api/libraries/util/conversion"
+	"github.com/why444216978/go-util/conversion"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
