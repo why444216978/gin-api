@@ -144,7 +144,6 @@ port = 9200
 2. log.ini中的dir目录确保本地存在且有写入权限
 3. go run main.go
 
-**注意：测试 /test/conn 接口时，应确保 mysql 和 redis 配置文件符合示例配置文件中的default（当然可以自定义，不过需要更改 test_model.go 和 goods_service.go 中的 DB_NAME ）**
 
 ```
 [why@localhost] ~/Desktop/go/gin-api$go run main.go 
@@ -163,6 +162,21 @@ port = 9200
 [GIN-debug] GET    /test/panic               --> gin-api/controllers/opentracing.Panic (6 handlers)
 [GIN-debug] GET    /test/conn                --> gin-api/controllers/conn.Do (6 handlers)
 2020/12/20 17:44:43 Actual pid is 9104
+```
+
+
+**注意：测试 /test/conn 接口时，应确检查如下几项：**
+1. mysql 和 redis 配置文件符合示例配置文件中的default（当然可以自定义，不过需要更改 test_model.go 和 goods_service.go 中的 DB_NAME ）
+2. 创建 test 库
+3. 创建 test 表并随意插入数据
+```
+CREATE TABLE `test` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `goods_id` bigint(20) unsigned NOT NULL,
+  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_goods` (`goods_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
 ```
 
 
