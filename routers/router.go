@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"gin-api/controllers/conn"
 	"gin-api/controllers/opentracing"
 	"gin-api/controllers/ping"
 	"gin-api/middlewares/limiter"
@@ -43,12 +44,8 @@ func InitRouter() *gin.Engine {
 	{
 		testGroup.GET("/rpc", opentracing.Rpc)
 		testGroup.GET("/panic", opentracing.Panic)
+		testGroup.GET("/conn", conn.Do)
 	}
-
-	//originGroup := server.Group("/origin")
-	//{
-	//	originGroup.GET("/first_origin_price", first_origin_price.Do)
-	//}
 
 	return server
 }

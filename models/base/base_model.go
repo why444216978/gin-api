@@ -5,33 +5,24 @@
 package base
 
 import (
-	"context"
+	"gin-api/app_const"
 	"gin-api/libraries/config"
-	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
-	util_err "github.com/why444216978/go-util/error"
-	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"github.com/opentracing/opentracing-go"
+	util_err "github.com/why444216978/go-util/error"
 	"strconv"
 )
 
-var cfgs map[string]interface{}
-var dbInstance map[string]*mysql.DB
-
-var modelInstance map[string]*BaseModel
-
 type BaseModel struct {
-	c         *gin.Context
-	ctx       context.Context
-	parent    opentracing.Span
-	span      opentracing.Span
-	logFormat *logging.LogHeader
-
 	readExecTimeout  int64
 	writeExecTimeout int64
+}
 
-	Db *mysql.DB
+var cfgs map[string]interface{}
+var instanceMap map[string]*mysql.DB
+
+func init() {
+	instanceMap = make(map[string]*mysql.DB, app_const.DB_NUM)
 }
 
 func (instance *BaseModel) CheckRes(dbRes *gorm.DB) {
@@ -40,7 +31,11 @@ func (instance *BaseModel) CheckRes(dbRes *gorm.DB) {
 	}
 }
 
-func (instance *BaseModel) GetConn(database string) {
+func (instance *BaseModel) GetConn(database string) *mysql.DB {
+	if instanceMap[database] != nil {
+		return instanceMap[database]
+	}
+
 	write := database + "_write"
 	read := database + "_read"
 	writeDsn := instance.getDSN(database + "_write")
@@ -69,13 +64,15 @@ func (instance *BaseModel) GetConn(database string) {
 	conn, err := mysql.New(cfg)
 	util_err.Must(err)
 
-	instance.Db = conn
+	instanceMap[database] = conn
+
+	return instanceMap[database]
 }
 
 func (instance *BaseModel) getExecTimeout(conn string) int64 {
 	cfg := instance.getCfg(conn)
 	execTimeoutCfg := cfg["exec_timeout"].(string)
-	execTimeoutCfgInt,err := strconv.Atoi(execTimeoutCfg)
+	execTimeoutCfgInt, err := strconv.Atoi(execTimeoutCfg)
 	util_err.Must(err)
 	return int64(execTimeoutCfgInt)
 }
@@ -83,7 +80,7 @@ func (instance *BaseModel) getExecTimeout(conn string) int64 {
 func (instance *BaseModel) getMaxOpen(conn string) int {
 	cfg := instance.getCfg(conn)
 	maxCfg := cfg["max_open"].(string)
-	maxOpen,err := strconv.Atoi(maxCfg)
+	maxOpen, err := strconv.Atoi(maxCfg)
 	util_err.Must(err)
 	return maxOpen
 }
@@ -91,7 +88,7 @@ func (instance *BaseModel) getMaxOpen(conn string) int {
 func (instance *BaseModel) getMaxIdle(conn string) int {
 	cfg := instance.getCfg(conn)
 	maxCfg := cfg["max_idle"].(string)
-	maxIdle,err := strconv.Atoi(maxCfg)
+	maxIdle, err := strconv.Atoi(maxCfg)
 	util_err.Must(err)
 	return maxIdle
 }
