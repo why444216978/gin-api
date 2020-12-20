@@ -143,5 +143,26 @@ port = 9200
 1. 创建上述基础配置文件
 2. log.ini中的dir目录确保本地存在且有写入权限
 3. go run main.go
-4. curl localhost:777/ping
+
+**注意：测试 /test/conn 接口时，应确保 mysql 和 redis 配置文件符合示例配置文件中的default（当然可以自定义，不过需要更改 test_model.go 和 goods_service.go 中的 DB_NAME ）**
+
+```
+[why@localhost] ~/Desktop/go/gin-api$go run main.go 
+2020/12/20 17:44:43 load redis.json
+2020/12/20 17:44:43 load mysql.json
+2020/12/20 17:44:43 new test_dao
+2020/12/20 17:44:43 new test_service
+2020/12/20 17:44:43 load log.json
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:   export GIN_MODE=release
+ - using code:  gin.SetMode(gin.ReleaseMode)
+
+2020/12/20 17:44:43 load env.json
+[GIN-debug] GET    /ping                     --> gin-api/controllers/ping.Ping (6 handlers)
+[GIN-debug] GET    /test/rpc                 --> gin-api/controllers/opentracing.Rpc (6 handlers)
+[GIN-debug] GET    /test/panic               --> gin-api/controllers/opentracing.Panic (6 handlers)
+[GIN-debug] GET    /test/conn                --> gin-api/controllers/conn.Do (6 handlers)
+2020/12/20 17:44:43 Actual pid is 9104
+```
+
 
