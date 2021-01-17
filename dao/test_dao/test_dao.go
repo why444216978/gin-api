@@ -2,9 +2,10 @@ package test_dao
 
 import (
 	"gin-api/models/test/test_model"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
-	"log"
 )
 
 type TestDao struct {
@@ -25,7 +26,11 @@ func GetInstance() *TestDao {
 }
 
 func (self *TestDao) GetFirstRow(c *gin.Context, noCache bool) map[string]interface{} {
-	dbRes := self.testModel.GetFirst()
+
+	dbRes, err := self.testModel.GetFirst()
+	if err != nil {
+		panic(err)
+	}
 
 	result := make(map[string]interface{})
 	if dbRes != nil {

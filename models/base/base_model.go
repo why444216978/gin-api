@@ -27,10 +27,11 @@ func init() {
 	instanceMap = make(map[string]*mysql.DB, app_const.DB_NUM)
 }
 
-func (instance *BaseModel) CheckRes(dbRes *gorm.DB) {
+func (instance *BaseModel) CheckRes(dbRes *gorm.DB) error {
 	if dbRes.Error != nil {
-		panic(dbRes.Error)
+		return dbRes.Error
 	}
+	return nil
 }
 
 func (instance *BaseModel) GetConn(database string) *mysql.DB {

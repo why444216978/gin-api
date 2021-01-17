@@ -1,7 +1,6 @@
 package test_model
 
 import (
-	"fmt"
 	"gin-api/libraries/mysql"
 	"gin-api/models/base"
 )
@@ -36,15 +35,12 @@ func GetInstance() *TestModel {
 	return testModel
 }
 
-func (instance *TestModel) GetFirst() []Test {
+func (instance *TestModel) GetFirst() ([]Test, error) {
 	test := []Test{}
 	orm := dbInstance.SlaveOrm()
 
 	dbRes := orm.First(&test)
-	fmt.Println(dbRes)
-	fmt.Println(*dbRes)
-	fmt.Println(test)
 
-	instance.CheckRes(dbRes)
-	return test
+	err := instance.CheckRes(dbRes)
+	return test, err
 }
