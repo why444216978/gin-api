@@ -5,12 +5,14 @@
 package base
 
 import (
+	"fmt"
 	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/mysql"
+	"strconv"
+
 	"github.com/jinzhu/gorm"
 	util_err "github.com/why444216978/go-util/error"
-	"strconv"
 )
 
 type BaseModel struct {
@@ -95,8 +97,13 @@ func (instance *BaseModel) getMaxIdle(conn string) int {
 
 func (instance *BaseModel) getDSN(conn string) string {
 	cfg := instance.getCfg(conn)
-	dsn := cfg["user"].(string) + ":" + cfg["password"].(string) + "@tcp(" + cfg["host"].(string) + ":" + cfg["port"].(string) + ")/" + cfg["db"].(string) + "?charset=" + cfg["charset"].(string)
-	return dsn
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true",
+		cfg["user"].(string),
+		cfg["password"].(string),
+		cfg["host"].(string),
+		cfg["port"].(string),
+		cfg["db"].(string),
+		cfg["charset"].(string))
 }
 
 func (instance *BaseModel) getCfg(conn string) map[string]interface{} {
