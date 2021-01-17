@@ -3,11 +3,12 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	util_err "github.com/why444216978/go-util/error"
+
 	//_ "github.com/go-sql-driver/mysql"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/pkg/errors"
 )
 
 type (
@@ -22,13 +23,19 @@ func New(c *Config) (db *DB, err error) {
 	db = new(DB)
 	db.Config = c
 	db.masterDB, err = gorm.Open("mysql", c.Master.DSN)
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "open master mysql conn error：")
+		panic(err)
+	}
 	db.masterDB.DB().SetMaxOpenConns(c.Master.MaxOpen)
 	db.masterDB.DB().SetMaxIdleConns(c.Master.MaxIdle)
-	util_err.Must(err)
 
 	db.slaveDB, err = gorm.Open("mysql", c.Slave.DSN)
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "open master mysql conn error：")
+		panic(err)
+	}
+
 	db.slaveDB.DB().SetMaxOpenConns(c.Slave.MaxOpen)
 	db.slaveDB.DB().SetMaxIdleConns(c.Slave.MaxIdle)
 
@@ -55,7 +62,10 @@ func (db *DB) SlaveDB() *sql.DB {
 func (db *DB) MasterDBClose() error {
 	if db.masterDB != nil {
 		err := db.masterDB.DB().Close()
-		util_err.Must(err)
+		if err != nil {
+			err = errors.Wrap(err, "close master mysql conn error：")
+			panic(err)
+		}
 	}
 	return nil
 }
@@ -63,7 +73,10 @@ func (db *DB) MasterDBClose() error {
 // SlaveDBClose 释放从库的资源
 func (db *DB) SlaveDBClose() (err error) {
 	err = db.slaveDB.DB().Close()
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "close slave mysql conn error：")
+		panic(err)
+	}
 	return nil
 }
 
@@ -134,5 +147,3 @@ func (db *DB) SlaveDBQueryRowContext(ctx context.Context, query string, args ...
 	r, _ := db.operate(ctx, operateSlaveQueryRow, query, args...)
 	return r.(*sql.Row)
 }
-
-

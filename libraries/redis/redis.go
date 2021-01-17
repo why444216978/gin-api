@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"gin-api/libraries/config"
-	util_error "github.com/why444216978/go-util/error"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 )
 
 type RedisDB struct {
@@ -22,29 +23,38 @@ type RedisDB struct {
 var obj map[string]*RedisDB
 
 func GetRedis(redisName string) *RedisDB {
+	var (
+		hostCfg      string
+		authCfg      string
+		portCfg      string
+		tmpDbCfg     string
+		maxActiveCfg string
+		maxIdleCfg   string
+		execTimeCfg  string
+		execTime     int64
+	)
+
 	cfg := config.GetConfigToJson("redis", redisName)
 
-	hostCfg := cfg["host"].(string)
-	authCfg := cfg["auth"].(string)
-	portCfg := cfg["port"].(string)
-	port,err := strconv.Atoi(portCfg)
-	util_error.Must(err)
-	tmpDbCfg := cfg["db"].(string)
-	dbCfg,err := strconv.Atoi(tmpDbCfg)
-	util_error.Must(err)
-	maxActiveCfg := cfg["max_active"].(string)
-	maxActive,err := strconv.Atoi(maxActiveCfg)
-	util_error.Must(err)
-	maxIdleCfg := cfg["max_idle"].(string)
-	maxIdle,err := strconv.Atoi(maxIdleCfg)
-	util_error.Must(err)
-	execTimeCfg := cfg["exec_timeout"].(string)
-	execTimeInt,err := strconv.Atoi(execTimeCfg)
-	util_error.Must(err)
-	execTime := int64(execTimeInt)
+	hostCfg = cfg["host"].(string)
+	authCfg = cfg["auth"].(string)
+	portCfg = cfg["port"].(string)
+	port, err := strconv.Atoi(portCfg)
+	tmpDbCfg = cfg["db"].(string)
+	dbCfg, err := strconv.Atoi(tmpDbCfg)
+	maxActiveCfg = cfg["max_active"].(string)
+	maxActive, err := strconv.Atoi(maxActiveCfg)
+	maxIdleCfg = cfg["max_idle"].(string)
+	maxIdle, err := strconv.Atoi(maxIdleCfg)
+	execTimeCfg = cfg["exec_timeout"].(string)
+	execTimeInt, err := strconv.Atoi(execTimeCfg)
+	execTime = int64(execTimeInt)
 
 	db, err := conn(redisName, hostCfg, authCfg, port, dbCfg, maxActive, maxIdle, execTime)
-	util_error.Must(err)
+
+	if err != nil {
+		err = errors.Wrap(err, "get redis config error：")
+	}
 
 	return db
 }
@@ -95,10 +105,6 @@ func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, exec
 	obj[conn] = db
 
 	return
-}
-
-func errorsWrap(err error, msg string) error {
-	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // ConnPool 返回 redis.Pool.

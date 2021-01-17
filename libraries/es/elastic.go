@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"time"
 
+	"gin-api/libraries/config"
+	"gin-api/libraries/logging"
+
 	"github.com/olivere/elastic"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
-	"gin-api/libraries/config"
-	"gin-api/libraries/logging"
 	"github.com/why444216978/go-util/conversion"
-	util_err "github.com/why444216978/go-util/error"
 )
 
 type Elastic struct {
@@ -36,17 +36,27 @@ func InitES(name string) *Elastic {
 	}
 	confES := config.GetConfigToJson("es", name)
 	host := confES["host"].(string) + ":" + confES["port"].(string)
-	var err error
+
 	client, err := elastic.NewClient(elastic.SetURL(host))
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "new es client error:")
+		panic(err)
+	}
 
 	info, code, err := client.Ping(host).Do(context.Background())
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "ping es error:")
+		panic(err)
+	}
 	fmt.Printf("Elasticsearch returned with code %d and version %s\n", code, info.Version.Number)
 
 	esVersion, err := client.ElasticsearchVersion(host)
-	util_err.Must(err)
+	if err != nil {
+		err = errors.Wrap(err, "get es version error:")
+		panic(err)
+	}
 	fmt.Printf("Elasticsearch version %s\n", esVersion)
+
 	es := &Elastic{
 		Client: client,
 		host:   host,
@@ -345,22 +355,23 @@ func (self *Elastic) JsonMap(index, typ, query string, fields []string, from, si
 	}
 
 	byteDates, err := json.Marshal(data)
-	util_err.Must(err)
 	reader := bytes.NewReader(byteDates)
 
 	client := &http.Client{}
 	url := self.host + "/" + index + "/" + typ + "/_search"
 	req, err := http.NewRequest("POST", url, reader)
-	util_err.Must(err)
 
 	req.Header.Add("content-type", "application/json")
 
 	resp, err := client.Do(req)
-	util_err.Must(err)
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
-	util_err.Must(err)
+
+	if err != nil {
+		err = errors.Wrap(err, "get es error:")
+		panic(err)
+	}
 
 	ret := conversion.JsonToMap(string(b))
 	if ret["error"] != nil {
@@ -459,22 +470,23 @@ func (self *Elastic) JsonMapHttp(index, typ, query string, fields []string, from
 	}
 
 	byteDates, err := json.Marshal(data)
-	util_err.Must(err)
 	reader := bytes.NewReader(byteDates)
 
 	client := &http.Client{}
 	url := self.host + "/" + index + "/" + typ + "/_search"
 	req, err := http.NewRequest("POST", url, reader)
-	util_err.Must(err)
 
 	req.Header.Add("content-type", "application/json")
 
 	resp, err := client.Do(req)
-	util_err.Must(err)
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
-	util_err.Must(err)
+
+	if err != nil {
+		err = errors.Wrap(err, "get es error:")
+		panic(err)
+	}
 
 	ret := conversion.JsonToMap(string(b))
 	if ret["error"] != nil {
