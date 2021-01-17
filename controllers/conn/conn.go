@@ -1,11 +1,14 @@
 package conn
 
 import (
+	"context"
 	"gin-api/controllers"
 	"gin-api/services/goods_service"
 	"gin-api/services/test_service"
+
+	"golang.org/x/sync/errgroup"
+
 	"github.com/gin-gonic/gin"
-	"sync"
 )
 
 type ConnController struct {
@@ -35,20 +38,29 @@ func (self *ConnController) action() {
 
 	goodsId := goods["goods_id"].(int)
 
-	var wg sync.WaitGroup
 	price := 0
 	name := ""
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		name = self.goodsService.GetGoodsName(self.C, goodsId)
-	}()
 
-	go func() {
-		defer wg.Done()
-		price = self.goodsService.GetGoodsPrice(self.C, goodsId)
-	}()
-	wg.Wait()
+	g, _ := errgroup.WithContext(context.TODO())
+	g.Go(func() (err error) {
+		name, err = self.goodsService.GetGoodsName(self.C, goodsId)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() (err error) {
+		price, err = self.goodsService.GetGoodsPrice(self.C, goodsId)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	err := g.Wait()
+	if err != nil {
+		panic(err)
+	}
 
 	goods["name"] = name
 	goods["price"] = price

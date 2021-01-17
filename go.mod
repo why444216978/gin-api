@@ -18,6 +18,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/why444216978/go-util v1.0.0
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/grpc v1.32.0
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect

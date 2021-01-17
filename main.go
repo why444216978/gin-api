@@ -5,11 +5,12 @@ import (
 	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"github.com/why444216978/go-util/dir"
 	"gin-api/routers"
 	"log"
 	"strconv"
 	"syscall"
+
+	"github.com/why444216978/go-util/dir"
 
 	"gin-api/libraries/endless"
 )
