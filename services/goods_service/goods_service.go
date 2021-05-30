@@ -1,7 +1,7 @@
 package goods_service
 
 import (
-	"gin-api/libraries/redis"
+	"gin-api/resource"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -12,58 +12,58 @@ import (
 	redigo "github.com/gomodule/redigo/redis"
 )
 
-type GoodsService struct {
-	redis *redis.RedisDB
+type GoodsInterface interface {
+	GetGoodsPrice(ctx *gin.Context, id int) (int, error)
+
+	GetGoodsName(ctx *gin.Context, id int) (string, error)
+
+	GetGoodsInfo(ctx *gin.Context, id int) map[string]interface{}
+
+	BatchGoodsName(ctx *gin.Context, ids []int) []string
 }
 
-var goods *GoodsService
+var Instance GoodsInterface
 
-//var onceServiceLocation sync.Once
+type GoodsService struct{}
+
+func init() {
+	Instance = &GoodsService{}
+}
 
 const (
-	DB_NAME         = "default"
 	GOODS_NAME_KEY  = "goods::name::"
 	GOODS_PRICE_KEY = "goods::price::"
 )
 
-func init() {
-	goods = &GoodsService{}
-	goods.redis = redis.GetRedis(DB_NAME)
-}
-
-func GetInstance() *GoodsService {
-	return goods
-}
-
-func (self *GoodsService) GetGoodsPrice(ctx *gin.Context, id int) (int, error) {
-	data, err := redigo.Int(self.redis.Do(ctx, "GET", GOODS_PRICE_KEY+strconv.Itoa(id)))
+func (srv *GoodsService) GetGoodsPrice(ctx *gin.Context, id int) (int, error) {
+	data, err := redigo.Int(resource.DefaultRedis.Do(ctx, "GET", GOODS_PRICE_KEY+strconv.Itoa(id)))
 	if err != nil {
 		err = errors.Wrap(err, "redis get goods price error：")
 	}
 	return data, err
 }
 
-func (self *GoodsService) GetGoodsName(ctx *gin.Context, id int) (string, error) {
-	data, err := redigo.String(self.redis.Do(ctx, "GET", GOODS_NAME_KEY+strconv.Itoa(id)))
+func (srv *GoodsService) GetGoodsName(ctx *gin.Context, id int) (string, error) {
+	data, err := redigo.String(resource.DefaultRedis.Do(ctx, "GET", GOODS_NAME_KEY+strconv.Itoa(id)))
 	if err != nil {
 		err = errors.Wrap(err, "redis get goods price error：")
 	}
 	return data, err
 }
 
-func (self *GoodsService) GetGoodsInfo(ctx *gin.Context, id int) map[string]interface{} {
-	data, _ := redigo.String(self.redis.Do(ctx, "GET", GOODS_NAME_KEY+strconv.Itoa(id)))
-
-	return conversion.JsonToMap(data)
+func (srv *GoodsService) GetGoodsInfo(ctx *gin.Context, id int) map[string]interface{} {
+	data, _ := redigo.String(resource.DefaultRedis.Do(ctx, "GET", GOODS_NAME_KEY+strconv.Itoa(id)))
+	ret, _ := conversion.JsonToMap(data)
+	return ret
 }
 
-func (self *GoodsService) BatchGoodsName(ctx *gin.Context, ids []int) []string {
+func (srv *GoodsService) BatchGoodsName(ctx *gin.Context, ids []int) []string {
 	var args []interface{}
 	for _, v := range ids {
 		args = append(args, GOODS_NAME_KEY+strconv.Itoa(v))
 	}
 
-	data, _ := redigo.Strings(self.redis.Do(ctx, "MGET", args...))
+	data, _ := redigo.Strings(resource.DefaultRedis.Do(ctx, "MGET", args...))
 
 	return data
 }

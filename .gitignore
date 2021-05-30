@@ -14,5 +14,4 @@ development
 .DS_Store
 test/*
 test.go
-configs/*
-go.sum
+__debug_bin

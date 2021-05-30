@@ -3,17 +3,17 @@ package panic
 import (
 	"bytes"
 	"gin-api/app_const"
-	"gin-api/codes"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
+	"gin-api/response"
+	"io/ioutil"
+	"runtime/debug"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/sys"
 	"github.com/why444216978/go-util/url"
-	"github.com/gin-gonic/gin"
-	"io/ioutil"
-	"net/http"
-	"runtime/debug"
-	"strings"
 )
 
 type bodyLogWriter struct {
@@ -35,13 +35,6 @@ func ThrowPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"errno":    codes.SERVER_ERROR,
-					"errmsg":   codes.ErrorMsg[codes.SERVER_ERROR],
-					"data":     make(map[string]interface{}),
-					"user_msg": codes.ErrorUserMsg[codes.SERVER_ERROR],
-				})
-
 				mailDebugStack := ""
 				debugStack := make(map[int]interface{})
 				for k, v := range strings.Split(string(debug.Stack()), "\n") {
@@ -72,28 +65,32 @@ func ThrowPanic() gin.HandlerFunc {
 				responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 				c.Writer = responseWriter
 
-				c.Next() // 处理请求
-
 				responseBody := responseWriter.body.String()
 
-				hostIp,_ := sys.ExternalIP()
+				hostIp, _ := sys.ExternalIP()
 
 				header := &logging.LogHeader{
-					LogId: logId,
-					CallerIp: c.ClientIP(),
-					HostIp: hostIp,
-					Port: app_const.SERVICE_PORT,
-					Product: app_const.PRODUCT,
-					Module: app_const.MODULE,
+					LogId:     logId,
+					CallerIp:  c.ClientIP(),
+					HostIp:    hostIp,
+					Port:      app_const.SERVICE_PORT,
+					Product:   app_const.PRODUCT,
+					Module:    app_const.MODULE,
 					ServiceId: app_const.SERVICE_NAME,
-					UriPath: c.Request.RequestURI,
-					Env:        envCfg["env"].(string),
+					UriPath:   c.Request.RequestURI,
+					Env:       envCfg["env"].(string),
 				}
+
+				reqMap := make(map[string]interface{})
+				reqMap, _ = conversion.JsonToMap(strReqBody)
+
+				respMap := make(map[string]interface{})
+				respMap, _ = conversion.JsonToMap(responseBody)
 
 				logging.Error(header, map[string]interface{}{
 					"requestHeader": c.Request.Header,
-					"requestBody":   conversion.JsonToMap(strReqBody),
-					"responseBody":  conversion.JsonToMap(responseBody),
+					"requestBody":   reqMap,
+					"responseBody":  respMap,
 					"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
 					"err":           err,
 					"trace":         debugStack,
@@ -119,7 +116,7 @@ func ThrowPanic() gin.HandlerFunc {
 				//}
 				//_ = mail.Send(options)
 
-				c.Done()
+				response.Response(c, response.CODE_SERVER, nil, "")
 			}
 		}(c)
 		c.Next()

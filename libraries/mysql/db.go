@@ -19,7 +19,7 @@ type (
 	}
 )
 
-func New(c *Config) (db *DB, err error) {
+func newConn(c *Config) (db *DB, err error) {
 	db = new(DB)
 	db.Config = c
 	db.masterDB, err = gorm.Open("mysql", c.Master.DSN)

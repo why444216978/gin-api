@@ -3,44 +3,30 @@ package main
 import (
 	"fmt"
 	"gin-api/app_const"
-	"gin-api/libraries/config"
-	"gin-api/libraries/logging"
+	"gin-api/bootstrap"
+	"gin-api/libraries/endless"
 	"gin-api/routers"
 	"log"
 	"strconv"
-	"syscall"
-
-	"github.com/why444216978/go-util/dir"
-
-	"gin-api/libraries/endless"
 )
 
-func init() {
-	logCfg := config.GetConfigToJson("log", "log")
-	logDir := logCfg["dir"].(string) + "/" + app_const.SERVICE_NAME
-	file := app_const.SERVICE_NAME + ".log"
-	dir.CreateDir(logDir)
-	c := logging.LogConfig{
-		Path:                logDir,
-		File:                file,
-		Mode:                1,
-		Rotate:              true,
-		AsyncFormatter:      true,
-		RotatingFileHandler: logging.TIMED_ROTATING_FILE_HANDLER,
-		RotateInterval:      3600,
-		Debug:               true,
-	}
-	logging.Init(&c)
-}
-
 func main() {
-	server := routers.InitRouter()
+	bootstrap.Bootstrap()
 
-	tmpServer := endless.NewServer(fmt.Sprintf(":%s", strconv.Itoa(app_const.SERVICE_PORT)), server)
-	tmpServer.BeforeBegin = func(add string) {
-		log.Printf("Actual pid is %d", syscall.Getpid())
-	}
-	err := tmpServer.ListenAndServe()
+	router := routers.InitRouter()
+
+	// server := &http.Server{
+	// 	Addr:         fmt.Sprintf(":%s", strconv.Itoa(app_const.SERVICE_PORT)),
+	// 	Handler:      router,
+	// 	ReadTimeout:  3 * time.Second,
+	// 	WriteTimeout: 3 * time.Second,
+	// }
+
+	// server.ListenAndServe()
+
+	// endless.DefaultReadTimeOut = 3 * time.Second
+	// endless.DefaultWriteTimeOut = 3 * time.Second
+	err := endless.ListenAndServe(fmt.Sprintf(":%s", strconv.Itoa(app_const.SERVICE_PORT)), router)
 	if err != nil {
 		log.Printf("Server err: %v", err)
 	}

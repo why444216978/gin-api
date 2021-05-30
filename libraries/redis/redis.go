@@ -22,7 +22,7 @@ type RedisDB struct {
 
 var obj map[string]*RedisDB
 
-func GetRedis(redisName string) *RedisDB {
+func GetRedis(redisName string) (*RedisDB, error) {
 	var (
 		hostCfg      string
 		authCfg      string
@@ -39,24 +39,24 @@ func GetRedis(redisName string) *RedisDB {
 	hostCfg = cfg["host"].(string)
 	authCfg = cfg["auth"].(string)
 	portCfg = cfg["port"].(string)
-	port, err := strconv.Atoi(portCfg)
+	port, _ := strconv.Atoi(portCfg)
 	tmpDbCfg = cfg["db"].(string)
-	dbCfg, err := strconv.Atoi(tmpDbCfg)
+	dbCfg, _ := strconv.Atoi(tmpDbCfg)
 	maxActiveCfg = cfg["max_active"].(string)
-	maxActive, err := strconv.Atoi(maxActiveCfg)
+	maxActive, _ := strconv.Atoi(maxActiveCfg)
 	maxIdleCfg = cfg["max_idle"].(string)
-	maxIdle, err := strconv.Atoi(maxIdleCfg)
+	maxIdle, _ := strconv.Atoi(maxIdleCfg)
 	execTimeCfg = cfg["exec_timeout"].(string)
-	execTimeInt, err := strconv.Atoi(execTimeCfg)
+	execTimeInt, _ := strconv.Atoi(execTimeCfg)
 	execTime = int64(execTimeInt)
 
 	db, err := conn(redisName, hostCfg, authCfg, port, dbCfg, maxActive, maxIdle, execTime)
-
 	if err != nil {
 		err = errors.Wrap(err, "get redis config error：")
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }
 
 func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, execTimeout int64) (db *RedisDB, err error) {

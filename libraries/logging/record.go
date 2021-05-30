@@ -67,19 +67,20 @@ type LogHeader struct {
 	CallerIp              string `json:"caller_ip"`
 	HostIp                string `json:"host_ip"`
 	Port                  int
-	Product               string           `json:"product"`
-	Module                string           `json:"module"`
-	ServiceId             string           `json:"service_id"`
-	InstanceId            string           `json:"instance_id"`
-	UriPath               string           `json:"uri_path"`
-	Tag                   string           `json:"tag"`
-	Env                   string           `json:"env"`
-	SVersion              string           `json:"sversion"`
-	Request               *http.Request    `json:"-"`
-	DownstreamErrServices string           `json:"downstream_err_services,omitempty"`
-	TraceID               string           `json:"trace_id"`
-	SpanID                string           `json:"span_id"`
-	GrayMark              string           `json:"gray_mark"`
+	Product               string        `json:"product"`
+	Module                string        `json:"module"`
+	ServiceId             string        `json:"service_id"`
+	InstanceId            string        `json:"instance_id"`
+	UriPath               string        `json:"uri_path"`
+	Tag                   string        `json:"tag"`
+	Env                   string        `json:"env"`
+	SVersion              string        `json:"sversion"`
+	Request               *http.Request `json:"-"`
+	DownstreamErrServices string        `json:"downstream_err_services,omitempty"`
+	TraceID               string        `json:"trace_id"`
+	SpanID                string        `json:"span_id"`
+	GrayMark              string        `json:"gray_mark"`
+	Cost                  int64         `json:"cost"`
 }
 
 func NewLogHeader() *LogHeader {

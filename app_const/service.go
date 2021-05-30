@@ -1,7 +1,7 @@
 package app_const
 
 const (
-	SERVICE_NAME  = "purchase-server"
+	SERVICE_NAME  = "gin-api"
 	SERVICE_PORT  = 777
 	PRODUCT       = "gin-api"
 	MODULE        = "gin-api"

@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,15 +10,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/sys"
 )
 
 const (
-	SHORTDATEFORMAT   = "20060102"
-	DATEFORMAT        = "2006-01-02"
-	DEFAULT_LOG_LEVEL = DEBUG
-	DEFAULT_LOG_PATH  = "./"
-	DEFAULT_LOG_FILE  = "log.log"
+	SHORTDATEFORMAT    = "20060102"
+	DATEFORMAT         = "2006-01-02"
+	DEFAULT_LOG_LEVEL  = DEBUG
+	DEFAULT_LOG_PATH   = "./"
+	DEFAULT_LOG_FILE   = "log.log"
+	CONTEXT_LOG_HEADER = "log_header"
 )
 
 var (
@@ -42,7 +45,7 @@ func Init(logConfig *LogConfig) {
 
 		defaultLogger = NewLogger(logConfig)
 		defaultLogHeader = &LogHeader{LogId: NewObjectId().Hex()}
-		defaultLogHeader.HostIp = sys.GetInternalIp()
+		defaultLogHeader.HostIp, _ = sys.GetInternalIP()
 	})
 }
 
@@ -225,6 +228,9 @@ func Errorf(header *LogHeader, format string, v ...interface{}) {
 func Error(header *LogHeader, v ...interface{}) {
 	defaultLogger.Error(header, v...)
 }
+func ErrorCtx(c *gin.Context, v ...interface{}) {
+	defaultLogger.Error(GetLogHeader(c), v...)
+}
 func Warnf(header *LogHeader, format string, v ...interface{}) {
 	defaultLogger.Warnf(header, format, v...)
 }
@@ -245,4 +251,12 @@ func Notify(sig os.Signal) {
 	if defaultLogger != nil {
 		defaultLogger.Notify(sig)
 	}
+}
+
+func GetLogHeader(c *gin.Context) *LogHeader {
+	return c.Request.Context().Value(CONTEXT_LOG_HEADER).(*LogHeader)
+}
+
+func WriteLogHeader(c *gin.Context, header *LogHeader) {
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), CONTEXT_LOG_HEADER, header))
 }

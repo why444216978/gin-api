@@ -7,8 +7,10 @@ import (
 	"gin-api/middlewares/limiter"
 	"gin-api/middlewares/log"
 	"gin-api/middlewares/panic"
+	"gin-api/middlewares/timeout"
 	"gin-api/middlewares/trace"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +20,15 @@ func InitRouter() *gin.Engine {
 
 	server.Use(gin.Recovery())
 
-	server.Use(trace.OpenTracing())
+	server.Use(panic.ThrowPanic())
 
 	server.Use(limiter.Limiter(10))
 
+	server.Use(timeout.TimeoutMiddleware(time.Second * 3))
+
 	server.Use(log.LoggerMiddleware())
 
-	server.Use(panic.ThrowPanic())
+	server.Use(trace.OpenTracing())
 
 	server.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -44,7 +48,7 @@ func InitRouter() *gin.Engine {
 	{
 		testGroup.GET("/rpc", opentracing.Rpc)
 		testGroup.GET("/panic", opentracing.Panic)
-		testGroup.GET("/conn", conn.Do)
+		testGroup.POST("/conn", conn.Do)
 	}
 
 	return server

@@ -6,11 +6,13 @@ import (
 	"gin-api/app_const"
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
+	"io/ioutil"
+	"time"
+
+	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/sys"
 	"github.com/why444216978/go-util/url"
-	"github.com/gin-gonic/gin"
-	"io/ioutil"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -34,6 +36,8 @@ func LoggerMiddleware() gin.HandlerFunc {
 	headerLogField := logCfg["header_field"].(string)
 
 	return func(c *gin.Context) {
+		start := time.Now()
+
 		var logId string
 		switch {
 		case c.Query(queryLogField) != "":
@@ -50,7 +54,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		if c.Request.Body != nil { // Read
 			reqBody, _ = ioutil.ReadAll(c.Request.Body)
 		}
-		strReqBody := string(reqBody)
+		reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
 
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
 		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
@@ -59,6 +63,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		c.Next() // 处理请求
 
 		responseBody := responseWriter.body.String()
+		responseBodyMap, _ := conversion.JsonToMap(responseBody)
 
 		hostIp, _ := sys.ExternalIP()
 
@@ -72,13 +77,17 @@ func LoggerMiddleware() gin.HandlerFunc {
 			ServiceId: app_const.SERVICE_NAME,
 			UriPath:   c.Request.RequestURI,
 			Env:       envCfg["env"].(string),
+			Cost:      time.Now().Sub(start).Milliseconds(),
 		}
+		logging.WriteLogHeader(c, header)
+
 		logging.Info(header, map[string]interface{}{
 			"requestHeader": c.Request.Header,
-			"requestBody":   conversion.JsonToMap(strReqBody),
-			"responseBody":  conversion.JsonToMap(responseBody),
+			"requestBody":   reqBodyMap,
+			"responseBody":  responseBodyMap,
 			"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
 			"http_code":     c.Writer.Status(),
 		})
+
 	}
 }

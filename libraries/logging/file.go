@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"github.com/why444216978/go-util/sys"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,7 +14,11 @@ type LogFile struct {
 }
 
 func (f *LogFile) FilePath() string {
-	return filepath.Join(f.path, f.file) + "." + sys.HostName()
+	// hostname, err := sys.HostName()
+	// if err != nil {
+	// 	return ""
+	// }
+	return filepath.Join(f.path, f.file)
 }
 
 //open for write only

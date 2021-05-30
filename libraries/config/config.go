@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"gin-api/app_const"
 	"gin-api/libraries/apollo"
+	"log"
+
 	"github.com/why444216978/go-util/conversion"
 	util_file "github.com/why444216978/go-util/file"
 	"gopkg.in/ini.v1"
-	"log"
 )
 
 type Config struct {
@@ -36,7 +37,7 @@ func GetConfigToJson(file, section string) map[string]interface{} {
 
 	if app_const.CONFIG_SOURCE == SOURCE_APOLLO {
 		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
-		cfgMap := conversion.JsonToMap(cfg[file])
+		cfgMap, _ := conversion.JsonToMap(cfg[file])
 		ret = cfgMap[section].(map[string]interface{})
 	} else if app_const.CONFIG_SOURCE == SOURCE_JSON {
 		return getJsonConfig(file, section)
@@ -53,8 +54,8 @@ func getJsonConfig(file, section string) map[string]interface{} {
 		return cfgList[file].(map[string]interface{})
 	}
 
-	jsonStr := util_file.ReadJsonFile(path + file + ".json")
-	cfgMap := conversion.JsonToMap(jsonStr)
+	jsonStr, _ := util_file.ReadJsonFile(path + file + ".json")
+	cfgMap, _ := conversion.JsonToMap(jsonStr)
 	cfgList[file] = cfgMap[section].(map[string]interface{})
 
 	log.Println(fmt.Sprintf("load %s.json", file))
