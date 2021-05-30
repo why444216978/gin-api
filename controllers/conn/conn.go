@@ -1,7 +1,7 @@
 package conn
 
 import (
-	"gin-api/libraries/logging"
+	"gin-api/resource"
 	"gin-api/response"
 	"gin-api/services/goods_service"
 	"gin-api/services/test_service"
@@ -12,12 +12,6 @@ import (
 )
 
 func Do(c *gin.Context) {
-	if err := c.Request.Context().Err(); err != nil {
-		logging.ErrorCtx(c, map[string]interface{}{"err": err.Error()})
-		response.Response(c, response.CODE_SUCCESS, nil, "")
-		return
-	}
-
 	goods, _ := test_service.Instance.GetFirstRow(c, true)
 	g, _ := errgroup.WithContext(c.Request.Context())
 	g.Go(func() (err error) {
@@ -29,7 +23,7 @@ func Do(c *gin.Context) {
 	})
 	err := g.Wait()
 	if err != nil {
-		logging.ErrorCtx(c, map[string]interface{}{"err": err.Error()})
+		resource.Logger.Error("test conn error msg", map[string]interface{}{"err": err.Error()})
 		response.Response(c, response.CODE_SERVER, goods, "")
 		return
 	}

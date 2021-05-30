@@ -1,14 +1,10 @@
 package bootstrap
 
 import (
-	"gin-api/app_const"
-	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
 	"gin-api/libraries/redis"
 	"gin-api/resource"
-
-	"github.com/why444216978/go-util/dir"
 )
 
 func Bootstrap() {
@@ -34,21 +30,7 @@ func initRedis(db string) {
 }
 
 func initLogger() {
-	logCfg := config.GetConfigToJson("log", "log")
-	logDir := logCfg["dir"].(string)
-	file := app_const.SERVICE_NAME + ".log"
-	dir.CreateDir(logDir)
-	c := logging.LogConfig{
-		Path:                logDir,
-		File:                file,
-		Mode:                1,
-		Rotate:              true,
-		AsyncFormatter:      true,
-		RotatingFileHandler: logging.TIMED_ROTATING_FILE_HANDLER,
-		RotateInterval:      3600,
-		Debug:               true,
-	}
-	logging.Init(&c)
+	resource.Logger = logging.NewLogger("./logs/gin-api.log", "./logs/gin-api.wf.log")
 }
 
 func initJaeger(db string) {

@@ -9,6 +9,7 @@ import (
 	"gin-api/middlewares/panic"
 	"gin-api/middlewares/timeout"
 	"gin-api/middlewares/trace"
+	"gin-api/response"
 	"net/http"
 	"time"
 
@@ -18,10 +19,6 @@ import (
 func InitRouter() *gin.Engine {
 	server := gin.New()
 
-	server.Use(gin.Recovery())
-
-	server.Use(log.WithContext())
-
 	server.Use(panic.ThrowPanic())
 
 	server.Use(limiter.Limiter(10))
@@ -30,15 +27,13 @@ func InitRouter() *gin.Engine {
 
 	server.Use(log.LoggerMiddleware())
 
+	// server.Use(log.Logger())
+
 	server.Use(trace.OpenTracing())
 
 	server.NoRoute(func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, gin.H{
-			"errno":    http.StatusNotFound,
-			"errmsg":   "uri错误",
-			"data":     nil,
-			"user_msg": "请求资源不存在",
-		})
+		response.Response(c, response.CODE_URI_NOT_FOUND, nil, "")
+		c.AbortWithStatus(http.StatusNotFound)
 	})
 
 	pingGroup := server.Group("/ping")

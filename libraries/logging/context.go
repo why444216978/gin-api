@@ -2,21 +2,23 @@ package logging
 
 import (
 	"context"
+
+	"github.com/gin-gonic/gin"
 )
 
-type logContextKey string
+const (
+	CONTEXT_LOG_KEY = "log"
+)
 
-const ctxLogHeaderKey logContextKey = "_logHeader"
-
-//LogHeaderFromContext 从context取出log.LogFormat
-//logHeader 不存在会返回nil
-func LogHeaderFromContext(ctx context.Context) *LogHeader {
-	logHeader, _ := ctx.Value(ctxLogHeaderKey).(*LogHeader)
-	return logHeader
+func GetLogCommon(c *gin.Context) (comm *Common) {
+	h := c.Request.Context().Value(CONTEXT_LOG_KEY)
+	comm, ok := h.(*Common)
+	if !ok {
+		comm = &Common{}
+	}
+	return
 }
 
-//ContextWithLogHeader 挂载*LogHeader
-//附加自定义的log.LogFormat
-func ContextWithLogHeader(ctx context.Context, logHeader *LogHeader) context.Context {
-	return context.WithValue(ctx, ctxLogHeaderKey, logHeader)
+func WriteLogCommon(c *gin.Context, comm *Common) {
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), CONTEXT_LOG_KEY, comm))
 }

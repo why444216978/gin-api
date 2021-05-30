@@ -1,257 +1,117 @@
 package logging
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
-	"sync"
-	"syscall"
+	"io"
+	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/why444216978/go-util/sys"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
-
-const (
-	SHORTDATEFORMAT    = "20060102"
-	DATEFORMAT         = "2006-01-02"
-	DEFAULT_LOG_LEVEL  = DEBUG
-	DEFAULT_LOG_PATH   = "./"
-	DEFAULT_LOG_FILE   = "log.log"
-	CONTEXT_LOG_HEADER = "log_header"
-)
-
-var (
-	defaultLogger    *Logger
-	defaultLogHeader *LogHeader
-	initOnce         sync.Once
-)
-
-func Init(logConfig *LogConfig) {
-	initOnce.Do(func() {
-		//设置默认值
-		if logConfig.Path == "" {
-			logConfig.Path = DEFAULT_LOG_PATH
-		}
-		if logConfig.File == "" {
-			logConfig.File = DEFAULT_LOG_FILE
-		}
-
-		if logConfig.RotatingFileHandler == "" {
-			logConfig.RotatingFileHandler = TIMED_ROTATING_FILE_HANDLER
-		}
-
-		defaultLogger = NewLogger(logConfig)
-		defaultLogHeader = &LogHeader{LogId: NewObjectId().Hex()}
-		defaultLogHeader.HostIp, _ = sys.GetInternalIP()
-	})
-}
 
 type Logger struct {
-	c *LogConfig
-
-	hdlrs []LogHandler
-
-	logLevel LogLevel
-	shutdown bool //when true,no longer receive new msg
-
-	sync.RWMutex
+	encoder zapcore.Encoder
+	logger  *zap.Logger
 }
 
-/*
-* 命名参考Python TimedRotatingFileHandler
-* 目前的实现本质上就是个TimedRotatingFileHandler
-* https://docs.python.org/2/library/logging.handlers.html#timedrotatingfilehandler
- */
-func NewLogger(c *LogConfig) *Logger {
-	logger := &Logger{
-		c:        c,
-		logLevel: LogLevel(c.Level),
-		hdlrs:    []LogHandler{FileHandlerAdapterWithConfig(c)},
+func NewLogger(infoPath, errorPath string) (logger *Logger) {
+	// 设置一些基本日志格式 具体含义还比较好理解，直接看zap源码也不难懂
+	encoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		MessageKey:  "msg",
+		LevelKey:    "level",
+		EncodeLevel: zapcore.CapitalLevelEncoder,
+		TimeKey:     "ts",
+		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(t.Format("2006-01-02 15:04:05"))
+		},
+		CallerKey:    "file",
+		EncodeCaller: zapcore.ShortCallerEncoder,
+		EncodeDuration: func(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendInt64(int64(d) / 1000000)
+		},
+	})
+
+	// 实现两个判断日志等级的interface
+	infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.InfoLevel
+	})
+
+	errorLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
+
+	logger = &Logger{
+		encoder: encoder,
 	}
 
-	if c.Debug {
-		//NewStdColorfulHandler is a singleton call
-		logger.hdlrs = append(logger.hdlrs, NewStdColorfulHandler())
-	}
+	// 获取 info、error日志文件的io.Writer 抽象 getWriter() 在下方实现
+	infoWriter := logger.getWriter(infoPath)
+	errorWriter := logger.getWriter(errorPath)
 
-	for _, hdlr := range logger.hdlrs {
-		go hdlr.Run()
-	}
+	// 最后创建具体的Logger
+	core := zapcore.NewTee(
+		zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoLevel),
+		zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorLevel),
+	)
 
-	return logger
-}
+	// 需要传入 zap.AddCaller() 才会显示打日志点的文件名和行数
+	logger.logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
-func (l *Logger) Debugf(header *LogHeader, format string, v ...interface{}) {
-	l.logf(DEBUG, header, format, v...)
-}
-func (l *Logger) Debug(header *LogHeader, v ...interface{}) {
-	l.log(DEBUG, header, v...)
-}
-func (l *Logger) Infof(header *LogHeader, format string, v ...interface{}) {
-	l.logf(INFO, header, format, v...)
-}
-func (l *Logger) Info(header *LogHeader, v ...interface{}) {
-	l.log(INFO, header, v...)
-}
-func (l *Logger) Warnf(header *LogHeader, format string, v ...interface{}) {
-	l.logf(WARN, header, format, v...)
-}
-func (l *Logger) Warn(header *LogHeader, v ...interface{}) {
-	l.log(WARN, header, v...)
-}
-func (l *Logger) Errorf(header *LogHeader, format string, v ...interface{}) {
-	l.logf(ERROR, header, format, v...)
-}
-func (l *Logger) Error(header *LogHeader, v ...interface{}) {
-	l.log(ERROR, header, v...)
-}
-
-//do nothing if the logger is not initialized
-func (l *Logger) logf(lvl LogLevel, header *LogHeader, format string, v ...interface{}) {
-	if l != nil {
-		if l.LogLevel() <= lvl {
-			l.output(4, lvl, header, fmt.Sprintf(format, v...))
-		}
-	}
-}
-
-//do nothing if the logger is not initialized
-func (l *Logger) log(lvl LogLevel, header *LogHeader, v ...interface{}) {
-	if l != nil {
-		if l.LogLevel() <= lvl {
-			if len(v) == 1 {
-				l.output(4, lvl, header, v[0])
-			} else {
-				l.output(4, lvl, header, fmt.Sprint(v...))
-			}
-		}
-	}
-}
-
-func (l *Logger) output(calldepth int, lvl LogLevel, header *LogHeader, s interface{}) {
-	pc, file, line, _ := runtime.Caller(calldepth)
-
-	//TODO
-	//此处使用了指针,可能有race的问题,concurrent read and write
-
-	header.Error = s
-	record := &Record{
-		Timestamp: ts(time.Now()),
-		Level:     lvl,
-		File:      filepath.Base(file),
-		Line:      line,
-		Func:      runtime.FuncForPC(pc).Name(),
-		LogHeader: *header,
-	}
-	record.MilliSecond = millts(record.Timestamp)
-	record.HumanTime = hts(record.Timestamp)
-
-	for _, h := range l.hdlrs {
-		if l.c.AsyncFormatter {
-			//异步formatter
-			h.Receive(record)
-		} else {
-			//同步formatter
-			h.SyncFormatterReceive(record)
-		}
-
-	}
-}
-
-func (l *Logger) LogLevel() (lvl LogLevel) {
-	l.RLock()
-	lvl = l.logLevel
-	l.RUnlock()
 	return
 }
 
-func (l *Logger) Notify(sig os.Signal) {
-	switch sig {
-	case syscall.SIGUSR1:
-		for _, h := range l.hdlrs {
-			h.Notify(&LogSignal{
-				Action: SignalReopen,
-			})
-		}
+func (l *Logger) getWriter(filename string) io.Writer {
+	// 生成rotatelogs的Logger 实际生成的文件名 demo.log.YYmmddHH
+	// demo.log是指向最新日志的链接
+	// 保存7天内的日志，每1小时(整点)分割一次日志
+	hook, err := rotatelogs.New(
+		strings.Replace(filename, ".log", "", -1)+"-%Y%m%d%H.log", // 没有使用go风格反人类的format格式
+		rotatelogs.WithLinkName(filename),
+		rotatelogs.WithMaxAge(time.Hour*24*7),
+		rotatelogs.WithRotationTime(time.Hour),
+	)
+
+	if err != nil {
+		panic(err)
 	}
+	return hook
 }
 
-func (l *Logger) Shutdown() <-chan bool {
-	l.Lock()
-	if l.shutdown {
-		l.Unlock()
-		c := make(chan bool, 1)
-		c <- true
-		return c
-	} else {
-		l.shutdown = true
-		l.Unlock()
-		c := make(chan bool, 1)
+func (l *Logger) Debug(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Debug(msg, data...)
+}
 
-		var wg sync.WaitGroup
-		for _, h := range l.hdlrs {
-			wg.Add(1)
-			//Method params are evaluated when the method is invoke, not at the moment literal statement.
-			//Here you must pass h as a param to go routine,for h is an interface.
-			//Or you'll get the unexpected result: in every goroutine, h pointing to the last item in l.hdlrs
-			// after the for iteration and before the method invoke.
-			go func(_h LogHandler) {
-				<-_h.Shutdown()
-				defer wg.Done()
-			}(h)
-		}
+func (l *Logger) Info(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Info(msg, data...)
+}
 
-		wg.Wait()
-		c <- true
-		return c
+func (l *Logger) Warn(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Warn(msg, data...)
+}
+
+func (l *Logger) Error(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Error(msg, data...)
+}
+
+func (l *Logger) Panic(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Panic(msg, data...)
+}
+
+func (l *Logger) Fatal(msg string, fields map[string]interface{}) {
+	data := l.withFields(fields)
+	l.logger.Fatal(msg, data...)
+}
+
+func (l *Logger) withFields(fields map[string]interface{}) []zapcore.Field {
+	ret := make([]zapcore.Field, 0)
+	for k, v := range fields {
+		ret = append(ret, zap.Reflect(k, v))
 	}
-}
-
-func DebugCtx(c *gin.Context, v ...interface{}) {
-	header := GetLogHeader(c)
-	defaultLogger.Debug(header, v...)
-}
-func InfoCtx(c *gin.Context, v ...interface{}) {
-	header := GetLogHeader(c)
-	defaultLogger.Info(header, v...)
-}
-func ErrorCtx(c *gin.Context, v ...interface{}) {
-	header := GetLogHeader(c)
-	defaultLogger.Error(header, v...)
-}
-func WarnCtx(c *gin.Context, v ...interface{}) {
-	header := GetLogHeader(c)
-	defaultLogger.Warn(header, v...)
-}
-
-func Shutdown() <-chan bool {
-	if defaultLogger != nil {
-		return defaultLogger.Shutdown()
-	} else {
-		c := make(chan bool, 1)
-		c <- true
-		return c
-	}
-}
-
-func Notify(sig os.Signal) {
-	if defaultLogger != nil {
-		defaultLogger.Notify(sig)
-	}
-}
-
-func GetLogHeader(c *gin.Context) (header *LogHeader) {
-	h := c.Request.Context().Value(CONTEXT_LOG_HEADER)
-	header, ok := h.(*LogHeader)
-	if !ok {
-		header = &LogHeader{}
-	}
-	return
-}
-
-func WriteLogHeader(c *gin.Context, header *LogHeader) {
-	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), CONTEXT_LOG_HEADER, header))
+	return ret
 }

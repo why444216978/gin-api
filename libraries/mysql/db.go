@@ -99,6 +99,10 @@ var operationNames = map[operate]string{
 }
 
 func (db *DB) operate(ctx context.Context, op operate, query string, args ...interface{}) (i interface{}, err error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	switch op {
 	case operateMasterQuery:
 		i, err = db.MasterDB().QueryContext(ctx, query, args...)

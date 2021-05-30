@@ -10,6 +10,8 @@ import (
 	"os"
 	"sync/atomic"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // LogId is a unique ID identifying a log record. It must be exactly 12 bytes
@@ -46,6 +48,17 @@ func initMachineId() []byte {
 	hw.Write([]byte(hostname))
 	copy(id, hw.Sum(nil))
 	return id
+}
+
+func GetLogID(c *gin.Context) string {
+	logID := c.Request.Header.Get(LOG_HEADER)
+	if logID == "" {
+		logID = NewObjectId().Hex()
+	}
+
+	c.Header(LOG_HEADER, logID)
+
+	return logID
 }
 
 func StrToObjectId(str string) (ObjectId, error) {

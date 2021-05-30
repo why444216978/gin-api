@@ -1,15 +1,13 @@
 package redis
 
 import (
+	"context"
 	"fmt"
-	"gin-api/libraries/logging"
 	"strconv"
-	"strings"
 	"time"
 
 	"gin-api/libraries/config"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
 )
@@ -122,36 +120,18 @@ func (db *RedisDB) Close() error {
 
 // Do 执行 redis 命令
 // NOTE 除非有必要(比如在一个函数内部需要执行多次 redis 操作), 否则请用该函数执行所有的操作, 这样能有效避免忘记释放资源.
-func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (db *RedisDB) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
 	if commandName == "PING" {
 		return
 	}
-	var (
-		conn    = db.pool.Get()
-		argsStr []string
-	)
-
+	conn := db.pool.Get()
 	defer conn.Close()
 
-	logCfg := config.GetConfigToJson("log", "log")
-	headerLogField := logCfg["header_field"].(string)
-
-	header := logging.GetLogHeader(c)
-	header.LogId = c.Writer.Header().Get(headerLogField)
-	header.Module = "databus/redis"
-
-	reply, err = conn.Do(commandName, args...)
-
-	for _, arg := range args {
-		argsStr = append(argsStr, fmt.Sprint(arg))
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
-	defer func() {
-		if err != nil {
-			header.Error = fmt.Sprintf("redis do:[%s], error: %s", fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")), err.Error())
-			logging.ErrorCtx(c)
-		}
-	}()
+	reply, err = conn.Do(commandName, args...)
 
 	return
 }

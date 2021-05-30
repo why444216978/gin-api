@@ -2,7 +2,6 @@ package panic
 
 import (
 	"bytes"
-	"gin-api/libraries/logging"
 	"gin-api/response"
 	"net/http"
 	"runtime/debug"
@@ -22,42 +21,7 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ThrowPanic() gin.HandlerFunc {
-	// logCfg := config.GetConfigToJson("log", "log")
-	// queryLogField := logCfg["query_field"].(string)
-	// headerLogField := logCfg["header_field"].(string)
 	return func(c *gin.Context) {
-		// var logID string
-		// switch {
-		// case c.Query(queryLogField) != "":
-		// 	logID = c.Query(queryLogField)
-		// case c.Request.Header.Get(headerLogField) != "":
-		// 	logID = c.Request.Header.Get(headerLogField)
-		// default:
-		// 	logID = logging.NewObjectId().Hex()
-		// }
-		// c.Header(headerLogField, logID)
-
-		// reqBody := []byte{}
-		// if c.Request.Body != nil { // Read
-		// 	reqBody, _ = ioutil.ReadAll(c.Request.Body)
-		// }
-		// reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
-		// c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
-
-		// hostIP, _ := sys.ExternalIP()
-		// header := &logging.LogHeader{
-		// 	HTTPCode: c.Writer.Status(),
-		// 	Header:   c.Request.Header,
-		// 	LogId:    logID,
-		// 	CallerIp: c.ClientIP(),
-		// 	HostIp:   hostIP,
-		// 	Port:     app_const.SERVICE_PORT,
-		// 	UriPath:  c.Request.RequestURI,
-		// 	Module:   "http",
-		// 	Request:  reqBodyMap,
-		// }
-		// logging.WriteLogHeader(c, header)
-
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
 				mailDebugStack := ""
@@ -71,13 +35,12 @@ func ThrowPanic() gin.HandlerFunc {
 				responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 				c.Writer = responseWriter
 
-				header := logging.GetLogHeader(c)
-				header.HTTPCode = http.StatusInternalServerError
-				header.Trace = debugStack
-				header.Error = err
-				logging.WriteLogHeader(c, header)
+				// header := logging.GetLogHeader(c)
+				// header.HTTPCode = http.StatusInternalServerError
+				// header.Trace = debugStack
+				// logging.WriteLogHeader(c, header)
 
-				logging.ErrorCtx(c)
+				// logging.ErrorCtx(c)
 				response.Response(c, response.CODE_SERVER, nil, "")
 				c.AbortWithStatus(http.StatusInternalServerError)
 
