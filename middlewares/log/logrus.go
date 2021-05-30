@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gin-api/app_const"
-	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"io/ioutil"
 	"os"
 	"path"
 	"time"
@@ -24,7 +22,7 @@ import (
 func Logger() gin.HandlerFunc {
 
 	logFilePath := "./logs"
-	logFileName := "api.log"
+	logFileName := "gin-api.log"
 
 	// 日志文件
 	fileName := path.Join(logFilePath, logFileName)
@@ -68,50 +66,29 @@ func Logger() gin.HandlerFunc {
 	// 新增 Hook
 	logger.AddHook(lfHook)
 
-	logCfg := config.GetConfigToJson("log", "log")
-	queryLogField := logCfg["query_field"].(string)
-	headerLogField := logCfg["header_field"].(string)
 	return func(c *gin.Context) {
-		var logID string
-		switch {
-		case c.Query(queryLogField) != "":
-			logID = c.Query(queryLogField)
-		case c.Request.Header.Get(headerLogField) != "":
-			logID = c.Request.Header.Get(headerLogField)
-		default:
-			logID = logging.NewObjectId().Hex()
-		}
-		c.Header(headerLogField, logID)
-
-		reqBody := []byte{}
-		if c.Request.Body != nil { // Read
-			reqBody, _ = ioutil.ReadAll(c.Request.Body)
-		}
-		reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
-
-		hostIP, _ := sys.ExternalIP()
-
 		start := time.Now()
 
 		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 		c.Writer = responseWriter
 
-		c.Next() // 处理请求
+		c.Next()
 
-		responseBody := responseWriter.body.String()
-		responseBodyMap, _ := conversion.JsonToMap(responseBody)
+		resp := responseWriter.body.String()
+		respMap, _ := conversion.JsonToMap(resp)
 
 		common := &logging.Common{
-			LogID: logID,
+			LogID: logging.GetLogID(c),
 		}
 		logging.WriteLogCommon(c, common)
+
+		hostIP, _ := sys.ExternalIP()
 
 		fields := logging.Fields{
 			Header:   c.Request.Header,
 			Method:   c.Request.Method,
-			Request:  reqBodyMap,
-			Response: responseBodyMap,
+			Request:  logging.GetRequestBody(c),
+			Response: respMap,
 			Code:     c.Writer.Status(),
 			CallerIP: c.ClientIP(),
 			HostIP:   hostIP,
@@ -122,7 +99,7 @@ func Logger() gin.HandlerFunc {
 		}
 		fields.Common = *common
 
-		data, _ := conversion.StructToJson(common)
+		data, _ := conversion.StructToJson(fields)
 
 		var logFields logrus.Fields
 		json.Unmarshal([]byte(data), &logFields)

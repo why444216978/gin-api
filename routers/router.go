@@ -27,8 +27,6 @@ func InitRouter() *gin.Engine {
 
 	server.Use(log.LoggerMiddleware())
 
-	// server.Use(log.Logger())
-
 	server.Use(trace.OpenTracing())
 
 	server.NoRoute(func(c *gin.Context) {

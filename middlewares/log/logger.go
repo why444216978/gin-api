@@ -43,10 +43,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		common := &logging.Common{
-			LogID: logging.GetLogID(c),
-		}
-		logging.WriteLogCommon(c, common)
+		common := logging.GetLogCommon(c)
 
 		hostIP, _ := sys.ExternalIP()
 
