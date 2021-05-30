@@ -30,25 +30,15 @@ QQ群：909211071
 package app_const
 
 const (
-	SERVICE_NAME  = "purchase-server"
+	SERVICE_NAME  = "gin-api"
 	SERVICE_PORT  = 777
-	PRODUCT       = "gin-api"
-	MODULE        = "gin-api"
-	ENV           = "development"
 	CONFIG_SOURCE = "ini" //apollo、json、ini
-	CONFIGS_NUM   = 10     //配置文件数，影响配置file享元map初始化大小
+	CONFIGS_NUM   = 10    //配置文件数，影响配置file享元map初始化大小
 )
 
 ```
 
 ## ini（默认格式）
-
-### env.ini example:
-
-```
-[env]
-env = development
-```
 
 ### log.ini example：
 ```
@@ -56,7 +46,7 @@ env = development
 dir = /data/logs
 area = 1
 query_field = "logid"
-header_field = "X-Logid"
+header_field = "X-Log-Id"
 ```
 
 
@@ -106,7 +96,7 @@ exec_timeout = 100000
 dir = /data/logs/
 area = 1
 query_field = "logid"
-header_field = "X-Logid"
+header_field = "X-Log-Id"
 ```
 
 ### es.ini example:
@@ -117,23 +107,14 @@ host = http://127.0.0.1
 port = 9200
 ```
 
-### env.json example：
-```
-{
-  "env":{
-    "env": "development"
-  }
-}
-```
-
 ### log.json example：
 ```
 {
   "log":{
-    "dir":"/data/logs",
+    "dir":"./logs",
     "area":1,
     "query_field":"logid",
-    "header_field":"X-Logid"
+    "header_field":"X-Log-Id"
   }
 }
 ```
