@@ -43,7 +43,7 @@ const (
 ### log.ini example：
 ```
 [log]
-dir = /data/logs
+dir = ./logs
 area = 1
 query_field = "logid"
 header_field = "X-Log-Id"
@@ -93,7 +93,7 @@ exec_timeout = 100000
 
 ```
 [log]
-dir = /data/logs/
+dir = ./logs/
 area = 1
 query_field = "logid"
 header_field = "X-Log-Id"
