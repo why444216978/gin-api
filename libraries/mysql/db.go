@@ -25,7 +25,7 @@ func newConn(c *Config) (db *DB, err error) {
 	db.masterDB, err = gorm.Open("mysql", c.Master.DSN)
 	if err != nil {
 		err = errors.Wrap(err, "open master mysql conn error：")
-		panic(err)
+		return
 	}
 	db.masterDB.DB().SetMaxOpenConns(c.Master.MaxOpen)
 	db.masterDB.DB().SetMaxIdleConns(c.Master.MaxIdle)
@@ -33,7 +33,7 @@ func newConn(c *Config) (db *DB, err error) {
 	db.slaveDB, err = gorm.Open("mysql", c.Slave.DSN)
 	if err != nil {
 		err = errors.Wrap(err, "open master mysql conn error：")
-		panic(err)
+		return
 	}
 
 	db.slaveDB.DB().SetMaxOpenConns(c.Slave.MaxOpen)
@@ -64,7 +64,7 @@ func (db *DB) MasterDBClose() error {
 		err := db.masterDB.DB().Close()
 		if err != nil {
 			err = errors.Wrap(err, "close master mysql conn error：")
-			panic(err)
+			return err
 		}
 	}
 	return nil
@@ -75,7 +75,7 @@ func (db *DB) SlaveDBClose() (err error) {
 	err = db.slaveDB.DB().Close()
 	if err != nil {
 		err = errors.Wrap(err, "close slave mysql conn error：")
-		panic(err)
+		return
 	}
 	return nil
 }

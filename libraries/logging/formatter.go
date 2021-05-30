@@ -64,7 +64,6 @@ func (f *SimpleFormatter) Format(record *Record) ([]byte, error) {
 	}
 
 	f.formatHeader(&buf, time.Time(record.MilliSecond), record.File, record.Line)
-	buf = append(buf, []byte(fmt.Sprintf("%s", record.Msg))...)
 
 	if (f.flag | Lcolor) != 0 {
 		buf = append(buf, []byte("\033[0m")...)

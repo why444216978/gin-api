@@ -29,8 +29,8 @@ func Do(c *gin.Context) {
 	})
 	err := g.Wait()
 	if err != nil {
-		response.Response(c, response.CODE_SERVER, goods, "")
 		logging.ErrorCtx(c, map[string]interface{}{"err": err.Error()})
+		response.Response(c, response.CODE_SERVER, goods, "")
 		return
 	}
 

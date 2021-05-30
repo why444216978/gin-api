@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -142,8 +141,6 @@ func (sh *StreamHandler) SyncFormatterReceive(r *Record) {
 	}
 	sh.RUnlock()
 
-	r.Seq = atomic.AddInt64(&counter, 1)
-
 	var (
 		buf []byte
 		err error
@@ -198,7 +195,6 @@ func (sh *StreamHandler) Run() {
 			select {
 			case record = <-sh.logChan:
 				sh.counter += 1
-				record.Seq = sh.counter //只有当前goroutine读写counter,不会RACE
 				var (
 					buf []byte
 					err error

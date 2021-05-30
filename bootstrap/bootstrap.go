@@ -50,3 +50,11 @@ func initLogger() {
 	}
 	logging.Init(&c)
 }
+
+func initJaeger(db string) {
+	var err error
+	resource.TestDB, err = mysql.GetConn(db)
+	if err != nil {
+		panic(err)
+	}
+}

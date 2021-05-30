@@ -2,7 +2,6 @@ package redis
 
 import (
 	"fmt"
-	"gin-api/app_const"
 	"gin-api/libraries/logging"
 	"strconv"
 	"strings"
@@ -128,7 +127,6 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 		return
 	}
 	var (
-		ctx     = c.Request.Context()
 		conn    = db.pool.Get()
 		argsStr []string
 	)
@@ -138,16 +136,9 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	logCfg := config.GetConfigToJson("log", "log")
 	headerLogField := logCfg["header_field"].(string)
 
-	header := &logging.LogHeader{
-		LogId:     c.Writer.Header().Get(headerLogField),
-		CallerIp:  c.ClientIP(),
-		Port:      app_const.SERVICE_PORT,
-		Product:   app_const.PRODUCT,
-		Module:    "databus/redis",
-		ServiceId: app_const.SERVICE_NAME,
-		UriPath:   c.Request.RequestURI,
-		Env:       app_const.ENV,
-	}
+	header := logging.GetLogHeader(c)
+	header.LogId = c.Writer.Header().Get(headerLogField)
+	header.Module = "databus/redis"
 
 	reply, err = conn.Do(commandName, args...)
 
@@ -156,10 +147,9 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	}
 
 	defer func() {
-		ctx = logging.ContextWithLogHeader(ctx, header)
-
 		if err != nil {
-			logging.Errorf(header, "redis do:[%s], error: %s", fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")), err)
+			header.Error = fmt.Sprintf("redis do:[%s], error: %s", fmt.Sprint(commandName, " ", strings.Join(argsStr, " ")), err.Error())
+			logging.ErrorCtx(c)
 		}
 	}()
 

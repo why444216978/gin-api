@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -48,39 +47,33 @@ func (t hts) MarshalJSON() ([]byte, error) {
 }
 
 type Record struct {
-	Timestamp   ts          `json:"timestamp"`
-	MilliSecond millts      `json:"millisecond"`
-	HumanTime   hts         `json:"human_time"`
-	Level       LogLevel    `json:"level"`
-	File        string      `json:"file"`
-	Line        int         `json:"line"`
-	Func        string      `json:"func"`
-	Msg         interface{} `json:"msg"`
-	Trace       interface{} `json:"trace,omitempty"`
-	Seq         int64       `json:"seq"` //用于日志排序
+	Timestamp   ts       `json:"timestamp"`
+	MilliSecond millts   `json:"millisecond"`
+	HumanTime   hts      `json:"human_time"`
+	Level       LogLevel `json:"level"`
+	File        string   `json:"file"`
+	Line        int      `json:"line"`
+	Func        string   `json:"func"`
 	LogHeader
 	RPCRecord `json:",omitempty"`
 }
 
 type LogHeader struct {
-	LogId                 string `json:"logid"`
-	CallerIp              string `json:"caller_ip"`
-	HostIp                string `json:"host_ip"`
-	Port                  int
-	Product               string        `json:"product"`
-	Module                string        `json:"module"`
-	ServiceId             string        `json:"service_id"`
-	InstanceId            string        `json:"instance_id"`
-	UriPath               string        `json:"uri_path"`
-	Tag                   string        `json:"tag"`
-	Env                   string        `json:"env"`
-	SVersion              string        `json:"sversion"`
-	Request               *http.Request `json:"-"`
-	DownstreamErrServices string        `json:"downstream_err_services,omitempty"`
-	TraceID               string        `json:"trace_id"`
-	SpanID                string        `json:"span_id"`
-	GrayMark              string        `json:"gray_mark"`
-	Cost                  int64         `json:"cost"`
+	Header   http.Header `json:"header"`
+	Request  interface{} `json:"request"`
+	Response interface{} `json:"response,omitempty"`
+	HTTPCode int         `json:"http_code"`
+	LogId    string      `json:"logid"`
+	CallerIp string      `json:"caller_ip"`
+	HostIp   string      `json:"host_ip"`
+	Port     int         `json:"port"`
+	UriPath  string      `json:"uri_path"`
+	TraceID  string      `json:"trace_id"`
+	SpanID   string      `json:"span_id"`
+	Cost     int64       `json:"cost"`
+	Module   string      `json:"module"`
+	Trace    interface{} `json:"trace,omitempty"`
+	Error    interface{} `json:"error,omitempty"`
 }
 
 func NewLogHeader() *LogHeader {
@@ -97,73 +90,10 @@ func (h *LogHeader) Dup() *LogHeader {
 	}
 
 	return &LogHeader{
-		LogId:      h.LogId,
-		CallerIp:   h.CallerIp,
-		HostIp:     h.HostIp,
-		Product:    h.Product,
-		Module:     h.Module,
-		ServiceId:  h.ServiceId,
-		InstanceId: h.InstanceId,
-		UriPath:    h.UriPath,
-		Tag:        h.Tag,
-		Env:        h.Env,
-		SVersion:   h.SVersion,
-		Request:    h.Request,
-		GrayMark:   h.GrayMark,
-	}
-}
-
-func (h *LogHeader) AddTag(tag ...string) {
-	if h == nil {
-		return
-	}
-
-	var (
-		ss  []string
-		set map[string]bool
-	)
-	if h.Tag != "" {
-		ss = strings.Split(h.Tag, ",")
-	}
-	ss = append(ss, tag...)
-	set = make(map[string]bool, len(ss))
-	//去重
-	for _, s := range ss {
-		if s != "" {
-			set[s] = true
-		}
-	}
-
-	if len(set) == 0 {
-		h.Tag = ""
-	} else {
-		ss = make([]string, len(set))
-		idx := 0
-		for s, _ := range set {
-			ss[idx] = s
-			idx += 1
-		}
-
-		h.Tag = strings.Join(ss, ",")
-	}
-}
-
-func (h *LogHeader) SetTag(tag ...string) {
-	if h == nil {
-		return
-	}
-
-	h.Tag = ""
-	for _, t := range tag {
-		h.AddTag(t)
-	}
-}
-
-func (h *LogHeader) GetAppKey() string {
-	if h == nil {
-		return ""
-	} else {
-		return fmt.Sprintf("%s_%s_%s", h.Product, h.Module, h.Env)
+		LogId:    h.LogId,
+		CallerIp: h.CallerIp,
+		HostIp:   h.HostIp,
+		Request:  h.Request,
 	}
 }
 

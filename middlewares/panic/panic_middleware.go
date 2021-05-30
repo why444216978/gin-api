@@ -2,18 +2,13 @@ package panic
 
 import (
 	"bytes"
-	"gin-api/app_const"
-	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
 	"gin-api/response"
-	"io/ioutil"
+	"net/http"
 	"runtime/debug"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/why444216978/go-util/conversion"
-	"github.com/why444216978/go-util/sys"
-	"github.com/why444216978/go-util/url"
 )
 
 type bodyLogWriter struct {
@@ -27,12 +22,42 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ThrowPanic() gin.HandlerFunc {
-	envCfg := config.GetConfigToJson("env", "env")
-	logCfg := config.GetConfigToJson("log", "log")
-	queryLogField := logCfg["query_field"].(string)
-	headerLogField := logCfg["header_field"].(string)
-
+	// logCfg := config.GetConfigToJson("log", "log")
+	// queryLogField := logCfg["query_field"].(string)
+	// headerLogField := logCfg["header_field"].(string)
 	return func(c *gin.Context) {
+		// var logID string
+		// switch {
+		// case c.Query(queryLogField) != "":
+		// 	logID = c.Query(queryLogField)
+		// case c.Request.Header.Get(headerLogField) != "":
+		// 	logID = c.Request.Header.Get(headerLogField)
+		// default:
+		// 	logID = logging.NewObjectId().Hex()
+		// }
+		// c.Header(headerLogField, logID)
+
+		// reqBody := []byte{}
+		// if c.Request.Body != nil { // Read
+		// 	reqBody, _ = ioutil.ReadAll(c.Request.Body)
+		// }
+		// reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
+		// c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
+
+		// hostIP, _ := sys.ExternalIP()
+		// header := &logging.LogHeader{
+		// 	HTTPCode: c.Writer.Status(),
+		// 	Header:   c.Request.Header,
+		// 	LogId:    logID,
+		// 	CallerIp: c.ClientIP(),
+		// 	HostIp:   hostIP,
+		// 	Port:     app_const.SERVICE_PORT,
+		// 	UriPath:  c.Request.RequestURI,
+		// 	Module:   "http",
+		// 	Request:  reqBodyMap,
+		// }
+		// logging.WriteLogHeader(c, header)
+
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
 				mailDebugStack := ""
@@ -43,58 +68,18 @@ func ThrowPanic() gin.HandlerFunc {
 					debugStack[k] = v
 				}
 
-				var logId string
-				switch {
-				case c.Query(queryLogField) != "":
-					logId = c.Query(queryLogField)
-				case c.Request.Header.Get(headerLogField) != "":
-					logId = c.Request.Header.Get(headerLogField)
-				default:
-					logId = logging.NewObjectId().Hex()
-				}
-
-				c.Header(headerLogField, logId)
-
-				reqBody := []byte{}
-				if c.Request.Body != nil { // Read
-					reqBody, _ = ioutil.ReadAll(c.Request.Body)
-				}
-				strReqBody := string(reqBody)
-
-				c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
 				responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 				c.Writer = responseWriter
 
-				responseBody := responseWriter.body.String()
+				header := logging.GetLogHeader(c)
+				header.HTTPCode = http.StatusInternalServerError
+				header.Trace = debugStack
+				header.Error = err
+				logging.WriteLogHeader(c, header)
 
-				hostIp, _ := sys.ExternalIP()
-
-				header := &logging.LogHeader{
-					LogId:     logId,
-					CallerIp:  c.ClientIP(),
-					HostIp:    hostIp,
-					Port:      app_const.SERVICE_PORT,
-					Product:   app_const.PRODUCT,
-					Module:    app_const.MODULE,
-					ServiceId: app_const.SERVICE_NAME,
-					UriPath:   c.Request.RequestURI,
-					Env:       envCfg["env"].(string),
-				}
-
-				reqMap := make(map[string]interface{})
-				reqMap, _ = conversion.JsonToMap(strReqBody)
-
-				respMap := make(map[string]interface{})
-				respMap, _ = conversion.JsonToMap(responseBody)
-
-				logging.Error(header, map[string]interface{}{
-					"requestHeader": c.Request.Header,
-					"requestBody":   reqMap,
-					"responseBody":  respMap,
-					"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
-					"err":           err,
-					"trace":         debugStack,
-				})
+				logging.ErrorCtx(c)
+				response.Response(c, response.CODE_SERVER, nil, "")
+				c.AbortWithStatus(http.StatusInternalServerError)
 
 				//subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")
 				//
@@ -115,8 +100,6 @@ func ThrowPanic() gin.HandlerFunc {
 				//	Body:     body,
 				//}
 				//_ = mail.Send(options)
-
-				response.Response(c, response.CODE_SERVER, nil, "")
 			}
 		}(c)
 		c.Next()

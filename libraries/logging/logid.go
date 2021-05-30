@@ -48,13 +48,13 @@ func initMachineId() []byte {
 	return id
 }
 
-func StrToObjectId(str string) ObjectId {
+func StrToObjectId(str string) (ObjectId, error) {
+	var b [12]byte
 	byteArr, err := hex.DecodeString(str)
 	if err != nil {
-		panic(err.Error())
+		return b, err
 	}
 
-	var b [12]byte
 	i := 0
 	for {
 		if i == 12 {
@@ -64,7 +64,7 @@ func StrToObjectId(str string) ObjectId {
 		i++
 	}
 
-	return b
+	return b, nil
 }
 
 // NewObjectId returns a new unique ObjectId.
@@ -99,10 +99,10 @@ func NewObjectIdWithTime(t time.Time) ObjectId {
 	return b
 }
 
-func NewObjectIdWithHexString(s string) (o ObjectId) {
+func NewObjectIdWithHexString(s string) (o ObjectId, err error) {
 	d, err := hex.DecodeString(s)
 	if err != nil || len(d) != 12 {
-		panic(fmt.Sprintf("invalid input to ObjectIdHex: %q", s))
+		return
 	}
 	copy(o[:], d[:12])
 	return

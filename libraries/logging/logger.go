@@ -137,10 +137,10 @@ func (l *Logger) output(calldepth int, lvl LogLevel, header *LogHeader, s interf
 	//TODO
 	//此处使用了指针,可能有race的问题,concurrent read and write
 
+	header.Error = s
 	record := &Record{
 		Timestamp: ts(time.Now()),
 		Level:     lvl,
-		Msg:       s,
 		File:      filepath.Base(file),
 		Line:      line,
 		Func:      runtime.FuncForPC(pc).Name(),
@@ -210,33 +210,23 @@ func (l *Logger) Shutdown() <-chan bool {
 	}
 }
 
-func Debugf(header *LogHeader, format string, v ...interface{}) {
-	defaultLogger.Debugf(header, format, v...)
-}
-func Debug(header *LogHeader, v ...interface{}) {
+func DebugCtx(c *gin.Context, v ...interface{}) {
+	header := GetLogHeader(c)
 	defaultLogger.Debug(header, v...)
 }
-func Infof(header *LogHeader, format string, v ...interface{}) {
-	defaultLogger.Infof(header, format, v...)
-}
-func Info(header *LogHeader, v ...interface{}) {
+func InfoCtx(c *gin.Context, v ...interface{}) {
+	header := GetLogHeader(c)
 	defaultLogger.Info(header, v...)
 }
-func Errorf(header *LogHeader, format string, v ...interface{}) {
-	defaultLogger.Errorf(header, format, v...)
-}
-func Error(header *LogHeader, v ...interface{}) {
+func ErrorCtx(c *gin.Context, v ...interface{}) {
+	header := GetLogHeader(c)
 	defaultLogger.Error(header, v...)
 }
-func ErrorCtx(c *gin.Context, v ...interface{}) {
-	defaultLogger.Error(GetLogHeader(c), v...)
-}
-func Warnf(header *LogHeader, format string, v ...interface{}) {
-	defaultLogger.Warnf(header, format, v...)
-}
-func Warn(header *LogHeader, v ...interface{}) {
+func WarnCtx(c *gin.Context, v ...interface{}) {
+	header := GetLogHeader(c)
 	defaultLogger.Warn(header, v...)
 }
+
 func Shutdown() <-chan bool {
 	if defaultLogger != nil {
 		return defaultLogger.Shutdown()
@@ -253,8 +243,13 @@ func Notify(sig os.Signal) {
 	}
 }
 
-func GetLogHeader(c *gin.Context) *LogHeader {
-	return c.Request.Context().Value(CONTEXT_LOG_HEADER).(*LogHeader)
+func GetLogHeader(c *gin.Context) (header *LogHeader) {
+	h := c.Request.Context().Value(CONTEXT_LOG_HEADER)
+	header, ok := h.(*LogHeader)
+	if !ok {
+		header = &LogHeader{}
+	}
+	return
 }
 
 func WriteLogHeader(c *gin.Context, header *LogHeader) {

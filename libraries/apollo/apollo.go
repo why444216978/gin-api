@@ -77,7 +77,7 @@ func DoLoadApolloConf(host, service, cluster, token string, space []string) (map
 	return cfgMap, nil
 }
 
-func LoadApolloConf(service string, space []string) (map[string]string) {
+func LoadApolloConf(service string, space []string) (map[string]string, error) {
 	var err error
 	apolloOnce.Do(func() {
 		apolloConfigs = make(map[string]string)
@@ -85,18 +85,16 @@ func LoadApolloConf(service string, space []string) (map[string]string) {
 		cluster := os.Getenv("RUNTIME_CLUSTER")
 		token := os.Getenv("CONFIG_CENTER_TOKEN")
 		apolloConfigs, err = DoLoadApolloConf(host, service, cluster, token, space)
-		if err != nil{
-			panic(err)
-		}
 		fmt.Println("get apollo")
 	})
 
-	return apolloConfigs
+	return apolloConfigs, err
 }
 
 func Test() {
 	service := app_const.SERVICE_NAME
 	space := []string{"application"}
-	conf := LoadApolloConf(service, space)
+	conf, err := LoadApolloConf(service, space)
 	fmt.Println(conf)
+	fmt.Println(err)
 }

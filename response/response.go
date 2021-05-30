@@ -32,7 +32,7 @@ type response struct {
 }
 
 func Response(c *gin.Context, code Code, data interface{}, errmsg string) {
-	if data == nil {
+	if data == nil || code != CODE_SUCCESS {
 		data = make(map[string]interface{})
 	}
 
@@ -46,5 +46,4 @@ func Response(c *gin.Context, code Code, data interface{}, errmsg string) {
 		Data:   data,
 		ErrMsg: errmsg,
 	})
-	c.Done()
 }

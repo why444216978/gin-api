@@ -36,16 +36,15 @@ func GetConfigToJson(file, section string) map[string]interface{} {
 	ret := make(map[string]interface{}, 10)
 
 	if app_const.CONFIG_SOURCE == SOURCE_APOLLO {
-		cfg := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
+		cfg, _ := apollo.LoadApolloConf(app_const.SERVICE_NAME, []string{"application"})
 		cfgMap, _ := conversion.JsonToMap(cfg[file])
 		ret = cfgMap[section].(map[string]interface{})
 	} else if app_const.CONFIG_SOURCE == SOURCE_JSON {
-		return getJsonConfig(file, section)
+		ret = getJsonConfig(file, section)
 	} else if app_const.CONFIG_SOURCE == SOURCE_INI {
-		return getIniConfig(file, section)
-	} else {
-		panic("log source type error")
+		ret, _ = getIniConfig(file, section)
 	}
+
 	return ret
 }
 
@@ -63,15 +62,15 @@ func getJsonConfig(file, section string) map[string]interface{} {
 	return cfgList[file].(map[string]interface{})
 }
 
-func getIniConfig(file string, cfgSection string) map[string]interface{} {
+func getIniConfig(file string, cfgSection string) (map[string]interface{}, error) {
 	if cfgList[file] != nil {
-		return cfgList[file].(map[string]interface{})
+		return cfgList[file].(map[string]interface{}), nil
 	}
 
 	configFile := fmt.Sprintf("%s%s.ini", path, file)
 	iniFile, err := ini.Load(configFile)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	section := iniFile.Section(cfgSection)
 
@@ -85,5 +84,5 @@ func getIniConfig(file string, cfgSection string) map[string]interface{} {
 
 	log.Println(fmt.Sprintf("load %s.json", file))
 
-	return cfgList[file].(map[string]interface{})
+	return cfgList[file].(map[string]interface{}), err
 }

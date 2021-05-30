@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/sys"
-	"github.com/why444216978/go-util/url"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -29,34 +28,51 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func LoggerMiddleware() gin.HandlerFunc {
-	envCfg := config.GetConfigToJson("env", "env")
+func WithContext() gin.HandlerFunc {
 	logCfg := config.GetConfigToJson("log", "log")
 	queryLogField := logCfg["query_field"].(string)
 	headerLogField := logCfg["header_field"].(string)
 
 	return func(c *gin.Context) {
-		start := time.Now()
-
-		var logId string
+		var logID string
 		switch {
 		case c.Query(queryLogField) != "":
-			logId = c.Query(queryLogField)
+			logID = c.Query(queryLogField)
 		case c.Request.Header.Get(headerLogField) != "":
-			logId = c.Request.Header.Get(headerLogField)
+			logID = c.Request.Header.Get(headerLogField)
 		default:
-			logId = logging.NewObjectId().Hex()
+			logID = logging.NewObjectId().Hex()
 		}
-
-		c.Header(headerLogField, logId)
+		c.Header(headerLogField, logID)
 
 		reqBody := []byte{}
 		if c.Request.Body != nil { // Read
 			reqBody, _ = ioutil.ReadAll(c.Request.Body)
 		}
 		reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
-
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
+
+		hostIP, _ := sys.ExternalIP()
+		header := &logging.LogHeader{
+			HTTPCode: c.Writer.Status(),
+			Header:   c.Request.Header,
+			LogId:    logID,
+			CallerIp: c.ClientIP(),
+			HostIp:   hostIP,
+			Port:     app_const.SERVICE_PORT,
+			UriPath:  c.Request.RequestURI,
+			Module:   "http",
+			Request:  reqBodyMap,
+		}
+		logging.WriteLogHeader(c, header)
+		c.Next()
+	}
+}
+
+func LoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+
 		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 		c.Writer = responseWriter
 
@@ -65,29 +81,13 @@ func LoggerMiddleware() gin.HandlerFunc {
 		responseBody := responseWriter.body.String()
 		responseBodyMap, _ := conversion.JsonToMap(responseBody)
 
-		hostIp, _ := sys.ExternalIP()
-
-		header := &logging.LogHeader{
-			LogId:     logId,
-			CallerIp:  c.ClientIP(),
-			HostIp:    hostIp,
-			Port:      app_const.SERVICE_PORT,
-			Product:   app_const.PRODUCT,
-			Module:    app_const.MODULE,
-			ServiceId: app_const.SERVICE_NAME,
-			UriPath:   c.Request.RequestURI,
-			Env:       envCfg["env"].(string),
-			Cost:      time.Now().Sub(start).Milliseconds(),
-		}
+		header := logging.GetLogHeader(c)
+		header.Cost = time.Now().Sub(start).Milliseconds()
+		header.Response = responseBodyMap
 		logging.WriteLogHeader(c, header)
 
-		logging.Info(header, map[string]interface{}{
-			"requestHeader": c.Request.Header,
-			"requestBody":   reqBodyMap,
-			"responseBody":  responseBodyMap,
-			"uriQuery":      url.ParseUriQueryToMap(c.Request.URL.RawQuery),
-			"http_code":     c.Writer.Status(),
-		})
-
+		if !c.IsAborted() {
+			logging.InfoCtx(c)
+		}
 	}
 }

@@ -53,7 +53,6 @@ func OpenTracing() gin.HandlerFunc {
 }
 
 func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
-
 	cfg := &jaegerConfig.Configuration{
 		Sampler: &jaegerConfig.SamplerConfig{
 			Type:  "const", //固定采样
@@ -70,7 +69,7 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
 
 	tracer, closer, err := cfg.NewTracer(jaegerConfig.Logger(jaeger.StdLogger))
 	if err != nil {
-		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
+		fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err)
 	}
 	opentracing.SetGlobalTracer(tracer)
 	return tracer, closer

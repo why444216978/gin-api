@@ -1,11 +1,18 @@
 package opentracing
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"gin-api/libraries/config"
-	rpc_http "gin-api/libraries/http"
 	"gin-api/response"
+
+	"github.com/why444216978/go-util/conversion"
+	util_http "github.com/why444216978/go-util/http"
 )
 
 func Rpc(c *gin.Context) {
@@ -14,9 +21,13 @@ func Rpc(c *gin.Context) {
 
 	logCfg := config.GetConfigToJson("log", "log")
 	logId := c.Writer.Header().Get(logCfg["query_field"].(string))
-	sendUrl := "https://www.baidu.com"
+	sendUrl := "https://www.baidu.com?logid=" + logId
 
-	ret := rpc_http.HttpSend(c, "GET", sendUrl, logId, postData)
+	body, _ := conversion.MapToJson(postData)
+
+	ret, err := util_http.Send(c.Request.Context(), http.MethodGet, sendUrl, nil, strings.NewReader(body), time.Second)
+	fmt.Println(ret)
+	fmt.Println(err)
 
 	response.Response(c, response.CODE_SUCCESS, ret, "")
 }

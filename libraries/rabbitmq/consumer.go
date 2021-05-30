@@ -15,7 +15,7 @@ func (*TestConsumer) Do(d amqp.Delivery, header *logging.LogHeader) error {
 	fmt.Println(string(d.Body))
 	err := d.Ack(false)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
 	return err
 }

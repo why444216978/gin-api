@@ -20,6 +20,8 @@ func InitRouter() *gin.Engine {
 
 	server.Use(gin.Recovery())
 
+	server.Use(log.WithContext())
+
 	server.Use(panic.ThrowPanic())
 
 	server.Use(limiter.Limiter(10))
@@ -47,7 +49,7 @@ func InitRouter() *gin.Engine {
 	testGroup := server.Group("/test")
 	{
 		testGroup.GET("/rpc", opentracing.Rpc)
-		testGroup.GET("/panic", opentracing.Panic)
+		testGroup.POST("/panic", opentracing.Panic)
 		testGroup.POST("/conn", conn.Do)
 	}
 

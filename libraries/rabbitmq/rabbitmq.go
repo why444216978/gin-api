@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"gin-api/libraries/logging"
-	"github.com/streadway/amqp"
 	srcLog "log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/streadway/amqp"
 )
 
 // 定义接收者接口
@@ -81,30 +83,19 @@ func consume(d amqp.Delivery, consumeMsg ConsumeMsg) {
 		CallerIp: "",
 		HostIp:   "",
 		Port:     0,
-		Product:  "",
 		Module:   "",
-		//ServiceId:  serviceId,
-		//InstanceId: host,
-		UriPath: "",
-		Env: "",
+		UriPath:  "",
 	}
 
 	err := consumeMsg.Do(d, logFormat)
-	if err != nil{
-		panic(err)
-	}
-
+	var c *gin.Context
 	if err != nil {
-		logging.Errorf(logFormat, "failed to consumer msg:%s, err%s", d.Body, err.Error())
-		if err != nil{
-			panic(err)
-		}
+		logging.ErrorCtx(c, fmt.Sprintf("failed to consumer msg:%s, err%s", d.Body, err.Error()))
 		return
 	}
 }
 
-func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName, tag string, ctx context.Context, header http.Header) error {
-	var err error
+func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName, tag string, ctx context.Context, header http.Header) (err error) {
 	c := &Consumer{
 		amqpURI:   amqpURI,
 		queueName: queueName,
@@ -126,8 +117,8 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 	defer c.channel.Close()
 
 	err = c.channel.ExchangeDeclare(exchangeName, exchangeType, true, false, false, false, nil)
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	_, err = c.channel.QueueDeclare(
@@ -138,13 +129,13 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 		false,     // no-wait
 		nil,       // arguments
 	)
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	err = c.channel.QueueBind(queueName, routeName, exchangeName, false, nil)
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	err = c.channel.Publish(
@@ -156,16 +147,14 @@ func NewProducer(msg, amqpURI, exchangeName, exchangeType, queueName, routeName,
 			ContentType: "text/plain",
 			Body:        []byte(msg),
 		})
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	return nil
 }
 
-func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeName, tag string) error {
-	var err error
-
+func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeName, tag string) (err error) {
 	c := &Consumer{
 		amqpURI:   amqpURI,
 		queueName: queueName,
@@ -207,13 +196,13 @@ func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeNa
 		false,     // no-wait
 		nil,       // arguments
 	)
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	err = c.channel.QueueBind(queueName, routeName, exchangeName, false, nil)
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	err = c.channel.Publish(
@@ -225,8 +214,8 @@ func NewProducerCmd(msg, amqpURI, exchangeName, exchangeType, queueName, routeNa
 			ContentType: "text/plain",
 			Body:        []byte(msg),
 		})
-	if err != nil{
-		panic(err)
+	if err != nil {
+		return
 	}
 
 	return nil
