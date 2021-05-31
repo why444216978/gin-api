@@ -17,9 +17,15 @@ type DB struct {
 	Config    *Config
 }
 
-func newConn(c *Config) (db *DB, err error) {
-	db = new(DB)
-	db.Config = c
+func InitDB(database string) (db *DB, err error) {
+	c := &Config{
+		Master: getCoon(database + "_write"),
+		Slave:  getCoon(database + "_read"),
+	}
+
+	db = &DB{
+		Config: c,
+	}
 
 	db.masterDB, err = sql.Open("mysql", c.Master.DSN)
 	if err != nil {

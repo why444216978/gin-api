@@ -16,24 +16,10 @@ type Conn struct {
 type Config struct {
 	Master      Conn          `json:"master"`       //主库
 	Slave       Conn          `json:"slave"`        //从库
-	ExecTimeout time.Duration `json:"exec_timeout"` //超时打印日志
+	ExecTimeout time.Duration `json:"exec_timeout"` //超时阈值
 }
 
-func GetConn(database string) (*DB, error) {
-	cfg := &Config{
-		Master: conn(database + "_write"),
-		Slave:  conn(database + "_read"),
-	}
-
-	conn, err := newConn(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
-}
-
-func conn(conn string) Conn {
+func getCoon(conn string) Conn {
 	return Conn{
 		DSN:     getDSN(conn),
 		MaxOpen: getMaxOpen(conn),

@@ -15,7 +15,7 @@ func Bootstrap() {
 
 func initMysql(db string) {
 	var err error
-	resource.TestDB, err = mysql.GetConn(db)
+	resource.TestDB, err = mysql.InitDB(db)
 	if err != nil {
 		panic(err)
 	}
@@ -33,10 +33,6 @@ func initLogger() {
 	resource.Logger = logging.NewLogger("./logs/gin-api.log", "./logs/gin-api.wf.log")
 }
 
-func initJaeger(db string) {
-	var err error
-	resource.TestDB, err = mysql.GetConn(db)
-	if err != nil {
-		panic(err)
-	}
+func initJaeger(err string) {
+	return
 }
