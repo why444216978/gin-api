@@ -27,7 +27,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
-	github.com/why444216978/go-util v1.0.7
+	github.com/why444216978/go-util v1.0.8
 	go.starlark.net v0.0.0-20210511153848-cca21e7857d4 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
@@ -39,7 +39,9 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/ini.v1 v1.57.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
-	gorm.io/gorm v1.21.3
+	gorm.io/driver/mysql v1.1.0 // indirect
+	gorm.io/driver/sqlite v1.1.4 // indirect
+	gorm.io/gorm v1.21.9
 )
 
 replace github.com/gomodule/redigo v2.0.0+incompatible => github.com/gomodule/redigo/redis v0.0.0-20200429221454-e14091dffc1b

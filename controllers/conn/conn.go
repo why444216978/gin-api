@@ -12,7 +12,7 @@ import (
 )
 
 func Do(c *gin.Context) {
-	goods, _ := test_service.Instance.GetFirstRow(c, true)
+	goods, _ := test_service.New().GetFirstRow(c, true)
 	g, _ := errgroup.WithContext(c.Request.Context())
 	g.Go(func() (err error) {
 		goods.Name, err = goods_service.Instance.GetGoodsName(c, goods.Id)

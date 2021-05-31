@@ -1,24 +1,41 @@
 package test_model
 
 import (
-	"gin-api/resource"
+	"sync"
+
+	"gorm.io/gorm"
 )
 
 type TestInterface interface {
 	GetFirst() (Test, error)
 }
 
-var Instance TestInterface
+type TestModel struct {
+	dbMaster *gorm.DB
+	dbSlave  *gorm.DB
+}
 
-type TestModel struct{}
+var (
+	instance     TestInterface
+	instanceOnce sync.Once
+)
 
-func init() {
-	Instance = &TestModel{}
+func New(master, slave *gorm.DB) TestInterface {
+	instanceOnce.Do(func() {
+		instance = &TestModel{
+			dbMaster: master,
+			dbSlave:  slave,
+		}
+	})
+	return instance
 }
 
 func (m *TestModel) GetFirst() (test Test, err error) {
-	orm := resource.TestDB.SlaveOrm()
-	err = orm.Model(&test).Select("*").First(&test).Error
+	err = m.dbSlave.Model(&test).Select("*").First(&test).Error
+
+	if test.Id == 0 {
+		err = ErrDataEmpty
+	}
 
 	return
 }

@@ -4,34 +4,25 @@ import (
 	"fmt"
 	"gin-api/libraries/config"
 	"strconv"
+	"time"
 )
 
-type BaseModel struct {
-	readExecTimeout  int64
-	writeExecTimeout int64
+type Conn struct {
+	// DSN example root:123456@tcp(127.0.0.1:3306)/test?charset=utf8&parseTime=true
+	DSN     string `json:"dsn"`
+	MaxOpen int    `json:"max_open"`
+	MaxIdle int    `json:"max_idle"`
+}
+type Config struct {
+	Master      Conn          `json:"master"`       //主库
+	Slave       Conn          `json:"slave"`        //从库
+	ExecTimeout time.Duration `json:"exec_timeout"` //超时打印日志
 }
 
 func GetConn(database string) (*DB, error) {
-	write := database + "_write"
-	read := database + "_read"
-	writeDsn := getDSN(database + "_write")
-	readDsn := getDSN(database + "_read")
-
-	writeObj := Conn{
-		DSN:     writeDsn,
-		MaxOpen: getMaxOpen(write),
-		MaxIdle: getMaxIdle(write),
-	}
-
-	readObj := Conn{
-		DSN:     readDsn,
-		MaxOpen: getMaxOpen(read),
-		MaxIdle: getMaxOpen(read),
-	}
-
 	cfg := &Config{
-		Master: writeObj,
-		Slave:  readObj,
+		Master: conn(database + "_write"),
+		Slave:  conn(database + "_read"),
 	}
 
 	conn, err := newConn(cfg)
@@ -40,6 +31,14 @@ func GetConn(database string) (*DB, error) {
 	}
 
 	return conn, nil
+}
+
+func conn(conn string) Conn {
+	return Conn{
+		DSN:     getDSN(conn),
+		MaxOpen: getMaxOpen(conn),
+		MaxIdle: getMaxIdle(conn),
+	}
 }
 
 func getExecTimeout(conn string) int64 {

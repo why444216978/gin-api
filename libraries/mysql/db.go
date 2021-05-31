@@ -4,64 +4,76 @@ import (
 	"context"
 	"database/sql"
 
-	//_ "github.com/go-sql-driver/mysql"
-
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/pkg/errors"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-type (
-	DB struct {
-		masterDB *gorm.DB
-		slaveDB  *gorm.DB
-		Config   *Config
-	}
-)
+type DB struct {
+	masterOrm *gorm.DB
+	slaveOrm  *gorm.DB
+	masterDB  *sql.DB
+	slaveDB   *sql.DB
+	Config    *Config
+}
 
 func newConn(c *Config) (db *DB, err error) {
 	db = new(DB)
 	db.Config = c
-	db.masterDB, err = gorm.Open("mysql", c.Master.DSN)
+
+	db.masterDB, err = sql.Open("mysql", c.Master.DSN)
 	if err != nil {
 		err = errors.Wrap(err, "open master mysql conn error：")
-		return
+		return nil, err
 	}
-	db.masterDB.DB().SetMaxOpenConns(c.Master.MaxOpen)
-	db.masterDB.DB().SetMaxIdleConns(c.Master.MaxIdle)
-
-	db.slaveDB, err = gorm.Open("mysql", c.Slave.DSN)
+	db.masterOrm, err = gorm.Open(mysql.New(mysql.Config{
+		Conn: db.masterDB,
+	}), &gorm.Config{})
 	if err != nil {
-		err = errors.Wrap(err, "open master mysql conn error：")
+		err = errors.Wrap(err, "open master mysql orm error：")
 		return
 	}
+	db.masterDB.SetMaxOpenConns(c.Master.MaxOpen)
+	db.masterDB.SetMaxIdleConns(c.Master.MaxIdle)
 
-	db.slaveDB.DB().SetMaxOpenConns(c.Slave.MaxOpen)
-	db.slaveDB.DB().SetMaxIdleConns(c.Slave.MaxIdle)
+	db.slaveDB, err = sql.Open("mysql", c.Slave.DSN)
+	if err != nil {
+		err = errors.Wrap(err, "open slave mysql error：")
+		return nil, err
+	}
+	db.slaveOrm, err = gorm.Open(mysql.New(mysql.Config{
+		Conn: db.slaveDB,
+	}), &gorm.Config{})
+	if err != nil {
+		err = errors.Wrap(err, "open slave mysql orm conn error：")
+		return
+	}
+	db.slaveDB.SetMaxOpenConns(c.Slave.MaxOpen)
+	db.slaveDB.SetMaxIdleConns(c.Slave.MaxIdle)
 
 	return
 }
 
 func (db *DB) MasterOrm() *gorm.DB {
-	return db.masterDB
+	return db.masterOrm
 }
 
 func (db *DB) SlaveOrm() *gorm.DB {
-	return db.slaveDB
+	return db.slaveOrm
 }
 
 func (db *DB) MasterDB() *sql.DB {
-	return db.masterDB.DB()
+	return db.masterDB
 }
 
 func (db *DB) SlaveDB() *sql.DB {
-	return db.slaveDB.DB()
+	return db.slaveDB
 }
 
 // MasterDBClose 释放主库的资源
 func (db *DB) MasterDBClose() error {
 	if db.masterDB != nil {
-		err := db.masterDB.DB().Close()
+		err := db.masterDB.Close()
 		if err != nil {
 			err = errors.Wrap(err, "close master mysql conn error：")
 			return err
@@ -72,7 +84,7 @@ func (db *DB) MasterDBClose() error {
 
 // SlaveDBClose 释放从库的资源
 func (db *DB) SlaveDBClose() (err error) {
-	err = db.slaveDB.DB().Close()
+	err = db.slaveDB.Close()
 	if err != nil {
 		err = errors.Wrap(err, "close slave mysql conn error：")
 		return
