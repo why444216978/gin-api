@@ -8,7 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gin-api/libraries/config"
+	"gin-api/app_const"
+	"gin-api/libraries/logging"
 	"gin-api/response"
 
 	"github.com/why444216978/go-util/conversion"
@@ -19,13 +20,11 @@ func Rpc(c *gin.Context) {
 	postData := make(map[string]interface{})
 	postData["query"] = [1]string{"猕猴桃"}
 
-	logCfg := config.GetConfigToJson("log", "log")
-	logId := c.Writer.Header().Get(logCfg["query_field"].(string))
-	sendUrl := "https://www.baidu.com?logid=" + logId
+	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", app_const.SERVICE_PORT, logging.GetLogID(c))
 
 	body, _ := conversion.MapToJson(postData)
 
-	ret, err := util_http.Send(c.Request.Context(), http.MethodGet, sendUrl, nil, strings.NewReader(body), time.Second)
+	ret, err := util_http.Send(c, http.MethodPost, sendUrl, nil, strings.NewReader(body), time.Second)
 	fmt.Println(ret)
 	fmt.Println(err)
 

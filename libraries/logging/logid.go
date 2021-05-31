@@ -50,13 +50,25 @@ func initMachineId() []byte {
 	return id
 }
 
+func SetLogID(c *gin.Context) {
+	logID := GetLogID(c)
+	c.Set(LOG_FIELD, logID)
+	c.Header(LOG_FIELD, logID)
+}
+
 func GetLogID(c *gin.Context) string {
-	logID := c.Request.Header.Get(LOG_HEADER)
+	logID := c.Request.Header.Get(LOG_FIELD)
+
+	if logID == "" {
+		l, ok := c.Get("Log-Id")
+		if ok {
+			logID = l.(string)
+		}
+	}
+
 	if logID == "" {
 		logID = NewObjectId().Hex()
 	}
-
-	c.Header(LOG_HEADER, logID)
 
 	return logID
 }

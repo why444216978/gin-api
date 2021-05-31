@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
 	"gin-api/libraries/redis"
@@ -11,6 +12,7 @@ func Bootstrap() {
 	initLogger()
 	initMysql("default")
 	initRedis("default")
+	initJaeger()
 }
 
 func initMysql(db string) {
@@ -33,6 +35,7 @@ func initLogger() {
 	resource.Logger = logging.NewLogger("./logs/gin-api.log", "./logs/gin-api.wf.log")
 }
 
-func initJaeger(err string) {
+func initJaeger() {
+	resource.Tracer, _ = jaeger.NewJaegerTracer("127.0.0.1:6831")
 	return
 }

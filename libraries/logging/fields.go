@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	LOG_HEADER = "X-Log-Id"
+	LOG_FIELD = "Log-Id"
 )
 
 type Common struct {
