@@ -12,7 +12,7 @@ func OpenTracing() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tracer := opentracing.GlobalTracer()
 
-		_, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.Request.Header))
+		_, err := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.Request.Header))
 		if err == nil {
 			return
 		}

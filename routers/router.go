@@ -44,6 +44,7 @@ func InitRouter() *gin.Engine {
 	testGroup := server.Group("/test")
 	{
 		testGroup.POST("/rpc", opentracing.Rpc)
+		testGroup.POST("/rpc1", opentracing.Rpc1)
 		testGroup.POST("/panic", opentracing.Panic)
 		testGroup.POST("/conn", conn.Do)
 	}
