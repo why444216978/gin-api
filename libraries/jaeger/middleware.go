@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"fmt"
+	"gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
@@ -21,6 +22,7 @@ func OpenTracing() gin.HandlerFunc {
 		span := spanContextToJaegerContext(sp.Context())
 		sp.SetTag(FIELD_TRACE_ID, span.TraceID().String())
 		sp.SetTag(FIELD_SPAN_ID, span.SpanID().String())
+		sp.SetTag(FIELD_LOG_ID, logging.ValueLogID(c))
 
 		c.Set(FIELD_TRACER, tracer)
 		c.Set(FIELD_SPAN, sp)

@@ -3,6 +3,7 @@ package jaeger
 import (
 	"errors"
 	"fmt"
+	"gin-api/libraries/logging"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -34,6 +35,7 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 	}
 
 	//设置请求header
+	req.Header.Add(logging.LOG_FIELD, logging.ValueLogID(c))
 	for k, v := range header {
 		req.Header.Add(k, v)
 	}
@@ -52,6 +54,7 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 		sp := spanContextToJaegerContext(span.Context())
 		span.SetTag(FIELD_TRACE_ID, sp.TraceID().String())
 		span.SetTag(FIELD_SPAN_ID, sp.SpanID().String())
+		span.SetTag(FIELD_LOG_ID, logging.ValueLogID(c))
 
 		err = tracer.(opentracing.Tracer).Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 		if err != nil {
