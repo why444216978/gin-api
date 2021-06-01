@@ -2,7 +2,6 @@ package jaeger
 
 import (
 	"context"
-	"fmt"
 	"gin-api/app_const"
 	"io"
 	"strings"
@@ -17,14 +16,14 @@ import (
 )
 
 const (
-	FIELD_LOG_ID       = "Log-Id"
-	FIELD_TRACE_ID     = "Trace-Id"
-	FIELD_SPAN_ID      = "Span-Id"
-	FIELD_TRACER       = "Tracer"
-	FIELD_SPAN_CONTEXT = "Span-Context"
+	FIELD_LOG_ID   = "Log-Id"
+	FIELD_TRACE_ID = "Trace-Id"
+	FIELD_SPAN_ID  = "Span-Id"
+	FIELD_TRACER   = "Tracer"
+	FIELD_SPAN     = "Span"
 )
 
-func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
+func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer, error) {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{
 			Type:  "const", //固定采样
@@ -41,13 +40,13 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer) {
 
 	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
 	if err != nil {
-		fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err)
+		return nil, nil, err
 	}
 	opentracing.SetGlobalTracer(tracer)
-	return tracer, closer
+	return tracer, closer, nil
 }
 
-func SpanContextToJaegerContext(spanContext opentracing.SpanContext) jaeger.SpanContext {
+func spanContextToJaegerContext(spanContext opentracing.SpanContext) jaeger.SpanContext {
 	if sc, ok := spanContext.(jaeger.SpanContext); ok {
 		return sc
 	} else {

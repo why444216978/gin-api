@@ -6,17 +6,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"gin-api/app_const"
+	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/response"
 
+	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
-	util_http "github.com/why444216978/go-util/http"
 )
 
 func Rpc(c *gin.Context) {
+	time.Sleep(time.Second)
 	postData := make(map[string]interface{})
 	postData["query"] = [1]string{"猕猴桃"}
 
@@ -24,9 +24,10 @@ func Rpc(c *gin.Context) {
 
 	body, _ := conversion.MapToJson(postData)
 
-	ret, err := util_http.Send(c, http.MethodPost, sendUrl, nil, strings.NewReader(body), time.Second)
-	fmt.Println(ret)
-	fmt.Println(err)
+	ret, err := jaeger.JaegerSend(c, http.MethodPost, sendUrl, nil, strings.NewReader(body), time.Second)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	response.Response(c, response.CODE_SUCCESS, ret, "")
 }

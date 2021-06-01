@@ -36,6 +36,11 @@ func initLogger() {
 }
 
 func initJaeger() {
-	resource.Tracer, _ = jaeger.NewJaegerTracer("127.0.0.1:6831")
+	var err error
+	resource.Tracer, _, err = jaeger.NewJaegerTracer("127.0.0.1:6831")
+	if err != nil {
+		panic(err)
+	}
+
 	return
 }

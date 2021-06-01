@@ -135,3 +135,30 @@ func (db *RedisDB) Do(ctx context.Context, commandName string, args ...interface
 
 	return
 }
+
+func (db *RedisDB) String(ctx context.Context, commandName string, args ...interface{}) (reply string, err error) {
+	reply, err = redis.String(db.Do(ctx, commandName, args...))
+	if err == redis.ErrNil {
+		err = nil
+	}
+
+	return
+}
+
+func (db *RedisDB) Strings(ctx context.Context, commandName string, args ...interface{}) (reply []string, err error) {
+	reply, err = redis.Strings(db.Do(ctx, commandName, args...))
+	if err == redis.ErrNil {
+		err = nil
+	}
+
+	return
+}
+
+func (db *RedisDB) Int(ctx context.Context, commandName string, args ...interface{}) (reply int, err error) {
+	reply, err = redis.Int(db.Do(ctx, commandName, args...))
+	if err == redis.ErrNil {
+		err = nil
+	}
+
+	return
+}
