@@ -14,6 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	LOG_FIELD = "Log-Id"
+)
+
 // LogId is a unique ID identifying a log record. It must be exactly 12 bytes
 // long.
 //
@@ -29,6 +33,52 @@ var (
 	// to NewObjectId function.
 	machineId = initMachineId()
 )
+
+// GetLogID get log id from *gin.Context
+func GetLogID(c *gin.Context) string {
+	l, ok := c.Get("a")
+	if !ok {
+		return ExtractLogID(c)
+	}
+	logID, ok := l.(string)
+	if !ok {
+		return ExtractLogID(c)
+	}
+	return logID
+}
+
+// ExtractLogID init log id
+func ExtractLogID(c *gin.Context) string {
+	logID := c.Request.Header.Get(LOG_FIELD)
+
+	if logID == "" {
+		logID = newObjectId().Hex()
+	}
+
+	c.Header(LOG_FIELD, logID)
+
+	return logID
+}
+
+// StrToObjectId string id to object
+func StrToObjectId(str string) (ObjectId, error) {
+	var b [12]byte
+	byteArr, err := hex.DecodeString(str)
+	if err != nil {
+		return b, err
+	}
+
+	i := 0
+	for {
+		if i == 12 {
+			break
+		}
+		b[i] = byteArr[i]
+		i++
+	}
+
+	return b, nil
+}
 
 // readMachineId generates machine id and puts it into the machineId global
 // variable. If this function fails to get the hostname, it will cause
@@ -50,50 +100,8 @@ func initMachineId() []byte {
 	return id
 }
 
-func SetLogID(c *gin.Context) {
-	logID := GetLogID(c)
-	c.Set(LOG_FIELD, logID)
-	c.Header(LOG_FIELD, logID)
-}
-
-func GetLogID(c *gin.Context) string {
-	logID := c.Request.Header.Get(LOG_FIELD)
-
-	if logID == "" {
-		l, ok := c.Get("Log-Id")
-		if ok {
-			logID = l.(string)
-		}
-	}
-
-	if logID == "" {
-		logID = NewObjectId().Hex()
-	}
-
-	return logID
-}
-
-func StrToObjectId(str string) (ObjectId, error) {
-	var b [12]byte
-	byteArr, err := hex.DecodeString(str)
-	if err != nil {
-		return b, err
-	}
-
-	i := 0
-	for {
-		if i == 12 {
-			break
-		}
-		b[i] = byteArr[i]
-		i++
-	}
-
-	return b, nil
-}
-
-// NewObjectId returns a new unique ObjectId.
-func NewObjectId() ObjectId {
+// newObjectId returns a new unique ObjectId.
+func newObjectId() ObjectId {
 	var b [12]byte
 	// Timestamp, 4 bytes, big endian
 	binary.BigEndian.PutUint32(b[:], uint32(time.Now().Unix()))

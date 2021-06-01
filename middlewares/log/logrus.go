@@ -77,14 +77,10 @@ func Logger() gin.HandlerFunc {
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		common := &logging.Common{
-			LogID: logging.GetLogID(c),
-		}
-		logging.WriteLogCommon(c, common)
-
 		hostIP, _ := sys.ExternalIP()
 
 		fields := logging.Fields{
+			LogID:    logging.GetLogID(c),
 			Header:   c.Request.Header,
 			Method:   c.Request.Method,
 			Request:  logging.GetRequestBody(c),
@@ -94,10 +90,9 @@ func Logger() gin.HandlerFunc {
 			HostIP:   hostIP,
 			Port:     app_const.SERVICE_PORT,
 			API:      c.Request.RequestURI,
-			Module:   "HTTP",
+			Module:   logging.MODULE_HTTP,
 			Cost:     int64(time.Now().Sub(start)),
 		}
-		fields.Common = *common
 
 		data, _ := conversion.StructToJson(fields)
 

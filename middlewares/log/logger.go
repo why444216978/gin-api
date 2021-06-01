@@ -1,16 +1,13 @@
 package log
 
-import "C"
 import (
 	"bytes"
-	"gin-api/app_const"
 	"gin-api/libraries/logging"
 	"gin-api/resource"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
-	"github.com/why444216978/go-util/sys"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -27,10 +24,6 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-const (
-	LOG_HEADER = "X-Log-Id"
-)
-
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -43,24 +36,10 @@ func LoggerMiddleware() gin.HandlerFunc {
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		common := logging.GetLogCommon(c)
-
-		hostIP, _ := sys.ExternalIP()
-
-		fields := logging.Fields{
-			Header:   c.Request.Header,
-			Method:   c.Request.Method,
-			Request:  logging.GetRequestBody(c),
-			Response: respMap,
-			Code:     c.Writer.Status(),
-			CallerIP: c.ClientIP(),
-			HostIP:   hostIP,
-			Port:     app_const.SERVICE_PORT,
-			API:      c.Request.RequestURI,
-			Module:   "HTTP",
-			Cost:     int64(time.Now().Sub(start)),
-		}
-		fields.Common = *common
+		fields := logging.InitHTTPFields(c)
+		fields.Response = respMap
+		fields.Code = c.Writer.Status()
+		fields.Cost = int64(time.Now().Sub(start))
 
 		data, _ := conversion.StructToMap(fields)
 		resource.Logger.Info("request info", data)

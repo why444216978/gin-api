@@ -1,16 +1,17 @@
 package logging
 
 import (
-	"bytes"
-	"io/ioutil"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/why444216978/go-util/conversion"
 )
 
+type MODULE string
+
 const (
-	LOG_FIELD = "Log-Id"
+	MODULE_HTTP     = "HTTP"
+	MODULE_RPC      = "RPC"
+	MODULE_MYSQL    = "MySQL"
+	MODULE_REDIS    = "Redis"
+	MODULE_RabbitMQ = "RabbitMQ"
 )
 
 type Common struct {
@@ -18,7 +19,9 @@ type Common struct {
 }
 
 type Fields struct {
-	Common
+	LogID    string      `json:"log_id"`
+	TraceID  string      `json:"trace_id"`
+	SpanID   string      `json:"span_id"`
 	Header   http.Header `json:"header"`
 	Method   string      `json:"method"`
 	Request  interface{} `json:"request"`
@@ -28,20 +31,7 @@ type Fields struct {
 	HostIP   string      `json:"host_ip"`
 	Port     int         `json:"port"`
 	API      string      `json:"api"`
-	TraceID  string      `json:"trace_id"`
-	SpanID   string      `json:"span_id"`
 	Cost     int64       `json:"cost"`
 	Module   string      `json:"module"`
 	Trace    interface{} `json:"trace"`
-}
-
-func GetRequestBody(c *gin.Context) map[string]interface{} {
-	reqBody := []byte{}
-	if c.Request.Body != nil { // Read
-		reqBody, _ = ioutil.ReadAll(c.Request.Body)
-	}
-	reqBodyMap, _ := conversion.JsonToMap(string(reqBody))
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
-
-	return reqBodyMap
 }

@@ -2,7 +2,6 @@ package panic
 
 import (
 	"bytes"
-	"gin-api/app_const"
 	"gin-api/libraries/logging"
 	"gin-api/resource"
 	"gin-api/response"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
-	"github.com/why444216978/go-util/sys"
 )
 
 type bodyLogWriter struct {
@@ -37,33 +35,15 @@ func ThrowPanic() gin.HandlerFunc {
 					debugStack[k] = v
 				}
 
-				common := &logging.Common{
-					LogID: logging.GetLogID(c),
+				fields := logging.InitHTTPFields(c)
+				fields.Response = map[string]interface{}{
+					"code":   http.StatusInternalServerError,
+					"toast":  "服务器错误",
+					"data":   "",
+					"errmsg": "服务器错误",
 				}
-				logging.WriteLogCommon(c, common)
-
-				hostIP, _ := sys.ExternalIP()
-
-				// `{"code":500,"toast":"服务器错误","data":{},"errmsg":""}`
-				fields := logging.Fields{
-					Header:  c.Request.Header,
-					Method:  c.Request.Method,
-					Request: logging.GetRequestBody(c),
-					Response: map[string]interface{}{
-						"code":   http.StatusInternalServerError,
-						"toast":  "服务器错误",
-						"data":   "",
-						"errmsg": "",
-					},
-					Code:     http.StatusInternalServerError,
-					CallerIP: c.ClientIP(),
-					HostIP:   hostIP,
-					Port:     app_const.SERVICE_PORT,
-					API:      c.Request.RequestURI,
-					Module:   "HTTP",
-					Trace:    debugStack,
-				}
-				fields.Common = *common
+				fields.Code = http.StatusInternalServerError
+				fields.Trace = debugStack
 
 				data, _ := conversion.StructToMap(fields)
 				resource.Logger.Error("panic", data) //这里不能打Fatal和Panic，否则程序会退出

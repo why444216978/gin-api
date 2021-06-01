@@ -19,7 +19,7 @@ import (
 func InitRouter() *gin.Engine {
 	server := gin.New()
 
-	server.Use(log.WithLogID())
+	server.Use(log.InitContext())
 
 	server.Use(panic.ThrowPanic())
 

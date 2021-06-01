@@ -20,17 +20,6 @@ gin-api v0.0.0-20200707063208-3a799797e664/go.mod h1:Dr2IrVLB7xRUk1IPwdnImN1xKhi
 gin-api v0.0.0-20200707073254-9f5fc0039a3e h1:hQolmsbsH6Az0sWzrS0fvuJj2MTPuy8veUoStxJ5q1U=
 gin-api v0.0.0-20200707083756-fe5dd13ddf61 h1:WRHHr8Ezgg1+ffh3TL/z8yxHYVe/ySSFmA91MgU2jAg=
 gin-api v0.0.0-20200707083756-fe5dd13ddf61/go.mod h1:5XgXpRo8uLZf2sHsC1hMetY+AGhRSnVn9vGYi2HULgI=
-git.ymt360.com/go/configurations v1.1.7/go.mod h1:bZ09j4/sRSxGUpC/bidpdS6UIxIIBmbNFS0JRAN8YO0=
-git.ymt360.com/go/configurations v1.3.8/go.mod h1:bZ09j4/sRSxGUpC/bidpdS6UIxIIBmbNFS0JRAN8YO0=
-git.ymt360.com/go/configurations v1.3.23/go.mod h1:bZ09j4/sRSxGUpC/bidpdS6UIxIIBmbNFS0JRAN8YO0=
-git.ymt360.com/go/gocommons v1.2.1/go.mod h1:D4Hi/cnSzG36n5QpYS6iw4nBb3Z4KiECIa3ED2VyzLI=
-git.ymt360.com/go/gocommons v1.4.3/go.mod h1:O3+LwSUfEvoEV3v41gEPXfaSEuUB+sR8ebPYPiEYaAg=
-git.ymt360.com/go/gocommons v1.4.12/go.mod h1:ek1ykjY2IwuBXaATsQPYFz466ixvVVkbzJyeEJ8q7hY=
-git.ymt360.com/go/gocommons v1.6.20 h1:5f5CfYJ0DnZ4/l5k0oKdIsLGMLVqe0qX1AwZ74Yg29w=
-git.ymt360.com/go/gocommons v1.6.20/go.mod h1:sJ0u77FhxKA+56MqAmxecM+Xi80MpwzHUKZVrCznjz4=
-git.ymt360.com/go/protos v1.2.2/go.mod h1:HNtFoPzOQZN/zmWtCFj4zkU3dJQD+1ZiK1q2P4nASHk=
-git.ymt360.com/go/security v1.1.12/go.mod h1:m7woMzEuoi9swU20rib9tLN4JrvmeAIABn8yFqdCnUY=
-git.ymt360.com/go/security v1.2.0/go.mod h1:A1ZLGJdE0smYF8wGkBd6DtFP1SU87pUI5HfaDlzRtBw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=

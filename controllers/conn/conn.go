@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"gin-api/libraries/logging"
 	"gin-api/resource"
 	"gin-api/response"
 	"gin-api/services/goods_service"
@@ -23,10 +24,12 @@ func Do(c *gin.Context) {
 	})
 	err := g.Wait()
 	if err != nil {
-		resource.Logger.Error("test conn error msg", map[string]interface{}{"err": err.Error()})
+		resource.Logger.Error("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": err.Error()}))
 		response.Response(c, response.CODE_SERVER, goods, "")
 		return
 	}
+
+	resource.Logger.Error("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": "test err"}))
 
 	response.Response(c, response.CODE_SUCCESS, goods, "")
 }

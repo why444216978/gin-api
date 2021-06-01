@@ -34,11 +34,11 @@ func NewLogger(infoPath, errorPath string) (logger *Logger) {
 
 	// 实现两个判断日志等级的interface
 	infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.InfoLevel
+		return lvl <= zapcore.InfoLevel
 	})
 
 	errorLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.ErrorLevel
+		return lvl >= zapcore.WarnLevel
 	})
 
 	logger = &Logger{

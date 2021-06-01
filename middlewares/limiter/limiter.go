@@ -1,11 +1,14 @@
 package limiter
 
 import (
-	"fmt"
+	"gin-api/libraries/logging"
+	"gin-api/resource"
+	"gin-api/response"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/why444216978/go-util/conversion"
 	"golang.org/x/time/rate"
 )
 
@@ -16,14 +19,21 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		fmt.Println("Too many requests")
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"errno":    http.StatusServiceUnavailable,
-			"errmsg":   "服务暂时不可用",
-			"data":     nil,
-			"user_msg": "服务暂时不可用",
-		})
-		c.Abort()
+
+		fields := logging.InitHTTPFields(c)
+		fields.Response = map[string]interface{}{
+			"code":   http.StatusServiceUnavailable,
+			"toast":  "服务暂时不可用",
+			"data":   "",
+			"errmsg": "服务暂时不可用",
+		}
+		fields.Code = http.StatusInternalServerError
+
+		data, _ := conversion.StructToMap(fields)
+		resource.Logger.Error("panic", data) //这里不能打Fatal和Panic，否则程序会退出
+		response.Response(c, response.CODE_SERVER, nil, "")
+		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 }
