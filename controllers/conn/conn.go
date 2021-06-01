@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/resource"
 	"gin-api/response"
@@ -13,6 +14,16 @@ import (
 )
 
 func Do(c *gin.Context) {
+	sp, _ := jaeger.InjectCurrent(c, c.Request.Header, "select", jaeger.OPERATION_TYPE_MYSQL)
+	if sp != nil {
+		defer sp.Finish()
+	}
+
+	sp, _ = jaeger.InjectCurrent(c, c.Request.Header, "get", jaeger.OPERATION_TYPE_REDIS)
+	if sp != nil {
+		defer sp.Finish()
+	}
+
 	goods, _ := test_service.New().GetFirstRow(c, true)
 	g, _ := errgroup.WithContext(c.Request.Context())
 	g.Go(func() (err error) {

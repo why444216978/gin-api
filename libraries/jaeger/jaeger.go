@@ -53,34 +53,61 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer, erro
 	return tracer, closer, nil
 }
 
-func Inject(c *gin.Context, header http.Header, operationName, operationType string) (opentracingSpan opentracing.Span, err error) {
-	tracerInterface, ok := c.Get(FIELD_TRACER)
+func Inject(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
+	tracer, parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
 	}
-	tracer, ok := tracerInterface.(opentracing.Tracer)
-	if !ok {
-		return
+	err = tracer.Inject(parentSpanContext, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	if err != nil {
+		span.LogFields(opentracing_log.String("inject-next-error", err.Error()))
 	}
-	parentSpanInterface, ok := c.Get(FIELD_SPAN_CONTEXT)
-	if !ok {
-		return
-	}
-	parentSpanContext, ok := parentSpanInterface.(opentracing.SpanContext)
+
+	return
+}
+
+func InjectCurrent(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
+	tracer, parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
 	}
 
-	opentracingSpan = opentracing.StartSpan(
+	span = opentracing.StartSpan(
 		operationName,
 		opentracing.ChildOf(parentSpanContext),
 		opentracing.Tag{Key: string(ext.Component), Value: operationType},
 		ext.SpanKindRPCClient,
 	)
-	SetTag(c, opentracingSpan, parentSpanContext)
-	err = tracer.Inject(opentracingSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	SetTag(c, span, parentSpanContext)
+	err = tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 	if err != nil {
-		opentracingSpan.LogFields(opentracing_log.String("inject-error", err.Error()))
+		span.LogFields(opentracing_log.String("inject-current-error", err.Error()))
+	}
+
+	return
+}
+
+func getInjectParent(c *gin.Context) (tracer opentracing.Tracer, spanContext opentracing.SpanContext, ok bool) {
+	var (
+		_tracer      interface{}
+		_spanContext interface{}
+	)
+
+	_tracer, ok = c.Get(FIELD_TRACER)
+	if !ok {
+		return
+	}
+	tracer, ok = _tracer.(opentracing.Tracer)
+	if !ok {
+		return
+	}
+	_spanContext, ok = c.Get(FIELD_SPAN_CONTEXT)
+	if !ok {
+		return
+	}
+	spanContext, ok = _spanContext.(opentracing.SpanContext)
+	if !ok {
+		return
 	}
 
 	return
