@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go"
-	opentracing_log "github.com/opentracing/opentracing-go/log"
 )
 
 type Response struct {
@@ -40,27 +38,10 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 		req.Header.Add(k, v)
 	}
 
-	//注入
-	tracer, ok1 := c.Get(FIELD_TRACER)
-	parentSpanContext, ok2 := c.Get(FIELD_SPAN)
-	if ok1 && ok2 {
-		spParent := parentSpanContext.(opentracing.Span)
-		span := opentracing.StartSpan(
-			req.URL.Path,
-			opentracing.ChildOf(spParent.Context()),
-		)
-		defer span.Finish()
-
-		sp := spanContextToJaegerContext(span.Context())
-		span.SetTag(FIELD_TRACE_ID, sp.TraceID().String())
-		span.SetTag(FIELD_SPAN_ID, sp.SpanID().String())
-		span.SetTag(FIELD_LOG_ID, logging.ValueLogID(c))
-
-		err = tracer.(opentracing.Tracer).Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		if err != nil {
-			span.LogFields(opentracing_log.String("inject-error", err.Error()))
-			err = nil
-		}
+	//注入Jaeger
+	opentracingSpan, _ := Inject(c, req.Header, c.Request.URL.Path, OPERATION_TYPE_HTTP)
+	if opentracingSpan != nil {
+		defer opentracingSpan.Finish()
 	}
 
 	//发送请求

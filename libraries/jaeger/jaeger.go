@@ -1,26 +1,33 @@
 package jaeger
 
 import (
-	"context"
 	"gin-api/app_const"
+	"gin-api/libraries/logging"
 	"io"
-	"strings"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	opentracing_log "github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 const (
-	FIELD_LOG_ID   = "Log-Id"
-	FIELD_TRACE_ID = "Trace-Id"
-	FIELD_SPAN_ID  = "Span-Id"
-	FIELD_TRACER   = "Tracer"
-	FIELD_SPAN     = "Span"
+	FIELD_LOG_ID       = "Log-Id"
+	FIELD_TRACE_ID     = "Trace-Id"
+	FIELD_SPAN_ID      = "Span-Id"
+	FIELD_TRACER       = "Tracer"
+	FIELD_SPAN_CONTEXT = "Span"
+)
+
+const (
+	OPERATION_TYPE_HTTP     = "HTTP"
+	OPERATION_TYPE_RPC      = "RPC"
+	OPERATION_TYPE_MYSQL    = "MySQL"
+	OPERATION_TYPE_REDIS    = "Redis"
+	OPERATION_TYPE_RabbitMQ = "RabbitMQ"
 )
 
 func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer, error) {
@@ -46,68 +53,50 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer, erro
 	return tracer, closer, nil
 }
 
+func Inject(c *gin.Context, header http.Header, operationName, operationType string) (opentracingSpan opentracing.Span, err error) {
+	tracerInterface, ok := c.Get(FIELD_TRACER)
+	if !ok {
+		return
+	}
+	tracer, ok := tracerInterface.(opentracing.Tracer)
+	if !ok {
+		return
+	}
+	parentSpanInterface, ok := c.Get(FIELD_SPAN_CONTEXT)
+	if !ok {
+		return
+	}
+	parentSpanContext, ok := parentSpanInterface.(opentracing.SpanContext)
+	if !ok {
+		return
+	}
+
+	opentracingSpan = opentracing.StartSpan(
+		operationName,
+		opentracing.ChildOf(parentSpanContext),
+		opentracing.Tag{Key: string(ext.Component), Value: operationType},
+		ext.SpanKindRPCClient,
+	)
+	SetTag(c, opentracingSpan, parentSpanContext)
+	err = tracer.Inject(opentracingSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	if err != nil {
+		opentracingSpan.LogFields(opentracing_log.String("inject-error", err.Error()))
+	}
+
+	return
+}
+
+func SetTag(c *gin.Context, span opentracing.Span, spanContext opentracing.SpanContext) {
+	jaegerSpanContext := spanContextToJaegerContext(spanContext)
+	span.SetTag(FIELD_TRACE_ID, jaegerSpanContext.TraceID().String())
+	span.SetTag(FIELD_SPAN_ID, jaegerSpanContext.SpanID().String())
+	span.SetTag(FIELD_LOG_ID, logging.ValueLogID(c))
+}
+
 func spanContextToJaegerContext(spanContext opentracing.SpanContext) jaeger.SpanContext {
 	if sc, ok := spanContext.(jaeger.SpanContext); ok {
 		return sc
 	} else {
 		return jaeger.SpanContext{}
-	}
-}
-
-type MDReaderWriter struct {
-	metadata.MD
-}
-
-// ForeachKey implements ForeachKey of opentracing.TextMapReader
-func (c MDReaderWriter) ForeachKey(handler func(key, val string) error) error {
-	for k, vs := range c.MD {
-		for _, v := range vs {
-			if err := handler(k, v); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// Set implements Set() of opentracing.TextMapWriter
-func (c MDReaderWriter) Set(key, val string) {
-	key = strings.ToLower(key)
-	c.MD[key] = append(c.MD[key], val)
-}
-
-// ClientInterceptor grpc client
-func ClientInterceptor(tracer opentracing.Tracer, spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string,
-		req, reply interface{}, cc *grpc.ClientConn,
-		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-
-		span := opentracing.StartSpan(
-			"call gRPC",
-			opentracing.ChildOf(spanContext),
-			opentracing.Tag{Key: string(ext.Component), Value: "gRPC"},
-			ext.SpanKindRPCClient,
-		)
-
-		defer span.Finish()
-
-		md, ok := metadata.FromOutgoingContext(ctx)
-		if !ok {
-			md = metadata.New(nil)
-		} else {
-			md = md.Copy()
-		}
-
-		err := tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
-		if err != nil {
-			span.LogFields(log.String("inject-error", err.Error()))
-		}
-
-		newCtx := metadata.NewOutgoingContext(ctx, md)
-		err = invoker(newCtx, method, req, reply, cc, opts...)
-		if err != nil {
-			span.LogFields(log.String("call-error", err.Error()))
-		}
-		return err
 	}
 }
