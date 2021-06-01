@@ -53,7 +53,7 @@ func NewJaegerTracer(jaegerHostPort string) (opentracing.Tracer, io.Closer, erro
 	return tracer, closer, nil
 }
 
-func Inject(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
+func InjectHTTP(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
 	tracer, parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
@@ -66,7 +66,7 @@ func Inject(c *gin.Context, header http.Header, operationName, operationType str
 	return
 }
 
-func InjectCurrent(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
+func InjectRedis(c *gin.Context, header http.Header, operationName, args string) (span opentracing.Span, err error) {
 	tracer, parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
@@ -75,7 +75,8 @@ func InjectCurrent(c *gin.Context, header http.Header, operationName, operationT
 	span = opentracing.StartSpan(
 		operationName,
 		opentracing.ChildOf(parentSpanContext),
-		opentracing.Tag{Key: string(ext.Component), Value: operationType},
+		opentracing.Tag{Key: string(ext.Component), Value: OPERATION_TYPE_REDIS},
+		opentracing.Tag{Key: "args", Value: args},
 		ext.SpanKindRPCClient,
 	)
 	SetTag(c, span, parentSpanContext)

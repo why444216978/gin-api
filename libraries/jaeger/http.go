@@ -39,7 +39,7 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 	}
 
 	//注入Jaeger
-	opentracingSpan, _ := Inject(c, req.Header, c.Request.URL.Path, OPERATION_TYPE_HTTP)
+	opentracingSpan, _ := InjectHTTP(c, req.Header, c.Request.URL.Path, OPERATION_TYPE_HTTP)
 	if opentracingSpan != nil {
 		defer opentracingSpan.Finish()
 	}

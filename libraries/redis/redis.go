@@ -1,13 +1,14 @@
 package redis
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"time"
 
 	"gin-api/libraries/config"
+	"gin-api/libraries/jaeger"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
 )
@@ -120,24 +121,43 @@ func (db *RedisDB) Close() error {
 
 // Do 执行 redis 命令
 // NOTE 除非有必要(比如在一个函数内部需要执行多次 redis 操作), 否则请用该函数执行所有的操作, 这样能有效避免忘记释放资源.
-func (db *RedisDB) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
 	if commandName == "PING" {
 		return
 	}
+
+	arg := ""
+	for _, v := range args {
+		arg = fmt.Sprintf("%v ", v)
+	}
+	sp, _ := jaeger.InjectRedis(c, c.Request.Header, commandName, arg)
+	if sp != nil {
+		defer sp.Finish()
+	}
+
+	//后defer连接，先释放，统计挥手时间
 	conn := db.pool.Get()
 	defer conn.Close()
 
-	if err := ctx.Err(); err != nil {
+	if err := c.Request.Context().Err(); err != nil {
+		if err != nil {
+			sp.SetTag("error", err.Error())
+		}
 		return nil, err
 	}
 
 	reply, err = conn.Do(commandName, args...)
+	if err != nil {
+		sp.SetTag("error", err.Error())
+	}
+	_reply := fmt.Sprintf("%v", reply)
+	sp.SetTag("result", string(_reply))
 
 	return
 }
 
-func (db *RedisDB) String(ctx context.Context, commandName string, args ...interface{}) (reply string, err error) {
-	reply, err = redis.String(db.Do(ctx, commandName, args...))
+func (db *RedisDB) String(c *gin.Context, commandName string, args ...interface{}) (reply string, err error) {
+	reply, err = redis.String(db.Do(c, commandName, args...))
 	if err == redis.ErrNil {
 		err = nil
 	}
@@ -145,8 +165,8 @@ func (db *RedisDB) String(ctx context.Context, commandName string, args ...inter
 	return
 }
 
-func (db *RedisDB) Strings(ctx context.Context, commandName string, args ...interface{}) (reply []string, err error) {
-	reply, err = redis.Strings(db.Do(ctx, commandName, args...))
+func (db *RedisDB) Strings(c *gin.Context, commandName string, args ...interface{}) (reply []string, err error) {
+	reply, err = redis.Strings(db.Do(c, commandName, args...))
 	if err == redis.ErrNil {
 		err = nil
 	}
@@ -154,8 +174,8 @@ func (db *RedisDB) Strings(ctx context.Context, commandName string, args ...inte
 	return
 }
 
-func (db *RedisDB) Int(ctx context.Context, commandName string, args ...interface{}) (reply int, err error) {
-	reply, err = redis.Int(db.Do(ctx, commandName, args...))
+func (db *RedisDB) Int(c *gin.Context, commandName string, args ...interface{}) (reply int, err error) {
+	reply, err = redis.Int(db.Do(c, commandName, args...))
 	if err == redis.ErrNil {
 		err = nil
 	}

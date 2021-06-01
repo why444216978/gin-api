@@ -17,7 +17,7 @@ type GoodsInterface interface {
 
 	GetGoodsInfo(c *gin.Context, id int) map[string]interface{}
 
-	BatchGoodsName(c *gin.Context, ids []int) []string
+	BatchGoodsName(c *gin.Context, ids []int) (data []string, err error)
 }
 
 var Instance GoodsInterface
@@ -34,7 +34,7 @@ const (
 )
 
 func (srv *GoodsService) GetGoodsPrice(c *gin.Context, id int) (int, error) {
-	data, err := resource.DefaultRedis.Int(c.Request.Context(), "GET", GOODS_PRICE_KEY+strconv.Itoa(id))
+	data, err := resource.DefaultRedis.Int(c, "GET", GOODS_PRICE_KEY+strconv.Itoa(id))
 	if err != nil {
 		err = errors.Wrap(err, "redis get goods price error：")
 	}
@@ -42,7 +42,7 @@ func (srv *GoodsService) GetGoodsPrice(c *gin.Context, id int) (int, error) {
 }
 
 func (srv *GoodsService) GetGoodsName(c *gin.Context, id int) (string, error) {
-	data, err := resource.DefaultRedis.String(c.Request.Context(), "GET", GOODS_NAME_KEY+strconv.Itoa(id))
+	data, err := resource.DefaultRedis.String(c, "GET", GOODS_NAME_KEY+strconv.Itoa(id))
 	if err != nil {
 		err = errors.Wrap(err, "redis get goods price error：")
 	}
@@ -50,18 +50,19 @@ func (srv *GoodsService) GetGoodsName(c *gin.Context, id int) (string, error) {
 }
 
 func (srv *GoodsService) GetGoodsInfo(c *gin.Context, id int) map[string]interface{} {
-	data, _ := resource.DefaultRedis.String(c.Request.Context(), "GET", GOODS_NAME_KEY+strconv.Itoa(id))
+	data, _ := resource.DefaultRedis.String(c, "GET", GOODS_NAME_KEY+strconv.Itoa(id))
 	ret, _ := conversion.JsonToMap(data)
 	return ret
 }
 
-func (srv *GoodsService) BatchGoodsName(c *gin.Context, ids []int) []string {
+func (srv *GoodsService) BatchGoodsName(c *gin.Context, ids []int) (data []string, err error) {
 	var args []interface{}
 	for _, v := range ids {
 		args = append(args, GOODS_NAME_KEY+strconv.Itoa(v))
 	}
 
-	data, _ := resource.DefaultRedis.Strings(c.Request.Context(), "MGET", args...)
+	data, err = resource.DefaultRedis.Strings(c, "MGET", args...)
+	err = errors.Wrap(err, "redis get goods price error：")
 
-	return data
+	return
 }
