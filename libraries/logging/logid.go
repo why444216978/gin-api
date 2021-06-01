@@ -34,19 +34,6 @@ var (
 	machineId = initMachineId()
 )
 
-// GetLogID get log id from *gin.Context
-func GetLogID(c *gin.Context) string {
-	l, ok := c.Get("a")
-	if !ok {
-		return ExtractLogID(c)
-	}
-	logID, ok := l.(string)
-	if !ok {
-		return ExtractLogID(c)
-	}
-	return logID
-}
-
 // ExtractLogID init log id
 func ExtractLogID(c *gin.Context) string {
 	logID := c.Request.Header.Get(LOG_FIELD)

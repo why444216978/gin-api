@@ -80,7 +80,7 @@ func Logger() gin.HandlerFunc {
 		hostIP, _ := sys.ExternalIP()
 
 		fields := logging.Fields{
-			LogID:    logging.GetLogID(c),
+			LogID:    logging.ValueLogID(c),
 			Header:   c.Request.Header,
 			Method:   c.Request.Method,
 			Request:  logging.GetRequestBody(c),

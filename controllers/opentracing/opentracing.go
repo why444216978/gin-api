@@ -3,7 +3,6 @@ package opentracing
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"gin-api/app_const"
@@ -12,7 +11,6 @@ import (
 	"gin-api/response"
 
 	"github.com/gin-gonic/gin"
-	"github.com/why444216978/go-util/conversion"
 )
 
 func Rpc(c *gin.Context) {
@@ -20,11 +18,9 @@ func Rpc(c *gin.Context) {
 	postData := make(map[string]interface{})
 	postData["query"] = [1]string{"猕猴桃"}
 
-	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", app_const.SERVICE_PORT, logging.GetLogID(c))
+	sendUrl := fmt.Sprintf("http://localhost:%d/test/rpc?logid=%s", app_const.SERVICE_PORT, logging.ValueLogID(c))
 
-	body, _ := conversion.MapToJson(postData)
-
-	ret, err := jaeger.JaegerSend(c, http.MethodPost, sendUrl, nil, strings.NewReader(body), time.Second)
+	ret, err := jaeger.JaegerSend(c, http.MethodPost, sendUrl, nil, nil, time.Second)
 	if err != nil {
 		fmt.Println(err)
 	}

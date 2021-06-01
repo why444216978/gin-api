@@ -36,13 +36,13 @@ func ValueLogID(c *gin.Context) string {
 
 // WithHTTPFields inject common http log fields to context
 func WithHTTPFields(c *gin.Context) {
-	ctx := context.WithValue(c.Request.Context(), contextLogID, InitHTTPFields(c))
+	ctx := context.WithValue(c.Request.Context(), contextHTTPLogFields, InitHTTPFields(c))
 	c.Request = c.Request.WithContext(ctx)
 }
 
 // ValueHTTPFields extrect common http log fields from context
 func ValueHTTPFields(c *gin.Context) Fields {
-	val := c.Request.Context().Value(contextLogID)
+	val := c.Request.Context().Value(contextHTTPLogFields)
 	fields, ok := val.(Fields)
 	if !ok {
 		return Fields{}
@@ -66,7 +66,7 @@ func GetRequestBody(c *gin.Context) map[string]interface{} {
 func InitHTTPFields(c *gin.Context) Fields {
 	hostIP, _ := sys.ExternalIP()
 	return Fields{
-		LogID:    GetLogID(c),
+		LogID:    ValueLogID(c),
 		Header:   c.Request.Header,
 		Method:   c.Request.Method,
 		Request:  GetRequestBody(c),
