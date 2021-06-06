@@ -1,0 +1,12 @@
+
+Host = "127.0.0.1"
+Port = 6379
+Auth = ""
+DB = 0
+ConnectTimeout = 1
+ReadTimeout = 1
+WriteTimeout = 1
+MaxActive = 30
+MaxIdle = 10
+IsLog = true
+ExecTimeout = 100000

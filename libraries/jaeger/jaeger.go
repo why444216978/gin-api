@@ -30,7 +30,12 @@ const (
 	OPERATION_TYPE_RabbitMQ = "RabbitMQ"
 )
 
-func NewJaegerTracer(host, port string) (opentracing.Tracer, io.Closer, error) {
+type Config struct {
+	Host string
+	Port string
+}
+
+func NewJaegerTracer(connCfg Config) (opentracing.Tracer, io.Closer, error) {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{
 			Type:  "const", //固定采样
@@ -39,7 +44,7 @@ func NewJaegerTracer(host, port string) (opentracing.Tracer, io.Closer, error) {
 
 		Reporter: &config.ReporterConfig{
 			LogSpans:           true,
-			LocalAgentHostPort: host + ":" + port,
+			LocalAgentHostPort: connCfg.Host + ":" + connCfg.Port,
 		},
 
 		ServiceName: app_const.SERVICE_NAME,

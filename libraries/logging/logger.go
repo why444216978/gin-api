@@ -15,7 +15,13 @@ type Logger struct {
 	logger  *zap.Logger
 }
 
-func NewLogger(infoPath, errorPath string) (logger *Logger) {
+type Config struct {
+	InfoFile  string
+	ErrorFile string
+	Level     string
+}
+
+func NewLogger(cfg Config) (logger *Logger) {
 	// 设置一些基本日志格式 具体含义还比较好理解，直接看zap源码也不难懂
 	encoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
 		MessageKey:  "msg",
@@ -46,8 +52,8 @@ func NewLogger(infoPath, errorPath string) (logger *Logger) {
 	}
 
 	// 获取 info、error日志文件的io.Writer 抽象 getWriter() 在下方实现
-	infoWriter := logger.getWriter(infoPath)
-	errorWriter := logger.getWriter(errorPath)
+	infoWriter := logger.getWriter(cfg.InfoFile)
+	errorWriter := logger.getWriter(cfg.ErrorFile)
 
 	// 最后创建具体的Logger
 	core := zapcore.NewTee(

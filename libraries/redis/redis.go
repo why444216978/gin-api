@@ -2,92 +2,44 @@ package redis
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
-	"gin-api/libraries/config"
 	"gin-api/libraries/jaeger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gomodule/redigo/redis"
-	"github.com/pkg/errors"
 )
 
+type Config struct {
+	Host           string
+	Port           int
+	Auth           string
+	DB             int
+	ConnectTimeout int
+	ReadTimeout    int
+	WriteTimeout   int
+	MaxActive      int
+	MaxIdle        int
+	IsLog          bool
+	ExecTimeout    int64
+}
+
 type RedisDB struct {
-	pool   *redis.Pool
-	Config *Config
+	pool *redis.Pool
 }
 
-var obj map[string]*RedisDB
-
-func GetRedis(redisName string) (*RedisDB, error) {
-	var (
-		hostCfg      string
-		authCfg      string
-		portCfg      string
-		tmpDbCfg     string
-		maxActiveCfg string
-		maxIdleCfg   string
-		execTimeCfg  string
-		execTime     int64
-	)
-
-	cfg := config.GetConfigToJson("redis", redisName)
-
-	hostCfg = cfg["host"].(string)
-	authCfg = cfg["auth"].(string)
-	portCfg = cfg["port"].(string)
-	port, _ := strconv.Atoi(portCfg)
-	tmpDbCfg = cfg["db"].(string)
-	dbCfg, _ := strconv.Atoi(tmpDbCfg)
-	maxActiveCfg = cfg["max_active"].(string)
-	maxActive, _ := strconv.Atoi(maxActiveCfg)
-	maxIdleCfg = cfg["max_idle"].(string)
-	maxIdle, _ := strconv.Atoi(maxIdleCfg)
-	execTimeCfg = cfg["exec_timeout"].(string)
-	execTimeInt, _ := strconv.Atoi(execTimeCfg)
-	execTime = int64(execTimeInt)
-
-	db, err := conn(redisName, hostCfg, authCfg, port, dbCfg, maxActive, maxIdle, execTime)
-	if err != nil {
-		err = errors.Wrap(err, "get redis config error：")
-		return nil, err
-	}
-
-	return db, nil
-}
-
-func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, execTimeout int64) (db *RedisDB, err error) {
-	if len(obj) == 0 {
-		obj = make(map[string]*RedisDB)
-	}
-	if obj[conn] != nil {
-		db = obj[conn]
-		return
-	}
-
-	cfg := &Config{
-		Host:        host,
-		Port:        port,
-		Password:    password,
-		DB:          dbNum,
-		MaxActive:   maxActive,
-		MaxIdle:     maxIdle,
-		ExecTimeout: execTimeout,
-	}
-
+func GetRedis(cfg Config) (db *RedisDB, err error) {
 	db = new(RedisDB)
-	db.Config = cfg
 	db.pool = &redis.Pool{
 		Dial: func() (redis.Conn, error) {
 			return redis.Dial(
 				"tcp",
 				fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-				redis.DialPassword(cfg.Password),
+				redis.DialPassword(cfg.Auth),
 				redis.DialDatabase(cfg.DB),
-				redis.DialConnectTimeout(time.Second*2),
-				redis.DialReadTimeout(time.Second*2),
-				redis.DialWriteTimeout(time.Second*2),
+				redis.DialConnectTimeout(time.Second*time.Duration(cfg.ConnectTimeout)),
+				redis.DialReadTimeout(time.Second*time.Duration(cfg.ReadTimeout)),
+				redis.DialWriteTimeout(time.Second*time.Duration(cfg.WriteTimeout)),
 			)
 		},
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
@@ -99,8 +51,6 @@ func conn(conn, host, password string, port, dbNum, maxActive, maxIdle int, exec
 		IdleTimeout: time.Second,   //最大的空闲连接等待时间，超过此时间后，空闲连接将被关闭
 		Wait:        true,          // 当链接数达到最大后是否阻塞，如果不的话，达到最大后返回错误
 	}
-
-	obj[conn] = db
 
 	return
 }

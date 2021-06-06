@@ -3,83 +3,75 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-type DB struct {
-	masterOrm *gorm.DB
-	slaveOrm  *gorm.DB
-	masterDB  *sql.DB
-	slaveDB   *sql.DB
-	Config    *Config
+type instance struct {
+	orm *gorm.DB
+	db  *sql.DB
 }
 
-func InitDB(database string) (db *DB, err error) {
-	c := &Config{
-		Master: getCoon(database + "_write"),
-		Slave:  getCoon(database + "_read"),
-	}
+type Config struct {
+	Master instanceConfig
+	Slave  instanceConfig
+}
 
-	db = &DB{
-		Config: c,
-	}
+type instanceConfig struct {
+	Host        string
+	Port        string
+	User        string
+	Password    string
+	DB          string
+	Charset     string
+	MaxOpen     int
+	MaxIdle     int
+	ExecTimeout int
+}
 
-	db.masterDB, err = sql.Open("mysql", c.Master.DSN)
+type DB struct {
+	master *instance
+	slave  *instance
+}
+
+func NewMySQL(cfg Config) (db1 *DB, err error) {
+	db1 = &DB{}
+
+	db1.master, err = getInstance(cfg.Master)
 	if err != nil {
-		err = errors.Wrap(err, "open master mysql conn error：")
-		return nil, err
-	}
-	db.masterOrm, err = gorm.Open(mysql.New(mysql.Config{
-		Conn: db.masterDB,
-	}), &gorm.Config{})
-	if err != nil {
-		err = errors.Wrap(err, "open master mysql orm error：")
 		return
 	}
-	db.masterDB.SetMaxOpenConns(c.Master.MaxOpen)
-	db.masterDB.SetMaxIdleConns(c.Master.MaxIdle)
-
-	db.slaveDB, err = sql.Open("mysql", c.Slave.DSN)
+	db1.slave, err = getInstance(cfg.Slave)
 	if err != nil {
-		err = errors.Wrap(err, "open slave mysql error：")
-		return nil, err
-	}
-	db.slaveOrm, err = gorm.Open(mysql.New(mysql.Config{
-		Conn: db.slaveDB,
-	}), &gorm.Config{})
-	if err != nil {
-		err = errors.Wrap(err, "open slave mysql orm conn error：")
 		return
 	}
-	db.slaveDB.SetMaxOpenConns(c.Slave.MaxOpen)
-	db.slaveDB.SetMaxIdleConns(c.Slave.MaxIdle)
 
 	return
 }
 
 func (db *DB) MasterOrm() *gorm.DB {
-	return db.masterOrm
+	return db.master.orm
 }
 
 func (db *DB) SlaveOrm() *gorm.DB {
-	return db.slaveOrm
+	return db.slave.orm
 }
 
 func (db *DB) MasterDB() *sql.DB {
-	return db.masterDB
+	return db.master.db
 }
 
 func (db *DB) SlaveDB() *sql.DB {
-	return db.slaveDB
+	return db.slave.db
 }
 
 // MasterDBClose 释放主库的资源
 func (db *DB) MasterDBClose() error {
-	if db.masterDB != nil {
-		err := db.masterDB.Close()
+	if db.master.db != nil {
+		err := db.master.db.Close()
 		if err != nil {
 			err = errors.Wrap(err, "close master mysql conn error：")
 			return err
@@ -90,7 +82,7 @@ func (db *DB) MasterDBClose() error {
 
 // SlaveDBClose 释放从库的资源
 func (db *DB) SlaveDBClose() (err error) {
-	err = db.slaveDB.Close()
+	err = db.slave.db.Close()
 	if err != nil {
 		err = errors.Wrap(err, "close slave mysql conn error：")
 		return
@@ -168,4 +160,39 @@ func (db *DB) SlaveDBQueryContext(ctx context.Context, query string, args ...int
 func (db *DB) SlaveDBQueryRowContext(ctx context.Context, query string, args ...interface{}) (result *sql.Row) {
 	r, _ := db.operate(ctx, operateSlaveQueryRow, query, args...)
 	return r.(*sql.Row)
+}
+
+func getInstance(cfg instanceConfig) (conn *instance, err error) {
+	db, err := sql.Open("mysql", getDSN1(cfg))
+	if err != nil {
+		err = errors.Wrap(err, "open mysql conn error：")
+		return nil, err
+	}
+	db.SetMaxOpenConns(cfg.MaxOpen)
+	db.SetMaxIdleConns(cfg.MaxIdle)
+
+	orm, err := gorm.Open(mysql.New(mysql.Config{
+		Conn: db,
+	}), &gorm.Config{})
+	if err != nil {
+		err = errors.Wrap(err, "open mysql orm error：")
+		return
+	}
+
+	conn = &instance{
+		orm: orm,
+		db:  db,
+	}
+
+	return
+}
+
+func getDSN1(cfg instanceConfig) string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true",
+		cfg.User,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.DB,
+		cfg.Charset)
 }
