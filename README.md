@@ -30,8 +30,6 @@ const (
 
 ```
 
-## ini（默认格式）
-
 ### log.toml：
 ```
 [log]
