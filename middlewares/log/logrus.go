@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gin-api/app_const"
+	"gin-api/global"
 	"gin-api/libraries/logging"
 	"os"
 	"path"
@@ -88,7 +88,7 @@ func Logger() gin.HandlerFunc {
 			Code:     c.Writer.Status(),
 			CallerIP: c.ClientIP(),
 			HostIP:   hostIP,
-			Port:     app_const.SERVICE_PORT,
+			Port:     global.Global.AppPort,
 			API:      c.Request.RequestURI,
 			Module:   logging.MODULE_HTTP,
 			Cost:     int64(time.Now().Sub(start)),

@@ -20,19 +20,14 @@ QQ群：909211071
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br>
 
+### app.toml：
 ```
-package app_const
-
-const (
-	SERVICE_NAME  = "gin-api"
-	SERVICE_PORT  = 777
-)
-
+AppName = "gin-api"
+AppPort = 777
 ```
 
 ### log.toml：
 ```
-[log]
 InfoFile = "./logs/info.log"
 ErrorFile = "./logs/error.wf.log"
 Level = "info"

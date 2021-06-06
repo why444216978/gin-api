@@ -3,7 +3,7 @@ package logging
 import (
 	"bytes"
 	"context"
-	"gin-api/app_const"
+	"gin-api/global"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
@@ -72,7 +72,7 @@ func InitHTTPFields(c *gin.Context) Fields {
 		Request:  GetRequestBody(c),
 		CallerIP: c.ClientIP(),
 		HostIP:   hostIP,
-		Port:     app_const.SERVICE_PORT,
+		Port:     global.Global.AppPort,
 		API:      c.Request.RequestURI,
 		Module:   MODULE_HTTP,
 	}

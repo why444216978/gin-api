@@ -1,7 +1,7 @@
 package jaeger
 
 import (
-	"gin-api/app_const"
+	"gin-api/global"
 	"gin-api/libraries/logging"
 	"io"
 	"net/http"
@@ -47,7 +47,7 @@ func NewJaegerTracer(connCfg Config) (opentracing.Tracer, io.Closer, error) {
 			LocalAgentHostPort: connCfg.Host + ":" + connCfg.Port,
 		},
 
-		ServiceName: app_const.SERVICE_NAME,
+		ServiceName: global.Global.AppName,
 	}
 
 	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))

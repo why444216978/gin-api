@@ -40,10 +40,16 @@ func NewLogger(cfg Config) (logger *Logger) {
 
 	// 实现两个判断日志等级的interface
 	infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if lvl.String() < cfg.Level {
+			return false
+		}
 		return lvl <= zapcore.InfoLevel
 	})
 
 	errorLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if lvl.String() < cfg.Level {
+			return false
+		}
 		return lvl >= zapcore.WarnLevel
 	})
 

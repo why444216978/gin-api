@@ -30,7 +30,7 @@ func Do(c *gin.Context) {
 		return
 	}
 
-	resource.Logger.Error("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": "test err"}))
+	resource.Logger.Debug("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": "test err"}))
 
 	response.Response(c, response.CODE_SUCCESS, goods, "")
 }

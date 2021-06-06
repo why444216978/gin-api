@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"gin-api/app_const"
+	"gin-api/global"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/response"
@@ -14,7 +14,7 @@ import (
 )
 
 func Rpc(c *gin.Context) {
-	sendUrl := fmt.Sprintf("http://localhost:%d/test/rpc1?logid=%s", app_const.SERVICE_PORT, logging.ValueLogID(c))
+	sendUrl := fmt.Sprintf("http://localhost:%d/test/rpc1?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
 
 	ret, err := jaeger.JaegerSend(c, http.MethodPost, sendUrl, nil, nil, time.Second)
 	if err != nil {
@@ -25,7 +25,7 @@ func Rpc(c *gin.Context) {
 }
 
 func Rpc1(c *gin.Context) {
-	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", app_const.SERVICE_PORT, logging.ValueLogID(c))
+	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
 
 	ret, err := jaeger.JaegerSend(c, http.MethodPost, sendUrl, nil, nil, time.Second)
 	if err != nil {
