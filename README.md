@@ -26,8 +26,6 @@ package app_const
 const (
 	SERVICE_NAME  = "gin-api"
 	SERVICE_PORT  = 777
-	CONFIG_SOURCE = "ini" //apollo、json、ini
-	CONFIGS_NUM   = 10    //配置文件数，影响配置file享元map初始化大小
 )
 
 ```
