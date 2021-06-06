@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"gin-api/libraries/config"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
@@ -37,7 +38,10 @@ func initLogger() {
 
 func initJaeger() {
 	var err error
-	resource.Tracer, _, err = jaeger.NewJaegerTracer("127.0.0.1:6831")
+
+	cfg := config.GetConfigToJson("jaeger", "default")
+
+	resource.Tracer, _, err = jaeger.NewJaegerTracer(cfg["host"].(string), cfg["port"].(string))
 	if err != nil {
 		panic(err)
 	}
