@@ -12,8 +12,8 @@ import (
 func Bootstrap() {
 	initConfig()
 	initLogger()
-	initMysql("default")
-	initRedis("default")
+	initMysql("test_mysql")
+	initRedis("default_redis")
 	initJaeger()
 }
 
@@ -44,7 +44,7 @@ func initMysql(db string) {
 		cfg mysql.Config
 	)
 
-	if err = resource.Config.ReadConfig("test_mysql", "toml", &cfg); err != nil {
+	if err = resource.Config.ReadConfig(db, "toml", &cfg); err != nil {
 		panic(err)
 	}
 
@@ -60,7 +60,7 @@ func initRedis(db string) {
 		cfg redis.Config
 	)
 
-	if err = resource.Config.ReadConfig("default_redis", "toml", &cfg); err != nil {
+	if err = resource.Config.ReadConfig(db, "toml", &cfg); err != nil {
 		panic(err)
 	}
 
