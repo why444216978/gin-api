@@ -17,13 +17,7 @@ QQ群：909211071
 <br>
 
 # 配置相关
-支持apollo、json、ini三种格式，文件配置需放到main.go同级目录configs下
-<br>
-- apollo：嵌套json格式，用于兼容mysql、redis等多实例
-- json：嵌套json格式，用于兼容mysql、redis等多实例
-- ini：section格式，用于兼容mysql、redis等多实例
-<br>
-通过 app_const.server.CONFIG_SOURCE 变量切换
+基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br>
 
 ```
@@ -40,89 +34,69 @@ const (
 
 ## ini（默认格式）
 
-### log.ini example：
+### log.toml：
 ```
 [log]
-dir = ./logs
-area = 1
-query_field = "logid"
-header_field = "X-Log-Id"
+InfoFile = "./logs/info.log"
+ErrorFile = "./logs/error.wf.log"
+Level = "info"
 ```
 
 
-### mysql.ini example:
+### test_mysql:
 
 ```
-[default_read]
-host = 127.0.0.1
-user = why
-password = why123
-port = 3306
-db = why
-charset = utf8
-max_open = 8
-max_idle = 4
-exec_timeout = 10000
+[master]
+Host = "127.0.0.1"
+Port = "3306"
+User = "root"
+Password = "123456"
+DB = "test"
+Charset = "utf8mb4"
+MaxOpen = 8
+MaxIdle = 4
+ExecTimeout = 10000
 
-[default_write]
-host = 127.0.0.1
-user = why
-password = why123
-port = 3306
-db = why
-charset = utf8
-max_open = 8
-max_idle = 4
-exec_timeout = 10000
-```
-
-### redis.ini example:
-
-```
-[default]
-host = 127.0.0.1
-port = 6379
-db = 0
-auth =
-max_active = 600
-max_idle = 10
-exec_timeout = 100000
+[slave]
+Host = "127.0.0.1"
+Port = "3306"
+User = "root"
+Password = "123456"
+DB = "test"
+Charset = "utf8mb4"
+MaxOpen = 8
+MaxIdle = 4
+ExecTimeout = 10000
 ```
 
-### log.ini example:
+### default_redis.toml:
 
 ```
-[log]
-dir = ./logs/
-area = 1
-query_field = "logid"
-header_field = "X-Log-Id"
+Host = "127.0.0.1"
+Port = 6379
+Auth = ""
+DB = 0
+ConnectTimeout = 1
+ReadTimeout = 1
+WriteTimeout = 1
+MaxActive = 30
+MaxIdle = 10
+IsLog = true
+ExecTimeout = 100000
 ```
 
-### es.ini example:
+### jaeger.toml:
 
 ```
-[default]
-host = http://127.0.0.1
-port = 9200
+Host = "127.0.0.1"
+Port = "6831"
 ```
 
-### log.json example：
-```
-{
-  "log":{
-    "dir":"./logs",
-    "area":1,
-    "query_field":"logid",
-    "header_field":"X-Log-Id"
-  }
-}
-```
 
 # 运行
 
 1. 创建上述基础配置文件
-2. log.ini中的dir目录确保本地存在且有写入权限
+2. log配置中的目录确保本地存在且有写入权限
 3. go run main.go
 
 
