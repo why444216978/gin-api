@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
@@ -27,6 +28,7 @@ func GinOpenTracing() gin.HandlerFunc {
 		defer span.Finish()
 		setHTTPTag(ctx, span)
 
+		ctx = logging.AddTraceID(ctx, getTraceID(span))
 		ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
 
 		c.Request = c.Request.WithContext(ctx)

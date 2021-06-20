@@ -49,6 +49,16 @@ func setTag(ctx context.Context, span opentracing.Span) {
 	span.SetTag(fieldLogID, logging.ValueLogID(ctx))
 }
 
+func getTraceID(span opentracing.Span) string {
+	jaegerSpanContext := spanContextToJaegerContext(span.Context())
+	return jaegerSpanContext.TraceID().String()
+}
+
+func getSpanID(span opentracing.Span) string {
+	jaegerSpanContext := spanContextToJaegerContext(span.Context())
+	return jaegerSpanContext.SpanID().String()
+}
+
 func getInjectParent(ctx context.Context) (spanContext opentracing.SpanContext, ok bool) {
 	var _spanContext interface{}
 

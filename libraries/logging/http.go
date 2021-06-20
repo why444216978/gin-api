@@ -14,6 +14,7 @@ type contextKey uint64
 const (
 	contextLogID contextKey = iota
 	contextHTTPLogFields
+	contextTraceID
 )
 
 // ExtractLogID init log id
@@ -44,6 +45,11 @@ func ValueLogID(ctx context.Context) string {
 	return logID
 }
 
+// WithTraceID inject trace_id id to context
+func WithTraceID(ctx context.Context, val interface{}) context.Context {
+	return context.WithValue(ctx, contextTraceID, val)
+}
+
 // WithHTTPFields inject common http log fields to context
 func WithHTTPFields(ctx context.Context, fields Fields) context.Context {
 	return context.WithValue(ctx, contextHTTPLogFields, fields)
@@ -57,6 +63,13 @@ func ValueHTTPFields(ctx context.Context) Fields {
 		return Fields{}
 	}
 	return fields
+}
+
+// AddTraceID add trace id to global fields
+func AddTraceID(ctx context.Context, traceID string) context.Context {
+	fields := ValueHTTPFields(ctx)
+	fields.TraceID = traceID
+	return WithHTTPFields(ctx, fields)
 }
 
 // GetRequestBody get http request body
