@@ -4,6 +4,10 @@ import (
 	"net/http"
 )
 
+const (
+	LOG_FIELD = "Log-Id"
+)
+
 type MODULE string
 
 const (

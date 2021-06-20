@@ -1,15 +1,35 @@
 package log
 
 import (
+	"gin-api/global"
 	"gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
+	"github.com/why444216978/go-util/sys"
 )
 
 func InitContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logging.WithLogID(c, logging.ExtractLogID(c))
-		logging.WithHTTPFields(c)
+		hostIP, _ := sys.ExternalIP()
+
+		logID := logging.ExtractLogID(c.Request)
+
+		fields := logging.Fields{
+			LogID:    logID,
+			Header:   c.Request.Header,
+			Method:   c.Request.Method,
+			Request:  logging.GetRequestBody(c.Request),
+			CallerIP: c.ClientIP(),
+			HostIP:   hostIP,
+			Port:     global.Global.AppPort,
+			API:      c.Request.RequestURI,
+			Module:   logging.MODULE_HTTP,
+		}
+
+		ctx := logging.WithLogID(c.Request.Context(), logID)
+		ctx = logging.WithHTTPFields(ctx, fields)
+
+		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()
 	}

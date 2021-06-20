@@ -1,15 +1,17 @@
 package jaeger
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"gin-api/libraries/logging"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	opentracing_log "github.com/opentracing/opentracing-go/log"
 )
 
 type Response struct {
@@ -18,7 +20,7 @@ type Response struct {
 }
 
 // JaegerSend 发送Jaeger请求
-func JaegerSend(c *gin.Context, method, url string, header map[string]string, body io.Reader, timeout time.Duration) (ret Response, err error) {
+func JaegerSend(ctx context.Context, method, url string, header map[string]string, body io.Reader, timeout time.Duration) (ret Response, err error) {
 	var req *http.Request
 
 	client := &http.Client{
@@ -27,19 +29,18 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 	}
 
 	//构建req
-	req, err = http.NewRequestWithContext(c, method, url, body)
+	req, err = http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return
 	}
 
 	//设置请求header
-	req.Header.Add(logging.LOG_FIELD, logging.ValueLogID(c))
 	for k, v := range header {
 		req.Header.Add(k, v)
 	}
 
 	//注入Jaeger
-	opentracingSpan, _ := InjectHTTP(c, req.Header, c.Request.URL.Path, OPERATION_TYPE_HTTP)
+	opentracingSpan, _ := injectHTTP(ctx, req.Header, req.URL.Path, operationTypeHTTP)
 	if opentracingSpan != nil {
 		defer opentracingSpan.Finish()
 	}
@@ -67,4 +68,22 @@ func JaegerSend(c *gin.Context, method, url string, header map[string]string, bo
 	}
 
 	return
+}
+
+func injectHTTP(ctx context.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
+	parentSpanContext, ok := getInjectParent(ctx)
+	if !ok {
+		return
+	}
+	err = Tracer.Inject(parentSpanContext, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	if err != nil {
+		span.LogFields(opentracing_log.String("inject-next-error", err.Error()))
+	}
+
+	return
+}
+
+func setHTTPTag(ctx context.Context, span opentracing.Span) {
+	setTag(ctx, span)
+	span.SetTag(string(ext.Component), operationTypeHTTP)
 }

@@ -10,12 +10,6 @@ import (
 	"os"
 	"sync/atomic"
 	"time"
-
-	"github.com/gin-gonic/gin"
-)
-
-const (
-	LOG_FIELD = "Log-Id"
 )
 
 // LogId is a unique ID identifying a log record. It must be exactly 12 bytes
@@ -33,19 +27,6 @@ var (
 	// to NewObjectId function.
 	machineId = initMachineId()
 )
-
-// ExtractLogID init log id
-func ExtractLogID(c *gin.Context) string {
-	logID := c.Request.Header.Get(LOG_FIELD)
-
-	if logID == "" {
-		logID = newObjectId().Hex()
-	}
-
-	c.Header(LOG_FIELD, logID)
-
-	return logID
-}
 
 // StrToObjectId string id to object
 func StrToObjectId(str string) (ObjectId, error) {

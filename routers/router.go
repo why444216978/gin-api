@@ -29,7 +29,7 @@ func InitRouter() *gin.Engine {
 
 	server.Use(log.LoggerMiddleware())
 
-	server.Use(jaeger.OpenTracing())
+	server.Use(jaeger.GinOpenTracing())
 
 	server.NoRoute(func(c *gin.Context) {
 		response.Response(c, response.CODE_URI_NOT_FOUND, nil, "")

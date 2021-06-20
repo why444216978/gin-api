@@ -20,7 +20,7 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 			return
 		}
 
-		fields := logging.InitHTTPFields(c)
+		fields := logging.ValueHTTPFields(c.Request.Context())
 		fields.Response = map[string]interface{}{
 			"code":   http.StatusServiceUnavailable,
 			"toast":  "服务暂时不可用",

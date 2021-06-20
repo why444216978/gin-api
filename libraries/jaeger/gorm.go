@@ -1,6 +1,8 @@
 package jaeger
 
 import (
+	"context"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	tracerLog "github.com/opentracing/opentracing-go/log"
@@ -38,6 +40,7 @@ func after(db *gorm.DB) {
 	if !ok {
 		return
 	}
+	setGormTag(db.Statement.Context, span)
 	defer span.Finish()
 	if db.Error != nil {
 		span.LogFields(
@@ -121,4 +124,9 @@ func (op *OpentracingPlugin) Initialize(db *gorm.DB) (err error) {
 	}
 
 	return nil
+}
+
+func setGormTag(ctx context.Context, span opentracing.Span) {
+	setTag(ctx, span)
+	span.SetTag(string(ext.Component), operationTypeGorm)
 }

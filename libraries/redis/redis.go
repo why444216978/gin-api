@@ -80,7 +80,7 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	for _, v := range args {
 		arg = fmt.Sprintf("%v ", v)
 	}
-	sp, _ := jaeger.InjectRedis(c, c.Request.Header, commandName, arg)
+	sp, _ := jaeger.InjectRedis(c.Request.Context(), c.Request.Header, commandName, arg)
 	if sp != nil {
 		defer sp.Finish()
 	}
@@ -90,18 +90,20 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 	defer conn.Close()
 
 	if err := c.Request.Context().Err(); err != nil {
-		if err != nil {
+		if err != nil && sp != nil {
 			sp.SetTag("error", err.Error())
 		}
 		return nil, err
 	}
 
 	reply, err = conn.Do(commandName, args...)
-	if err != nil {
+	if err != nil && sp != nil {
 		sp.SetTag("error", err.Error())
 	}
 	_reply := fmt.Sprintf("%v", reply)
-	sp.SetTag("result", string(_reply))
+	if sp != nil {
+		sp.SetTag("result", string(_reply))
+	}
 
 	return
 }

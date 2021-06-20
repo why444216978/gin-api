@@ -25,12 +25,11 @@ func Do(c *gin.Context) {
 	})
 	err := g.Wait()
 	if err != nil {
-		resource.Logger.Error("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": err.Error()}))
 		response.Response(c, response.CODE_SERVER, goods, "")
 		return
 	}
 
-	resource.Logger.Debug("test conn error msg", logging.MergeHTTPFields(c, map[string]interface{}{"err": "test err"}))
+	resource.Logger.Debug("test conn error msg", logging.MergeHTTPFields(c.Request.Context(), map[string]interface{}{"err": "test err"}))
 
 	response.Response(c, response.CODE_SUCCESS, goods, "")
 }

@@ -35,7 +35,7 @@ func ThrowPanic() gin.HandlerFunc {
 					debugStack[k] = v
 				}
 
-				fields := logging.InitHTTPFields(c)
+				fields := logging.ValueHTTPFields(c.Request.Context())
 				fields.Response = map[string]interface{}{
 					"code":   http.StatusInternalServerError,
 					"toast":  "服务器错误",

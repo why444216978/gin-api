@@ -44,5 +44,5 @@ func Response(c *gin.Context, code uint64, data interface{}, errmsg string) {
 		Data:   data,
 		ErrMsg: errmsg,
 	})
-	c.Next()
+	c.Abort()
 }

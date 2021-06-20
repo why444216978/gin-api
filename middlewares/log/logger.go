@@ -36,7 +36,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		fields := logging.InitHTTPFields(c)
+		fields := logging.ValueHTTPFields(c.Request.Context())
 		fields.Response = respMap
 		fields.Code = c.Writer.Status()
 		fields.Cost = int64(time.Now().Sub(start))
