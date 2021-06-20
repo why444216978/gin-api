@@ -1,13 +1,15 @@
 package test_model
 
 import (
+	"gin-api/libraries/mysql"
 	"sync"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type TestInterface interface {
-	GetFirst() (Test, error)
+	GetFirst(c *gin.Context) (Test, error)
 }
 
 type TestModel struct {
@@ -30,8 +32,8 @@ func New(master, slave *gorm.DB) TestInterface {
 	return instance
 }
 
-func (m *TestModel) GetFirst() (test Test, err error) {
-	err = m.dbSlave.Model(&test).Select("*").First(&test).Error
+func (m *TestModel) GetFirst(c *gin.Context) (test Test, err error) {
+	err = mysql.WithContext(c.Request.Context(), m.dbSlave).Model(&test).Select("*").First(&test).Error
 
 	if test.Id == 0 {
 		err = ErrDataEmpty

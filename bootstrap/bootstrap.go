@@ -103,7 +103,7 @@ func initJaeger() {
 		panic(err)
 	}
 
-	resource.Tracer, _, err = jaeger.NewJaegerTracer(cfg)
+	_, _, err = jaeger.NewJaegerTracer(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -126,7 +126,10 @@ func initHTTP() {
 	}
 	log.Printf("Actual pid is %d", syscall.Getpid())
 	log.Printf("Actual port is %d", global.Global.AppPort)
-	server.ListenAndServe()
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 
 	// endless.DefaultReadTimeOut = 3 * time.Second
 	// endless.DefaultWriteTimeOut = 3 * time.Second

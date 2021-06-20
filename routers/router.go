@@ -23,9 +23,9 @@ func InitRouter() *gin.Engine {
 
 	server.Use(panic.ThrowPanic())
 
-	server.Use(limiter.Limiter(10))
-
 	server.Use(timeout.TimeoutMiddleware(time.Second * 3))
+
+	server.Use(limiter.Limiter(10))
 
 	server.Use(log.LoggerMiddleware())
 

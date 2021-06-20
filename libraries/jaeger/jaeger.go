@@ -30,6 +30,10 @@ const (
 	OPERATION_TYPE_RabbitMQ = "RabbitMQ"
 )
 
+var (
+	Tracer opentracing.Tracer
+)
+
 type Config struct {
 	Host string
 	Port string
@@ -55,15 +59,16 @@ func NewJaegerTracer(connCfg Config) (opentracing.Tracer, io.Closer, error) {
 		return nil, nil, err
 	}
 	opentracing.SetGlobalTracer(tracer)
+	Tracer = tracer
 	return tracer, closer, nil
 }
 
 func InjectHTTP(c *gin.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
-	tracer, parentSpanContext, ok := getInjectParent(c)
+	parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
 	}
-	err = tracer.Inject(parentSpanContext, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	err = Tracer.Inject(parentSpanContext, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 	if err != nil {
 		span.LogFields(opentracing_log.String("inject-next-error", err.Error()))
 	}
@@ -72,7 +77,7 @@ func InjectHTTP(c *gin.Context, header http.Header, operationName, operationType
 }
 
 func InjectRedis(c *gin.Context, header http.Header, operationName, args string) (span opentracing.Span, err error) {
-	tracer, parentSpanContext, ok := getInjectParent(c)
+	parentSpanContext, ok := getInjectParent(c)
 	if !ok {
 		return
 	}
@@ -85,7 +90,7 @@ func InjectRedis(c *gin.Context, header http.Header, operationName, args string)
 		ext.SpanKindRPCClient,
 	)
 	SetTag(c, span, parentSpanContext)
-	err = tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	err = Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 	if err != nil {
 		span.LogFields(opentracing_log.String("inject-current-error", err.Error()))
 	}
@@ -93,20 +98,9 @@ func InjectRedis(c *gin.Context, header http.Header, operationName, args string)
 	return
 }
 
-func getInjectParent(c *gin.Context) (tracer opentracing.Tracer, spanContext opentracing.SpanContext, ok bool) {
-	var (
-		_tracer      interface{}
-		_spanContext interface{}
-	)
+func getInjectParent(c *gin.Context) (spanContext opentracing.SpanContext, ok bool) {
+	var _spanContext interface{}
 
-	_tracer, ok = c.Get(FIELD_TRACER)
-	if !ok {
-		return
-	}
-	tracer, ok = _tracer.(opentracing.Tracer)
-	if !ok {
-		return
-	}
 	_spanContext, ok = c.Get(FIELD_SPAN_CONTEXT)
 	if !ok {
 		return

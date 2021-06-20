@@ -9,7 +9,7 @@ import (
 )
 
 type TestInterface interface {
-	GetFirstRow(ctx *gin.Context, oCache bool) (ret test_model.Test, err error)
+	GetFirstRow(ctx *gin.Context, isCache bool) (ret test_model.Test, err error)
 }
 
 type TestService struct {
@@ -30,6 +30,6 @@ func New() TestInterface {
 	return instance
 }
 
-func (srv *TestService) GetFirstRow(ctx *gin.Context, oCache bool) (ret test_model.Test, err error) {
-	return srv.model.GetFirst()
+func (srv *TestService) GetFirstRow(c *gin.Context, isCache bool) (ret test_model.Test, err error) {
+	return srv.model.GetFirst(c)
 }

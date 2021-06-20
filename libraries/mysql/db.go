@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gin-api/libraries/jaeger"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
@@ -37,19 +38,23 @@ type DB struct {
 	slave  *instance
 }
 
-func NewMySQL(cfg Config) (db1 *DB, err error) {
-	db1 = &DB{}
+func NewMySQL(cfg Config) (db *DB, err error) {
+	db = &DB{}
 
-	db1.master, err = getInstance(cfg.Master)
+	db.master, err = getInstance(cfg.Master)
 	if err != nil {
 		return
 	}
-	db1.slave, err = getInstance(cfg.Slave)
+	db.slave, err = getInstance(cfg.Slave)
 	if err != nil {
 		return
 	}
 
 	return
+}
+
+func WithContext(ctx context.Context, db *gorm.DB) *gorm.DB {
+	return db.WithContext(ctx)
 }
 
 func (db *DB) MasterOrm() *gorm.DB {
@@ -163,7 +168,7 @@ func (db *DB) SlaveDBQueryRowContext(ctx context.Context, query string, args ...
 }
 
 func getInstance(cfg instanceConfig) (conn *instance, err error) {
-	db, err := sql.Open("mysql", getDSN1(cfg))
+	db, err := sql.Open("mysql", getDSN(cfg))
 	if err != nil {
 		err = errors.Wrap(err, "open mysql conn error：")
 		return nil, err
@@ -178,6 +183,7 @@ func getInstance(cfg instanceConfig) (conn *instance, err error) {
 		err = errors.Wrap(err, "open mysql orm error：")
 		return
 	}
+	orm.Use(jaeger.GormTrace)
 
 	conn = &instance{
 		orm: orm,
@@ -187,7 +193,7 @@ func getInstance(cfg instanceConfig) (conn *instance, err error) {
 	return
 }
 
-func getDSN1(cfg instanceConfig) string {
+func getDSN(cfg instanceConfig) string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true",
 		cfg.User,
 		cfg.Password,
