@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gin-api/libraries/logging"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +18,30 @@ import (
 type Response struct {
 	HTTPCode int
 	Response string
+}
+
+func ExtractHTTP(ctx context.Context, req *http.Request) (context.Context, opentracing.Span) {
+	var span opentracing.Span
+
+	parentSpanContext, err := Tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	if parentSpanContext == nil || err != nil {
+		span = Tracer.StartSpan(req.URL.Path)
+	} else {
+		span = opentracing.StartSpan(
+			req.URL.Path,
+			opentracing.ChildOf(parentSpanContext),
+			ext.RPCServerOption(parentSpanContext),
+			ext.SpanKindRPCClient,
+		)
+	}
+	span.SetTag(string(ext.Component), operationTypeHTTP)
+
+	setTag(ctx, span)
+
+	ctx = logging.AddTraceID(ctx, getTraceID(span))
+	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
+
+	return ctx, span
 }
 
 // JaegerSend 发送Jaeger请求
@@ -83,7 +108,7 @@ func injectHTTP(ctx context.Context, header http.Header, operationName, operatio
 	return
 }
 
-func setHTTPTag(ctx context.Context, span opentracing.Span) {
-	setTag(ctx, span)
-	span.SetTag(string(ext.Component), operationTypeHTTP)
+func SetHTTPLog(span opentracing.Span, req, resp string) {
+	span.LogFields(opentracing_log.Object(logFieldsRequest, string(req)))
+	span.LogFields(opentracing_log.Object(logFieldsResponse, string(resp)))
 }

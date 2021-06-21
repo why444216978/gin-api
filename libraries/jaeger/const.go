@@ -13,3 +13,8 @@ const (
 	operationTypeRedis    = "Redis"
 	operationTypeRabbitMQ = "RabbitMQ"
 )
+
+const (
+	logFieldsRequest  = "request"
+	logFieldsResponse = "response"
+)

@@ -13,6 +13,8 @@ type contextKey uint64
 
 const (
 	contextLogID contextKey = iota
+	contextHTTPRequestBodyFields
+	contextHTTPResponseBodyFields
 	contextHTTPLogFields
 	contextTraceID
 )
@@ -50,6 +52,16 @@ func WithTraceID(ctx context.Context, val interface{}) context.Context {
 	return context.WithValue(ctx, contextTraceID, val)
 }
 
+// ValueTraceID extract trace id from context
+func ValueTraceID(ctx context.Context) string {
+	val := ctx.Value(contextTraceID)
+	logID, ok := val.(string)
+	if !ok {
+		return ""
+	}
+	return logID
+}
+
 // WithHTTPFields inject common http log fields to context
 func WithHTTPFields(ctx context.Context, fields Fields) context.Context {
 	return context.WithValue(ctx, contextHTTPLogFields, fields)
@@ -63,6 +75,26 @@ func ValueHTTPFields(ctx context.Context) Fields {
 		return Fields{}
 	}
 	return fields
+}
+
+// WithHTTPRequestBody inject common http request body to context
+func WithHTTPRequestBody(ctx context.Context, body interface{}) context.Context {
+	return context.WithValue(ctx, contextHTTPRequestBodyFields, body)
+}
+
+// ValueHTTPRequestBody extrect common http request body from context
+func ValueHTTPRequestBody(ctx context.Context) interface{} {
+	return ctx.Value(contextHTTPRequestBodyFields)
+}
+
+// WithHTTPResponseBody inject common http response body to context
+func WithHTTPResponseBody(ctx context.Context, body interface{}) context.Context {
+	return context.WithValue(ctx, contextHTTPResponseBodyFields, body)
+}
+
+// ValueHTTPResponseBody extrect common http request body from context
+func ValueHTTPResponseBody(ctx context.Context) interface{} {
+	return ctx.Value(contextHTTPResponseBodyFields)
 }
 
 // AddTraceID add trace id to global fields

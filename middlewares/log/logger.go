@@ -2,6 +2,8 @@ package log
 
 import (
 	"bytes"
+	"encoding/json"
+	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/resource"
 	"time"
@@ -31,17 +33,33 @@ func LoggerMiddleware() gin.HandlerFunc {
 		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 		c.Writer = responseWriter
 
+		ctx := c.Request.Context()
+
+		ctx, span := jaeger.ExtractHTTP(ctx, c.Request)
+		defer span.Finish()
+		c.Request = c.Request.WithContext(ctx)
+
 		c.Next()
+
+		ctx = c.Request.Context()
 
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		fields := logging.ValueHTTPFields(c.Request.Context())
+		fields := logging.ValueHTTPFields(ctx)
 		fields.Response = respMap
 		fields.Code = c.Writer.Status()
-		fields.Cost = int64(time.Now().Sub(start))
+
+		ctx = logging.WithHTTPRequestBody(ctx, fields.Request)
+
+		req, _ := json.Marshal(fields.Request)
+		jaeger.SetHTTPLog(span, string(req), resp)
 
 		data, _ := conversion.StructToMap(fields)
 		resource.Logger.Info("request info", data)
+
+		fields.Cost = int64(time.Now().Sub(start))
+
+		c.Request = c.Request.WithContext(ctx)
 	}
 }

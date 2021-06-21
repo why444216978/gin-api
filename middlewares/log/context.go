@@ -27,6 +27,7 @@ func InitContext() gin.HandlerFunc {
 		}
 
 		ctx := logging.WithLogID(c.Request.Context(), logID)
+		ctx = logging.WithHTTPRequestBody(ctx, fields.Request)
 		ctx = logging.WithHTTPFields(ctx, fields)
 
 		c.Request = c.Request.WithContext(ctx)

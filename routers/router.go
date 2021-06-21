@@ -4,7 +4,6 @@ import (
 	"gin-api/controllers/conn"
 	"gin-api/controllers/opentracing"
 	"gin-api/controllers/ping"
-	"gin-api/libraries/jaeger"
 	"gin-api/middlewares/limiter"
 	"gin-api/middlewares/log"
 	"gin-api/middlewares/panic"
@@ -28,8 +27,6 @@ func InitRouter() *gin.Engine {
 	server.Use(limiter.Limiter(10))
 
 	server.Use(log.LoggerMiddleware())
-
-	server.Use(jaeger.GinOpenTracing())
 
 	server.NoRoute(func(c *gin.Context) {
 		response.Response(c, response.CODE_URI_NOT_FOUND, nil, "")
