@@ -36,9 +36,9 @@ func ExtractHTTP(ctx context.Context, req *http.Request) (context.Context, opent
 	}
 	span.SetTag(string(ext.Component), operationTypeHTTP)
 
-	setTag(ctx, span)
+	SetCommonTag(ctx, span)
 
-	ctx = logging.AddTraceID(ctx, getTraceID(span))
+	ctx = logging.AddTraceID(ctx, GetTraceID(span))
 	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
 
 	return ctx, span

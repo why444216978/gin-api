@@ -18,19 +18,17 @@ func InjectRedis(ctx context.Context, header http.Header, operationName, args st
 	span = opentracing.StartSpan(
 		operationName,
 		opentracing.ChildOf(parentSpanContext),
-		opentracing.Tag{Key: "args", Value: args},
+		opentracing.Tag{Key: string(ext.Component), Value: operationTypeRedis},
 		ext.SpanKindRPCClient,
 	)
-	setRedisTag(ctx, span)
+	SetCommonTag(ctx, span)
+
+	span.LogFields(opentracing_log.String(logFieldsArgs, args))
+
 	err = Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 	if err != nil {
-		span.LogFields(opentracing_log.String("inject-current-error", err.Error()))
+		span.LogFields(opentracing_log.Error(err))
 	}
 
 	return
-}
-
-func setRedisTag(ctx context.Context, span opentracing.Span) {
-	setTag(ctx, span)
-	span.SetTag(string(ext.Component), operationTypeRedis)
 }

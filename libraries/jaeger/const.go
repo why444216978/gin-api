@@ -17,4 +17,5 @@ const (
 const (
 	logFieldsRequest  = "request"
 	logFieldsResponse = "response"
+	logFieldsArgs     = "args"
 )

@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -91,18 +92,18 @@ func (db *RedisDB) Do(c *gin.Context, commandName string, args ...interface{}) (
 
 	if err := c.Request.Context().Err(); err != nil {
 		if err != nil && sp != nil {
-			sp.SetTag("error", err.Error())
+			jaeger.SetError(sp, err)
 		}
 		return nil, err
 	}
 
 	reply, err = conn.Do(commandName, args...)
 	if err != nil && sp != nil {
-		sp.SetTag("error", err.Error())
+		jaeger.SetError(sp, err)
 	}
-	_reply := fmt.Sprintf("%v", reply)
+	_reply, _ := json.Marshal(reply)
 	if sp != nil {
-		sp.SetTag("result", string(_reply))
+		jaeger.SetResponse(sp, string(_reply))
 	}
 
 	return

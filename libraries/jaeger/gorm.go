@@ -5,7 +5,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	tracerLog "github.com/opentracing/opentracing-go/log"
+	opentracing_log "github.com/opentracing/opentracing-go/log"
 	"gorm.io/gorm"
 )
 
@@ -44,11 +44,11 @@ func after(db *gorm.DB) {
 	defer span.Finish()
 	if db.Error != nil {
 		span.LogFields(
-			tracerLog.Error(db.Error),
+			opentracing_log.Error(db.Error),
 		)
 		span.SetTag(string(ext.Error), true)
 	}
-	span.LogFields(tracerLog.String("SQL", db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)))
+	span.LogFields(opentracing_log.String("SQL", db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)))
 
 	return
 }
@@ -127,6 +127,6 @@ func (op *OpentracingPlugin) Initialize(db *gorm.DB) (err error) {
 }
 
 func setGormTag(ctx context.Context, span opentracing.Span) {
-	setTag(ctx, span)
+	SetCommonTag(ctx, span)
 	span.SetTag(string(ext.Component), operationTypeGorm)
 }
