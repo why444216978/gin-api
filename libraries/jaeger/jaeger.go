@@ -34,7 +34,7 @@ func NewJaegerTracer(connCfg Config) (opentracing.Tracer, io.Closer, error) {
 		ServiceName: global.Global.AppName,
 	}
 
-	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	tracer, closer, err := cfg.NewTracer()
 	if err != nil {
 		return nil, nil, err
 	}

@@ -3,13 +3,14 @@ package resource
 import (
 	"gin-api/libraries/config"
 	"gin-api/libraries/logging"
-	"gin-api/libraries/mysql"
 	"gin-api/libraries/redis"
+
+	"gorm.io/gorm"
 )
 
 var (
 	Config       *config.Viper
-	TestDB       *mysql.DB
+	TestDB       *gorm.DB
 	DefaultRedis *redis.RedisDB
 	Logger       *logging.Logger
 )

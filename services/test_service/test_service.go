@@ -24,7 +24,7 @@ var (
 func New() TestInterface {
 	instanceOnce.Do(func() {
 		instance = &TestService{
-			model: test_model.New(resource.TestDB.MasterOrm(), resource.TestDB.SlaveOrm()),
+			model: test_model.New(resource.TestDB),
 		}
 	})
 	return instance

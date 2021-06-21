@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type TestInterface interface {
@@ -13,8 +14,7 @@ type TestInterface interface {
 }
 
 type TestModel struct {
-	dbMaster *gorm.DB
-	dbSlave  *gorm.DB
+	db *gorm.DB
 }
 
 var (
@@ -22,18 +22,17 @@ var (
 	instanceOnce sync.Once
 )
 
-func New(master, slave *gorm.DB) TestInterface {
+func New(db *gorm.DB) TestInterface {
 	instanceOnce.Do(func() {
 		instance = &TestModel{
-			dbMaster: master,
-			dbSlave:  slave,
+			db: db,
 		}
 	})
 	return instance
 }
 
 func (m *TestModel) GetFirst(c *gin.Context) (test Test, err error) {
-	err = mysql.WithContext(c.Request.Context(), m.dbSlave).Model(&test).Select("*").First(&test).Error
+	err = mysql.WithContext(c.Request.Context(), m.db).Clauses(dbresolver.Write).Model(&test).Select("*").First(&test).Error
 
 	if test.Id == 0 {
 		err = ErrDataEmpty

@@ -43,6 +43,7 @@ require (
 	gorm.io/driver/mysql v1.1.0
 	gorm.io/driver/sqlite v1.1.4 // indirect
 	gorm.io/gorm v1.21.9
+	gorm.io/plugin/dbresolver v1.1.0
 )
 
 replace github.com/gomodule/redigo v2.0.0+incompatible => github.com/gomodule/redigo/redis v0.0.0-20200429221454-e14091dffc1b
