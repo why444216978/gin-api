@@ -3,9 +3,12 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"gin-api/libraries/logging"
 	"net/http"
 	"time"
+
+	"gin-api/libraries/logging"
+
+	util_ctx "github.com/why444216978/go-util/context"
 )
 
 // CacheData cache data struct
@@ -42,7 +45,8 @@ func (db *RedisDB) GetData(ctx context.Context, header http.Header, key string, 
 		return
 	}
 
-	go db.flushCache(ctx, header, key, ttl, ex, f, data)
+	ctxNew := util_ctx.RemoveCancel(ctx)
+	go db.flushCache(ctxNew, header, key, ttl, ex, f, data)
 
 	return
 }
@@ -109,7 +113,7 @@ func (db *RedisDB) setCache(ctx context.Context, header http.Header, key, val st
 		return
 	}
 
-	res, err := db.String(ctx, header, "SET", key, data, "ex", ex)
+	res, err := db.String(ctx, header, "SET", key, string(data), "ex", ex)
 	if err != nil {
 		err = ErrSetCache
 		return

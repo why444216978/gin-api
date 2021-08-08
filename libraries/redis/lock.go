@@ -37,8 +37,7 @@ func (db *RedisDB) Lock(ctx context.Context, header http.Header, key, uniqueStr 
 
 // UnLock unlock
 func (db *RedisDB) UnLock(ctx context.Context, header http.Header, key, uniqueStr string) (err error) {
-	lua := redis.NewScript(1, lockLua)
-	res, err := redis.Int(db.DoLua(ctx, header, lua, key, uniqueStr))
+	res, err := redis.Int(db.DoLua(ctx, header, lockLua, key, uniqueStr))
 	if err != nil || res == lockFail {
 		err = ErrUnLock
 		return

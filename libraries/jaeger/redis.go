@@ -9,7 +9,7 @@ import (
 	opentracing_log "github.com/opentracing/opentracing-go/log"
 )
 
-func InjectRedis(ctx context.Context, header http.Header, operationName, args string) (span opentracing.Span, err error) {
+func InjectRedis(ctx context.Context, header http.Header, operationName string, args ...interface{}) (span opentracing.Span, err error) {
 	parentSpanContext, ok := getInjectParent(ctx)
 	if !ok {
 		return
@@ -23,7 +23,7 @@ func InjectRedis(ctx context.Context, header http.Header, operationName, args st
 	)
 	SetCommonTag(ctx, span)
 
-	span.LogFields(opentracing_log.String(logFieldsArgs, args))
+	span.LogFields(opentracing_log.Object("args", args))
 
 	err = Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 	if err != nil {

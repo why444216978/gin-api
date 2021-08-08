@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"gin-api/libraries/jaeger"
 
 	"github.com/gomodule/redigo/redis"
+	opentracing_log "github.com/opentracing/opentracing-go/log"
 )
 
 const (
@@ -82,11 +82,7 @@ func (db *RedisDB) Do(ctx context.Context, header http.Header, commandName strin
 		return
 	}
 
-	arg := ""
-	for _, v := range args {
-		arg = fmt.Sprintf("%v ", v)
-	}
-	sp, _ := jaeger.InjectRedis(ctx, header, commandName, arg)
+	sp, _ := jaeger.InjectRedis(ctx, header, commandName, args)
 	if sp != nil {
 		defer sp.Finish()
 	}
@@ -106,23 +102,17 @@ func (db *RedisDB) Do(ctx context.Context, header http.Header, commandName strin
 	if err != nil && sp != nil {
 		jaeger.SetError(sp, err)
 	}
-	_reply, _ := json.Marshal(reply)
-	if sp != nil {
-		jaeger.SetResponse(sp, string(_reply))
-	}
 
 	return
 }
 
 // DoLua 执行lua脚本
-func (db *RedisDB) DoLua(ctx context.Context, header http.Header, lua *redis.Script, args ...interface{}) (reply interface{}, err error) {
-	arg := ""
-	for _, v := range args {
-		arg = fmt.Sprintf("%v ", v)
-	}
-	sp, _ := jaeger.InjectRedis(ctx, header, "lua", arg)
+func (db *RedisDB) DoLua(ctx context.Context, header http.Header, script string, args ...interface{}) (reply interface{}, err error) {
+	lua := redis.NewScript(1, script)
+	sp, _ := jaeger.InjectRedis(ctx, header, "lua", args)
 	if sp != nil {
 		defer sp.Finish()
+		sp.LogFields(opentracing_log.Object("script", script))
 	}
 
 	//后defer连接，先释放，统计挥手时间
@@ -139,10 +129,6 @@ func (db *RedisDB) DoLua(ctx context.Context, header http.Header, lua *redis.Scr
 	reply, err = lua.Do(db.pool.Get(), args...)
 	if err != nil && sp != nil {
 		jaeger.SetError(sp, err)
-	}
-	_reply, _ := json.Marshal(reply)
-	if sp != nil {
-		jaeger.SetResponse(sp, string(_reply))
 	}
 
 	return
