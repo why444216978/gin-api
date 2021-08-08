@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"gin-api/global"
+	"gin-api/jobs"
 	"gin-api/libraries/config"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
@@ -19,6 +20,7 @@ import (
 
 var (
 	conf = flag.String("conf", "conf_dev", "config path")
+	job  = flag.String("job", "", "is job")
 )
 
 func Bootstrap() {
@@ -30,7 +32,13 @@ func Bootstrap() {
 	initMysql("test_mysql")
 	initRedis("default_redis")
 	initJaeger()
-	initHTTP()
+
+	if *job == "" {
+		log.Println("start by server")
+		initHTTP()
+	} else {
+		jobs.Handle(*job)
+	}
 }
 
 func initConfig() {
