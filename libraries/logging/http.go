@@ -24,7 +24,7 @@ func ExtractLogID(req *http.Request) string {
 	logID := req.Header.Get(LOG_FIELD)
 
 	if logID == "" {
-		logID = newObjectId().Hex()
+		logID = NewObjectId().Hex()
 	}
 
 	req.Header.Add(LOG_FIELD, logID)

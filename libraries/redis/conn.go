@@ -12,6 +12,10 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+const (
+	ResultOK = "OK"
+)
+
 type Config struct {
 	Host           string
 	Port           int
@@ -99,6 +103,40 @@ func (db *RedisDB) Do(ctx context.Context, header http.Header, commandName strin
 	}
 
 	reply, err = conn.Do(commandName, args...)
+	if err != nil && sp != nil {
+		jaeger.SetError(sp, err)
+	}
+	_reply, _ := json.Marshal(reply)
+	if sp != nil {
+		jaeger.SetResponse(sp, string(_reply))
+	}
+
+	return
+}
+
+// DoLua 执行lua脚本
+func (db *RedisDB) DoLua(ctx context.Context, header http.Header, lua *redis.Script, args ...interface{}) (reply interface{}, err error) {
+	arg := ""
+	for _, v := range args {
+		arg = fmt.Sprintf("%v ", v)
+	}
+	sp, _ := jaeger.InjectRedis(ctx, header, "lua", arg)
+	if sp != nil {
+		defer sp.Finish()
+	}
+
+	//后defer连接，先释放，统计挥手时间
+	conn := db.pool.Get()
+	defer conn.Close()
+
+	if err := ctx.Err(); err != nil {
+		if err != nil && sp != nil {
+			jaeger.SetError(sp, err)
+		}
+		return nil, err
+	}
+
+	reply, err = lua.Do(db.pool.Get(), args...)
 	if err != nil && sp != nil {
 		jaeger.SetError(sp, err)
 	}

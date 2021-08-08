@@ -68,8 +68,8 @@ func initMachineId() []byte {
 	return id
 }
 
-// newObjectId returns a new unique ObjectId.
-func newObjectId() ObjectId {
+// NewObjectId returns a new unique ObjectId.
+func NewObjectId() ObjectId {
 	var b [12]byte
 	// Timestamp, 4 bytes, big endian
 	binary.BigEndian.PutUint32(b[:], uint32(time.Now().Unix()))
