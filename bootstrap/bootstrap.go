@@ -16,6 +16,8 @@ import (
 	"net/http"
 	"syscall"
 	"time"
+
+	go_redis "github.com/go-redis/redis/v7"
 )
 
 var (
@@ -99,6 +101,13 @@ func initRedis(db string) {
 	if err != nil {
 		panic(err)
 	}
+
+	//TODO abstract to library
+	r := go_redis.NewClient(&go_redis.Options{
+		Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+	})
+	r.AddHook(jaeger.NewJaegerHook())
+	resource.GoRedis = r
 }
 
 func initJaeger() {

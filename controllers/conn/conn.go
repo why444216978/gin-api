@@ -17,6 +17,10 @@ import (
 )
 
 func Do(c *gin.Context) {
+	res, err := resource.GoRedis.WithContext(c.Request.Context()).MGet("why", "jzm").Result()
+	fmt.Println(res)
+	fmt.Println(err)
+
 	goods, _ := test_service.New().GetFirstRow(c, true)
 	g, _ := errgroup.WithContext(c.Request.Context())
 	g.Go(func() (err error) {
@@ -27,7 +31,7 @@ func Do(c *gin.Context) {
 		}
 		return nil
 	})
-	err := g.Wait()
+	err = g.Wait()
 	if err != nil {
 		response.Response(c, response.CODE_SERVER, goods, "")
 		return
@@ -36,7 +40,6 @@ func Do(c *gin.Context) {
 	resource.Logger.Debug("test conn error msg", logging.MergeHTTPFields(c.Request.Context(), map[string]interface{}{"err": "test err"}))
 
 	data := &Data{}
-
 	err = resource.DefaultRedis.GetData(c.Request.Context(), http.Header{}, "key", 3600, 86400, GetDataA, data)
 	fmt.Println(data)
 	fmt.Println(err)

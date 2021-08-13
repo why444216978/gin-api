@@ -20,7 +20,7 @@ const (
 //before gorm before execute action do something
 func before(db *gorm.DB) {
 	if Tracer == nil {
-		panic(ErrNotJaeger)
+		return
 	}
 	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, Tracer, opentracingSpanKey)
 	db.InstanceSet(gormSpanKey, span)
@@ -43,9 +43,7 @@ func after(db *gorm.DB) {
 	setGormTag(db.Statement.Context, span)
 	defer span.Finish()
 	if db.Error != nil {
-		span.LogFields(
-			opentracing_log.Error(db.Error),
-		)
+		span.LogFields(opentracing_log.Error(db.Error))
 		span.SetTag(string(ext.Error), true)
 	}
 	span.LogFields(opentracing_log.String("SQL", db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)))

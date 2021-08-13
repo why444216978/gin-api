@@ -5,6 +5,7 @@ import (
 	"gin-api/libraries/logging"
 	"gin-api/libraries/redis"
 
+	go_redis "github.com/go-redis/redis/v7"
 	"gorm.io/gorm"
 )
 
@@ -13,4 +14,5 @@ var (
 	TestDB       *gorm.DB
 	DefaultRedis *redis.RedisDB
 	Logger       *logging.Logger
+	GoRedis      *go_redis.Client
 )
