@@ -6,6 +6,7 @@ import (
 	"gin-api/global"
 	"gin-api/jobs"
 	"gin-api/libraries/config"
+	"gin-api/libraries/goredis"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/mysql"
@@ -16,8 +17,6 @@ import (
 	"net/http"
 	"syscall"
 	"time"
-
-	go_redis "github.com/go-redis/redis/v7"
 )
 
 var (
@@ -89,11 +88,16 @@ func initMysql(db string) {
 
 func initRedis(db string) {
 	var (
-		err error
-		cfg redis.Config
+		err   error
+		cfg   redis.Config
+		goCfg goredis.Config
 	)
 
 	if err = resource.Config.ReadConfig(db, "toml", &cfg); err != nil {
+		panic(err)
+	}
+
+	if err = resource.Config.ReadConfig(db, "toml", &goCfg); err != nil {
 		panic(err)
 	}
 
@@ -102,12 +106,9 @@ func initRedis(db string) {
 		panic(err)
 	}
 
-	//TODO abstract to library
-	r := go_redis.NewClient(&go_redis.Options{
-		Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-	})
-	r.AddHook(jaeger.NewJaegerHook())
-	resource.GoRedis = r
+	rc := goredis.NewClient(&goCfg)
+	rc.AddHook(jaeger.NewJaegerHook())
+	resource.GoRedis = rc
 }
 
 func initJaeger() {
