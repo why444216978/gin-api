@@ -2,19 +2,13 @@
  * @Descripttion:
  * @Author: weihaoyu
 -->
+<img src="https://github.com/why444216978/images/blob/master/qrcode.png" width="300" height="100" alt="公众号"/>
 
 # gin-api
 
 基于 Gin 开发的 api 框架，封装各种常用组件，包括配置、日志、DB、RabbitMQ、Redis、缓存处理（解决缓存穿透、击穿、雪崩）、分布式链路追踪等，目的在于提高Go应用开发效率。
 <br><br>
-有疑问随时联系本人
-<br>
-QQ群：909211071
-<br>
-个人QQ：444216978
-<br>
-微信：AbleYu_
-<br>
+
 
 # 配置相关
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
@@ -124,5 +118,3 @@ CREATE TABLE `test` (
   KEY `idx_goods` (`goods_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
 ```
-
-
