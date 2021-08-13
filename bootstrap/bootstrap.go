@@ -141,8 +141,8 @@ func initHTTP() {
 
 	// endless.DefaultReadTimeOut = 3 * time.Second
 	// endless.DefaultWriteTimeOut = 3 * time.Second
-	// server := endless.NewServer(fmt.Sprintf(":%s", strconv.Itoa(app_const.SERVICE_PORT)), router)
-	// err := server.ListenAndServe()
+	// serverEnd := endless.NewServer(fmt.Sprintf(":%d", global.Global.AppPort), router)
+	// err = serverEnd.ListenAndServe()
 	// if err != nil {
 	// 	log.Printf("Server err: %v", err)
 	// }

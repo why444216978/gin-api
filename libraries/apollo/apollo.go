@@ -16,10 +16,11 @@ package apollo
 import (
 	"encoding/json"
 	"fmt"
-	"gin-api/app_const"
+	"gin-api/global"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -56,8 +57,6 @@ func DoLoadApolloConf(host, service, cluster, token string, space []string) (map
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
-			responseData, _ := ioutil.ReadAll(response.Body)
-			fmt.Println(string(responseData))
 			return nil, fmt.Errorf("http status is not ok.")
 		}
 
@@ -92,9 +91,8 @@ func LoadApolloConf(service string, space []string) (map[string]string, error) {
 }
 
 func Test() {
-	service := app_const.SERVICE_NAME
 	space := []string{"application"}
-	conf, err := LoadApolloConf(service, space)
+	conf, err := LoadApolloConf(strconv.Itoa(global.Global.AppPort), space)
 	fmt.Println(conf)
 	fmt.Println(err)
 }
