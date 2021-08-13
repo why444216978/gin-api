@@ -125,4 +125,4 @@ CREATE TABLE `test` (
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
 ```
 
-![image](https://github.com/why444216978/images/blob/master/qrcode.png)
+![image](<img src="https://github.com/why444216978/images/blob/master/qrcode.pn" width="150" height="200" alt="图片描述文字"/>)
