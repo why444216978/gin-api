@@ -21,9 +21,9 @@ type Cacher interface {
 	// ttl is developer expiration
 	GetData(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error)
 
-	// flushCache flush cache
+	// FlushCache flush cache
 	// if cache not exist, load data and save cache
-	flushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error)
+	FlushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error)
 
 	// getCache get data from cache and conversion to cacheData
 	getCache(ctx context.Context, key string) (data *cacheData, err error)

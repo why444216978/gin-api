@@ -42,7 +42,7 @@ func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.D
 
 	// 无缓存
 	if cache.ExpireAt == 0 || cache.Data == "" {
-		rc.flushCache(ctx, key, expiration, ttl, f, data)
+		rc.FlushCache(ctx, key, expiration, ttl, f, data)
 		return
 	}
 
@@ -56,12 +56,12 @@ func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.D
 	}
 
 	ctxNew := util_ctx.RemoveCancel(ctx)
-	go rc.flushCache(ctxNew, key, expiration, ttl, f, data)
+	go rc.FlushCache(ctxNew, key, expiration, ttl, f, data)
 
 	return
 }
 
-func (rc *redisCache) flushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error) {
+func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error) {
 	lockKey := "LOCK::" + key
 	random := logging.NewObjectId().Hex()
 
