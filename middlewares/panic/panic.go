@@ -47,7 +47,7 @@ func ThrowPanic() gin.HandlerFunc {
 
 				data, _ := conversion.StructToMap(fields)
 				resource.Logger.Error("panic", data) //这里不能打Fatal和Panic，否则程序会退出
-				response.Response(c, response.CODE_SERVER, nil, "")
+				response.Response(c, response.CodeServer, nil, "")
 				c.AbortWithStatus(http.StatusInternalServerError)
 
 				//subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")

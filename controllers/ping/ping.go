@@ -7,6 +7,6 @@ import (
 )
 
 func Ping(c *gin.Context) {
-	response.Response(c, response.CODE_SUCCESS, nil, "")
+	response.Response(c, response.CodeSuccess, nil, "")
 
 }

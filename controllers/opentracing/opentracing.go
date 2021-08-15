@@ -25,7 +25,7 @@ func Rpc(c *gin.Context) {
 		return
 	}
 
-	response.Response(c, response.CODE_SUCCESS, ret, "")
+	response.Response(c, response.CodeSuccess, ret, "")
 }
 
 func Rpc1(c *gin.Context) {
@@ -39,7 +39,7 @@ func Rpc1(c *gin.Context) {
 		return
 	}
 
-	response.Response(c, response.CODE_SUCCESS, ret, "")
+	response.Response(c, response.CodeSuccess, ret, "")
 }
 
 func Panic(c *gin.Context) {

@@ -29,7 +29,7 @@ func InitRouter() *gin.Engine {
 	server.Use(log.LoggerMiddleware())
 
 	server.NoRoute(func(c *gin.Context) {
-		response.Response(c, response.CODE_URI_NOT_FOUND, nil, "")
+		response.Response(c, response.CodeUriNotFound, nil, "")
 		c.AbortWithStatus(http.StatusNotFound)
 	})
 

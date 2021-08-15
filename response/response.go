@@ -7,19 +7,19 @@ import (
 )
 
 const (
-	CODE_SUCCESS       = 0
-	CODE_PARAMS        = 1
-	CODE_URI_NOT_FOUND = http.StatusNotFound
-	CODE_SERVER        = http.StatusInternalServerError
-	CODE_TIMEOUT       = http.StatusGatewayTimeout
+	CodeSuccess     = 0
+	CodeParams      = 1
+	CodeUriNotFound = http.StatusNotFound
+	CodeServer      = http.StatusInternalServerError
+	CodeTimeout     = http.StatusGatewayTimeout
 )
 
 var codeText = map[uint64]string{
-	CODE_SUCCESS:       "success",
-	CODE_PARAMS:        "参数错误",
-	CODE_URI_NOT_FOUND: "资源不存在",
-	CODE_SERVER:        "服务器错误",
-	CODE_TIMEOUT:       "请求超时",
+	CodeSuccess:     "success",
+	CodeParams:      "参数错误",
+	CodeUriNotFound: "资源不存在",
+	CodeServer:      "服务器错误",
+	CodeTimeout:     "请求超时",
 }
 
 type response struct {
@@ -30,7 +30,7 @@ type response struct {
 }
 
 func Response(c *gin.Context, code uint64, data interface{}, errmsg string) {
-	if data == nil || code != CODE_SUCCESS {
+	if data == nil || code != CodeSuccess {
 		data = make(map[string]interface{})
 	}
 

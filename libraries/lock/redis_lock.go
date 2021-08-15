@@ -22,7 +22,7 @@ const (
 				`
 )
 
-var _ Locker = (*RedisLock)(nil)
+var _ Locker = (*redisLock)(nil)
 
 var (
 	ErrClientNil = errors.New("client is nil")
@@ -30,21 +30,21 @@ var (
 	ErrUnLock    = errors.New("unlock fail")
 )
 
-type RedisLock struct {
+type redisLock struct {
 	c *redis.Client
 }
 
-func New(c *redis.Client) (*RedisLock, error) {
+func New(c *redis.Client) (*redisLock, error) {
 	if c == nil {
 		return nil, ErrClientNil
 	}
-	return &RedisLock{
+	return &redisLock{
 		c: c,
 	}, nil
 }
 
 // Lock lock
-func (rl *RedisLock) Lock(ctx context.Context, key, random string, duration time.Duration) (err error) {
+func (rl *redisLock) Lock(ctx context.Context, key, random string, duration time.Duration) (err error) {
 	_, err = rl.c.SetNX(ctx, key, random, duration).Result()
 	if err != nil {
 		return
@@ -54,7 +54,7 @@ func (rl *RedisLock) Lock(ctx context.Context, key, random string, duration time
 }
 
 // UnLock unlock
-func (rl *RedisLock) Unlock(ctx context.Context, key, random string) (err error) {
+func (rl *redisLock) Unlock(ctx context.Context, key, random string) (err error) {
 	res, err := rl.c.Eval(ctx, lockLua, []string{key}, random).Result()
 	if err != nil {
 		return
