@@ -17,7 +17,7 @@ import (
 )
 
 func Do(c *gin.Context) {
-	res, err := resource.GoRedis.WithContext(c.Request.Context()).MGet("why", "jzm").Result()
+	res, err := resource.GoRedis.MGet(c.Request.Context(), "why", "jzm").Result()
 	fmt.Println(res)
 	fmt.Println(err)
 

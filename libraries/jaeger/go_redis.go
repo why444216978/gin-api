@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	tracerLog "github.com/opentracing/opentracing-go/log"

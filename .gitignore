@@ -15,3 +15,5 @@ development
 test/*
 test.go
 __debug_bin
+cover.out
+cover.html

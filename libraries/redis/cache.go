@@ -11,8 +11,8 @@ import (
 	util_ctx "github.com/why444216978/go-util/context"
 )
 
-// CacheData cache data struct
-type CacheData struct {
+// cacheData cache data struct
+type cacheData struct {
 	ExpireAt int64  // ExpireAt 失效时间
 	Data     string // Data 真实数据
 }
@@ -82,8 +82,8 @@ func (db *RedisDB) flushCache(ctx context.Context, header http.Header, key strin
 }
 
 // getCache get data from cache
-func (db *RedisDB) getCache(ctx context.Context, header http.Header, key string) (data *CacheData, err error) {
-	data = &CacheData{}
+func (db *RedisDB) getCache(ctx context.Context, header http.Header, key string) (data *cacheData, err error) {
+	data = &cacheData{}
 
 	res, err := db.String(ctx, header, "GET", key)
 	if err != nil {
@@ -104,7 +104,7 @@ func (db *RedisDB) getCache(ctx context.Context, header http.Header, key string)
 
 // setCache set cache
 func (db *RedisDB) setCache(ctx context.Context, header http.Header, key, val string, ttl, ex int64) (err error) {
-	_data := CacheData{
+	_data := cacheData{
 		ExpireAt: time.Now().Unix() + ttl,
 		Data:     val,
 	}

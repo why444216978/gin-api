@@ -5,7 +5,7 @@ import (
 	"gin-api/libraries/logging"
 	redigo "gin-api/libraries/redis"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
