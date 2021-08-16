@@ -3,25 +3,25 @@ before_script:
   - whoami
 stages:
   - build_image
-  - deploy_liantiao
+  - deploy
 
 build_job:
   stage: build_image
   script:
     - echo $CI_COMMIT_SHORT_SHA $CI_PROJECT_PATH $CI_PROJECT_NAME
-    - docker build --no-cache -f Dockerfile -t harbor.ymt.io/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
-    - sudo docker push harbor.ymt.io/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
+    - docker build --no-cache -f Dockerfile -t harbor.io/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA .
+    - sudo docker push harbor.io/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
   only:
-    - liantiao
+    - master
   tags:
     - dev-host-k8s-master
 
 deploy_job:
-  stage: deploy_liantiao
+  stage: deploy
   script:
     - cd /home/gitlab-runner
-    - bash liantiao_deployment.sh $CI_PROJECT_NAME
+    - bash deployment.sh $CI_PROJECT_NAME
   only:
-    - liantiao
+    - master
   tags:
     - dev-host-k8s-master
