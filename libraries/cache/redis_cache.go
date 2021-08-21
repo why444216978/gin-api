@@ -34,7 +34,7 @@ func New(c *redis.Client, locker lock.Locker) (Cacher, error) {
 	}, nil
 }
 
-func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error) {
+func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error) {
 	cache, err := rc.getCache(ctx, key)
 	if err != nil {
 		return
@@ -61,7 +61,7 @@ func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.D
 	return
 }
 
-func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error) {
+func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error) {
 	lockKey := "LOCK::" + key
 	random := logging.NewObjectId().Hex()
 
@@ -112,9 +112,9 @@ func (rc *redisCache) getCache(ctx context.Context, key string) (data *cacheData
 	return
 }
 
-func (rc *redisCache) setCache(ctx context.Context, key, val string, expiration time.Duration, ttl int64) (err error) {
+func (rc *redisCache) setCache(ctx context.Context, key, val string, expiration time.Duration, ttl time.Duration) (err error) {
 	_data := cacheData{
-		ExpireAt: time.Now().Unix() + ttl,
+		ExpireAt: time.Now().Add(ttl).Unix(),
 		Data:     val,
 	}
 	data, err := json.Marshal(_data)

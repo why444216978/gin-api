@@ -19,15 +19,15 @@ type Cacher interface {
 	// if cache not exist load data by LoadFunc
 	// expiration is redis server expiration
 	// ttl is developer expiration
-	GetData(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error)
+	GetData(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error)
 
 	// FlushCache flush cache
 	// if cache not exist, load data and save cache
-	FlushCache(ctx context.Context, key string, expiration time.Duration, ttl int64, f LoadFunc, data interface{}) (err error)
+	FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error)
 
 	// getCache get data from cache and conversion to cacheData
 	getCache(ctx context.Context, key string) (data *cacheData, err error)
 
 	// setCache set cache
-	setCache(ctx context.Context, key, val string, expiration time.Duration, ttl int64) (err error)
+	setCache(ctx context.Context, key, val string, expiration time.Duration, ttl time.Duration) (err error)
 }

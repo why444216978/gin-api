@@ -320,6 +320,8 @@ github.com/ugorji/go/codec v1.1.7 h1:2SvQaVZ1ouYrrKKwoSk2pzd4A9evlKJb9oTL+OaLUSs
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/why444216978/go-util v1.0.11 h1:3OhCxFcixYVVkM1wBWIVlhJDmX/4r0w7OQXodt1xvKc=
 github.com/why444216978/go-util v1.0.11/go.mod h1:Ig1wkItwcPRQGjpAzv5+i3NRIUBadmyKCdV/Nl1OKLc=
+github.com/why444216978/go-util v1.0.12 h1:aMMY4lBSfXyPMmzdLK9adBhiHb7xLHMamtZAqsa1tRA=
+github.com/why444216978/go-util v1.0.12/go.mod h1:Ig1wkItwcPRQGjpAzv5+i3NRIUBadmyKCdV/Nl1OKLc=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=

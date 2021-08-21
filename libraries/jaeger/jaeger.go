@@ -19,7 +19,7 @@ type Config struct {
 	Port string
 }
 
-func NewJaegerTracer(connCfg Config) (opentracing.Tracer, io.Closer, error) {
+func NewJaegerTracer(connCfg *Config) (opentracing.Tracer, io.Closer, error) {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{
 			Type:  "const", //固定采样

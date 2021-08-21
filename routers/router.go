@@ -4,6 +4,7 @@ import (
 	"gin-api/controllers/conn"
 	"gin-api/controllers/opentracing"
 	"gin-api/controllers/ping"
+	"gin-api/global"
 	"gin-api/middlewares/limiter"
 	"gin-api/middlewares/log"
 	"gin-api/middlewares/panic"
@@ -22,7 +23,7 @@ func InitRouter() *gin.Engine {
 
 	server.Use(panic.ThrowPanic())
 
-	server.Use(timeout.TimeoutMiddleware(time.Second * 3))
+	server.Use(timeout.TimeoutMiddleware(time.Duration(global.Global.ContextTimeout) * time.Millisecond))
 
 	server.Use(limiter.Limiter(10))
 

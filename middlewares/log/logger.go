@@ -56,7 +56,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		jaeger.SetHTTPLog(span, string(req), resp)
 
 		data, _ := conversion.StructToMap(fields)
-		resource.Logger.Info("request info", data)
+		resource.ServiceLogger.Info("request info", data)
 
 		fields.Cost = int64(time.Now().Sub(start))
 

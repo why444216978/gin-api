@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"errors"
 	"io"
 	"strings"
 	"time"
@@ -11,8 +12,8 @@ import (
 )
 
 type Logger struct {
-	encoder zapcore.Encoder
-	logger  *zap.Logger
+	logger *zap.Logger
+	level  zapcore.Level
 }
 
 type Config struct {
@@ -21,45 +22,31 @@ type Config struct {
 	Level     string
 }
 
-func NewLogger(cfg Config) (logger *Logger) {
-	// 设置一些基本日志格式 具体含义还比较好理解，直接看zap源码也不难懂
-	encoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-		MessageKey:  "msg",
-		LevelKey:    "level",
-		EncodeLevel: zapcore.CapitalLevelEncoder,
-		TimeKey:     "ts",
-		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(t.Format("2006-01-02 15:04:05"))
-		},
-		CallerKey:    "file",
-		EncodeCaller: zapcore.ShortCallerEncoder,
-		EncodeDuration: func(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendInt64(int64(d) / 1000000)
-		},
-	})
+type Option func(l *Logger)
 
-	// 实现两个判断日志等级的interface
-	infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		if lvl.String() < cfg.Level {
-			return false
-		}
-		return lvl <= zapcore.InfoLevel
-	})
-
-	errorLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		if lvl.String() < cfg.Level {
-			return false
-		}
-		return lvl >= zapcore.WarnLevel
-	})
-
-	logger = &Logger{
-		encoder: encoder,
+func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
+	level, err := zapLevel(cfg.Level)
+	if err != nil {
+		return
 	}
 
+	l = &Logger{
+		level: level,
+	}
+
+	for _, o := range opts {
+		o(l)
+	}
+
+	encoder := l.formatEncoder()
+
+	// 实现两个判断日志等级的interface
+	infoLevel := l.infoEnabler()
+	errorLevel := l.errorEnabler()
+
 	// 获取 info、error日志文件的io.Writer 抽象 getWriter() 在下方实现
-	infoWriter := logger.getWriter(cfg.InfoFile)
-	errorWriter := logger.getWriter(cfg.ErrorFile)
+	infoWriter := l.getWriter(cfg.InfoFile)
+	errorWriter := l.getWriter(cfg.ErrorFile)
 
 	// 最后创建具体的Logger
 	core := zapcore.NewTee(
@@ -68,9 +55,45 @@ func NewLogger(cfg Config) (logger *Logger) {
 	)
 
 	// 需要传入 zap.AddCaller() 才会显示打日志点的文件名和行数
-	logger.logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	l.logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	return
+}
+
+func (l *Logger) infoEnabler() zap.LevelEnablerFunc {
+	return zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if lvl < l.level {
+			return false
+		}
+		return lvl <= zapcore.InfoLevel
+	})
+}
+
+func (l *Logger) errorEnabler() zap.LevelEnablerFunc {
+	return zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if lvl < l.level {
+			return false
+		}
+		return lvl >= zapcore.WarnLevel
+	})
+}
+
+func (l *Logger) formatEncoder() zapcore.Encoder {
+	return zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		MessageKey:  "msg",
+		LevelKey:    "level",
+		EncodeLevel: zapcore.CapitalLevelEncoder,
+		TimeKey:     "time",
+		CallerKey:   "file",
+		FunctionKey: "func",
+		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(t.Format("2006-01-02 15:04:05"))
+		},
+		EncodeCaller: zapcore.ShortCallerEncoder,
+		EncodeDuration: func(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendInt64(int64(d) / 1000000)
+		},
+	})
 }
 
 func (l *Logger) getWriter(filename string) io.Writer {
@@ -88,6 +111,14 @@ func (l *Logger) getWriter(filename string) io.Writer {
 		panic(err)
 	}
 	return hook
+}
+
+func (l *Logger) GetLogger() *zap.Logger {
+	return l.logger
+}
+
+func (l *Logger) GetLevel() zapcore.Level {
+	return l.level
 }
 
 func (l *Logger) Debug(msg string, fields map[string]interface{}) {
@@ -126,4 +157,25 @@ func (l *Logger) withFields(fields map[string]interface{}) []zapcore.Field {
 		ret = append(ret, zap.Reflect(k, v))
 	}
 	return ret
+}
+
+func zapLevel(level string) (zapcore.Level, error) {
+	switch level {
+	case "debug", "DEBUG":
+		return zapcore.DebugLevel, nil
+	case "info", "INFO", "":
+		return zapcore.InfoLevel, nil
+	case "warn", "WARN":
+		return zapcore.WarnLevel, nil
+	case "error", "ERROR":
+		return zapcore.ErrorLevel, nil
+	case "dpanic", "DPANIC":
+		return zapcore.DPanicLevel, nil
+	case "panic", "PANIC":
+		return zapcore.PanicLevel, nil
+	case "fatal", "FATAL":
+		return zapcore.FatalLevel, nil
+	default:
+		return 0, errors.New("error level:" + level)
+	}
 }
