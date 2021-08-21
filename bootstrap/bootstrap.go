@@ -79,7 +79,7 @@ func initLogger() {
 
 	resource.GormLogger, err = logging.NewGorm(gormCfg)
 	if err != nil {
-		panic(nil)
+		panic(err)
 	}
 }
 
