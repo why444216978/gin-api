@@ -1,0 +1,3 @@
+InfoFile = "./logs/redis/info.log"
+ErrorFile = "./logs/redis/error.wf.log"
+Level = "debug" # debug < info < warn < error < dpanic < panic < fatal

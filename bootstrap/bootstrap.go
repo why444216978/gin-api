@@ -107,13 +107,23 @@ func initRedis(db string) {
 		err error
 	)
 	cfg := &redis.Config{}
+	logCfg := &logging.RedisConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
+		panic(err)
+	}
+	if err = resource.Config.ReadConfig("redis_log", "toml", &logCfg); err != nil {
+		panic(err)
+	}
+
+	logger, err := logging.NewRedisLogger(logCfg)
+	if err != nil {
 		panic(err)
 	}
 
 	rc := redis.NewClient(cfg)
 	rc.AddHook(jaeger.NewJaegerHook())
+	rc.AddHook(logger)
 	resource.RedisCache = rc
 }
 

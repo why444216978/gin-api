@@ -34,16 +34,6 @@ type GormOption func(gl *GormLogger)
 
 var _ logger.Interface = (*GormLogger)(nil)
 
-func New(zapLogger *zap.Logger) *GormLogger {
-	return &GormLogger{
-		ZapLogger:                 zapLogger,
-		LogLevel:                  logger.Warn,
-		SlowThreshold:             100 * time.Millisecond,
-		SkipCallerLookup:          false,
-		IgnoreRecordNotFoundError: false,
-	}
-}
-
 func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 	gl = &GormLogger{
 		LogLevel:                  logger.LogLevel(cfg.Level),

@@ -2,7 +2,6 @@ package jaeger
 
 import (
 	"context"
-	"sync"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
@@ -18,30 +17,16 @@ const (
 	ErrNumberOfConnectionsExceeded string = "ERR max number of clients reached"
 )
 
-// jaegerHook instance go-redis Hook
-type jaegerHook struct {
-	once   sync.Once
-	client redis.Client
-}
+// jaegerHook is go-redis jaeger hook
+type jaegerHook struct{}
 
-// NewJaegerHook
+// NewJaegerHook return jaegerHook
 func NewJaegerHook() *jaegerHook {
 	return &jaegerHook{}
 }
 
-// InitHook 初始化
-func (m *jaegerHook) InitHook() {
-	m.once.Do(func() {})
-}
-
-// SetClient 设置hook client
-func (m *jaegerHook) SetClient(cli redis.Client) {
-	m.client = cli
-}
-
 //BeforeProcess redis before execute action do something
-func (m *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	m.InitHook()
+func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	if Tracer == nil {
 		return ctx, nil
 	}
@@ -55,7 +40,7 @@ func (m *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (contex
 }
 
 //AfterProcess redis after execute action do something
-func (m *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if Tracer == nil {
 		return nil
 	}
@@ -78,7 +63,7 @@ func (m *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 }
 
 // BeforeProcessPipeline before command process handle
-func (m *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	if Tracer == nil {
 		return ctx, nil
 	}
@@ -91,7 +76,7 @@ func (m *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmd
 }
 
 // AfterProcessPipeline after command process handle
-func (m *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+func (jh *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	if Tracer == nil {
 		return nil
 	}
