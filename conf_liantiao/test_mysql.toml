@@ -7,7 +7,6 @@ DB = "test"
 Charset = "utf8mb4"
 MaxOpen = 8
 MaxIdle = 4
-ExecTimeout = 10000
 
 [slave]
 Host = "127.0.0.1"
@@ -18,4 +17,3 @@ DB = "test"
 Charset = "utf8mb4"
 MaxOpen = 8
 MaxIdle = 4
-ExecTimeout = 10000
