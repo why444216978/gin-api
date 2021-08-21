@@ -60,9 +60,10 @@ func LoggerMiddleware() gin.HandlerFunc {
 		req, _ := json.Marshal(fields.Request)
 		jaeger.SetHTTPLog(span, string(req), resp)
 
-		resource.ServiceLogger.Info("request info", zap.Reflect("data", fields))
+		fields.Cost = time.Since(start).Milliseconds()
+		ctx = logging.WithHTTPFields(ctx, fields)
 
-		fields.Cost = int64(time.Now().Sub(start))
+		resource.ServiceLogger.Info("request info", zap.Reflect("data", fields))
 
 		c.Request = c.Request.WithContext(ctx)
 	}

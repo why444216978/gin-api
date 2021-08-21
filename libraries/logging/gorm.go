@@ -93,42 +93,47 @@ func (l *GormLogger) LogMode(level logger.LogLevel) logger.Interface {
 	}
 }
 
-func (l *GormLogger) Info(ctx context.Context, str string, args ...interface{}) {
+func (l *GormLogger) Info(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel < logger.Info {
 		return
 	}
-	l.logger().Sugar().Debugf(str, args...)
+	l.logger().Info(msg, zap.Reflect("data", args))
+
 }
 
-func (l *GormLogger) Warn(ctx context.Context, str string, args ...interface{}) {
+func (l *GormLogger) Warn(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel < logger.Warn {
 		return
 	}
-	l.logger().Sugar().Warnf(str, args...)
+	l.logger().Warn(msg, zap.Reflect("data", args))
 }
 
-func (l *GormLogger) Error(ctx context.Context, str string, args ...interface{}) {
+func (l *GormLogger) Error(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel < logger.Error {
 		return
 	}
-	l.logger().Sugar().Errorf(str, args...)
+	l.logger().Error(msg, zap.Reflect("data", args))
 }
 
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel <= 0 {
 		return
 	}
+
 	elapsed := time.Since(begin)
 	switch {
 	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
 		sql, rows := fc()
-		l.logger().Error("trace", zap.Error(err), zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
+		l.logger().Error("trace", zap.Error(err), zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
+			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
 		sql, rows := fc()
-		l.logger().Warn("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
+		l.logger().Warn("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
+			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
 	case l.LogLevel >= logger.Info:
 		sql, rows := fc()
-		l.logger().Info("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
+		l.logger().Info("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
+			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
 	}
 }
 
