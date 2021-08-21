@@ -32,6 +32,7 @@ func Do(c *gin.Context) {
 	defer func() {
 		if err != nil {
 			db.WithContext(ctx).Rollback()
+			// resource.ServiceLogger.Error
 			response.Response(c, response.CodeServer, goods, err.Error())
 			return
 		}

@@ -11,6 +11,7 @@ const (
 	CodeParams      = 1
 	CodeUriNotFound = http.StatusNotFound
 	CodeServer      = http.StatusInternalServerError
+	CodeUnavailable = http.StatusServiceUnavailable
 	CodeTimeout     = http.StatusGatewayTimeout
 )
 
@@ -18,8 +19,9 @@ var codeText = map[uint64]string{
 	CodeSuccess:     "success",
 	CodeParams:      "参数错误",
 	CodeUriNotFound: "资源不存在",
-	CodeServer:      "服务器错误",
+	CodeUnavailable: "服务器暂时不可用",
 	CodeTimeout:     "请求超时",
+	CodeServer:      "服务器错误",
 }
 
 type response struct {

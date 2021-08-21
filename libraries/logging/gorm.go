@@ -76,7 +76,7 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 	if err != nil {
 		return
 	}
-	gl.ZapLogger = l.GetLogger()
+	gl.ZapLogger = l.Logger
 
 	logger.Default = gl
 

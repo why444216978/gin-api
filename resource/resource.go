@@ -12,6 +12,5 @@ var (
 	Config        *config.Viper
 	TestDB        *orm.Orm
 	ServiceLogger *logging.Logger
-	GormLogger    *logging.GormLogger
 	RedisCache    *redis.Client
 )

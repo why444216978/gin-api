@@ -62,22 +62,12 @@ func initLogger() {
 		err error
 	)
 	cfg := &logging.Config{}
-	gormCfg := &logging.GormConfig{}
 
 	if err = resource.Config.ReadConfig("log", "toml", &cfg); err != nil {
 		panic(err)
 	}
 
-	if err = resource.Config.ReadConfig("gorm_log", "toml", gormCfg); err != nil {
-		panic(err)
-	}
-
 	resource.ServiceLogger, err = logging.NewLogger(cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	resource.GormLogger, err = logging.NewGorm(gormCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -88,14 +78,24 @@ func initMysql(db string) {
 		err error
 	)
 	cfg := &orm.Config{}
+	gormCfg := &logging.GormConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
 	}
 
+	if err = resource.Config.ReadConfig("gorm_log", "toml", gormCfg); err != nil {
+		panic(err)
+	}
+
+	gormLogger, err := logging.NewGorm(gormCfg)
+	if err != nil {
+		panic(err)
+	}
+
 	resource.TestDB, err = orm.NewOrm(cfg,
 		orm.WithTrace(jaeger.GormTrace),
-		orm.WithLogger(resource.GormLogger),
+		orm.WithLogger(gormLogger),
 	)
 	if err != nil {
 		panic(err)

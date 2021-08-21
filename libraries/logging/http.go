@@ -21,13 +21,13 @@ const (
 
 // ExtractLogID init log id
 func ExtractLogID(req *http.Request) string {
-	logID := req.Header.Get(LOG_FIELD)
+	logID := req.Header.Get(LogHeader)
 
 	if logID == "" {
 		logID = NewObjectId().Hex()
 	}
 
-	req.Header.Add(LOG_FIELD, logID)
+	req.Header.Add(LogHeader, logID)
 
 	return logID
 }
@@ -114,20 +114,4 @@ func GetRequestBody(req *http.Request) map[string]interface{} {
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody)) // Reset
 
 	return reqBodyMap
-}
-
-// MergeHTTPFields merge extend log fields and  http common fields
-func MergeHTTPFields(ctx context.Context, extend map[string]interface{}) map[string]interface{} {
-	fields := ValueHTTPFields(ctx)
-	common, _ := conversion.StructToMap(fields)
-
-	ret := make(map[string]interface{})
-	for k, v := range common {
-		ret[k] = v
-	}
-	for k, v := range extend {
-		ret[k] = v
-	}
-
-	return ret
 }

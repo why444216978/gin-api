@@ -90,7 +90,7 @@ package log
 // 			HostIP:   hostIP,
 // 			Port:     global.Global.AppPort,
 // 			API:      c.Request.RequestURI,
-// 			Module:   logging.MODULE_HTTP,
+// 			Module:   logging.ModuleHTTP,
 // 			Cost:     int64(time.Now().Sub(start)),
 // 		}
 

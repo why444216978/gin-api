@@ -1,7 +1,6 @@
 package log
 
 import (
-	"gin-api/global"
 	"gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
@@ -21,9 +20,8 @@ func InitContext() gin.HandlerFunc {
 			Request:  logging.GetRequestBody(c.Request),
 			CallerIP: c.ClientIP(),
 			HostIP:   hostIP,
-			Port:     global.Global.AppPort,
 			API:      c.Request.RequestURI,
-			Module:   logging.MODULE_HTTP,
+			Module:   logging.ModuleHTTP,
 		}
 
 		ctx := logging.WithLogID(c.Request.Context(), logID)

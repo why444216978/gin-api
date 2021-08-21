@@ -16,11 +16,9 @@ package apollo
 import (
 	"encoding/json"
 	"fmt"
-	"gin-api/global"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -76,6 +74,8 @@ func DoLoadApolloConf(host, service, cluster, token string, space []string) (map
 	return cfgMap, nil
 }
 
+// LoadApolloConf
+// example: LoadApolloConf("777", []string{"application"})
 func LoadApolloConf(service string, space []string) (map[string]string, error) {
 	var err error
 	apolloOnce.Do(func() {
@@ -88,11 +88,4 @@ func LoadApolloConf(service string, space []string) (map[string]string, error) {
 	})
 
 	return apolloConfigs, err
-}
-
-func Test() {
-	space := []string{"application"}
-	conf, err := LoadApolloConf(strconv.Itoa(global.Global.AppPort), space)
-	fmt.Println(conf)
-	fmt.Println(err)
 }

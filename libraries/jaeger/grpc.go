@@ -34,10 +34,13 @@ func (c MDReaderWriter) Set(key, val string) {
 }
 
 // ClientInterceptor grpc client
-func ClientInterceptor(tracer opentracing.Tracer, spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
+func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string,
 		req, reply interface{}, cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if Tracer == nil {
+			return nil
+		}
 
 		span := opentracing.StartSpan(
 			"call gRPC",
@@ -55,7 +58,7 @@ func ClientInterceptor(tracer opentracing.Tracer, spanContext opentracing.SpanCo
 			md = md.Copy()
 		}
 
-		err := tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
+		err := Tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
 		if err != nil {
 			span.LogFields(log.String("inject-error", err.Error()))
 		}

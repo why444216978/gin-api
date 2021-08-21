@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gin-api/libraries/logging"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +19,7 @@ type Response struct {
 	Response string
 }
 
-func ExtractHTTP(ctx context.Context, req *http.Request) (context.Context, opentracing.Span) {
+func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.Context, opentracing.Span, string) {
 	var span opentracing.Span
 
 	parentSpanContext, err := Tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
@@ -37,11 +36,11 @@ func ExtractHTTP(ctx context.Context, req *http.Request) (context.Context, opent
 	span.SetTag(string(ext.Component), operationTypeHTTP)
 
 	SetCommonTag(ctx, span)
+	span.SetTag(fieldLogID, logID)
 
-	ctx = logging.AddTraceID(ctx, GetTraceID(span))
 	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
 
-	return ctx, span
+	return ctx, span, GetSpanID(span)
 }
 
 // JaegerSend 发送Jaeger请求

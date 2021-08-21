@@ -3,7 +3,6 @@ package jaeger
 import (
 	"context"
 	"gin-api/global"
-	"gin-api/libraries/logging"
 	"io"
 
 	"github.com/opentracing/opentracing-go"
@@ -55,7 +54,6 @@ func SetCommonTag(ctx context.Context, span opentracing.Span) {
 	jaegerSpanContext := spanContextToJaegerContext(span.Context())
 	span.SetTag(fieldTraceID, jaegerSpanContext.TraceID().String())
 	span.SetTag(fieldSpanID, jaegerSpanContext.SpanID().String())
-	span.SetTag(fieldLogID, logging.ValueLogID(ctx))
 }
 
 func GetTraceID(span opentracing.Span) string {

@@ -17,7 +17,7 @@ import (
 func Rpc(c *gin.Context) {
 	sendUrl := fmt.Sprintf("http://localhost:%d/test/rpc1?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
 
-	header := map[string]string{logging.LOG_FIELD: logging.ValueLogID(c.Request.Context())}
+	header := map[string]string{logging.LogHeader: logging.ValueLogID(c.Request.Context())}
 	ret, err := jaeger.JaegerSend(c.Request.Context(), http.MethodPost, sendUrl, header, bytes.NewBufferString(`{"a":"a"}`), time.Second)
 	if err != nil {
 		fmt.Println(ret)
@@ -31,7 +31,7 @@ func Rpc(c *gin.Context) {
 func Rpc1(c *gin.Context) {
 	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
 
-	header := map[string]string{logging.LOG_FIELD: logging.ValueLogID(c.Request.Context())}
+	header := map[string]string{logging.LogHeader: logging.ValueLogID(c.Request.Context())}
 	ret, err := jaeger.JaegerSend(c.Request.Context(), http.MethodPost, sendUrl, header, nil, time.Second)
 	if err != nil {
 		fmt.Println(ret)

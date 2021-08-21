@@ -6,11 +6,9 @@ import (
 	"gin-api/resource"
 	"gin-api/response"
 	"net/http"
-	"runtime/debug"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/why444216978/go-util/conversion"
+	"go.uber.org/zap"
 )
 
 type bodyLogWriter struct {
@@ -27,13 +25,13 @@ func ThrowPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func(c *gin.Context) {
 			if err := recover(); err != nil {
-				mailDebugStack := ""
-				debugStack := make(map[int]interface{})
-				for k, v := range strings.Split(string(debug.Stack()), "\n") {
-					//fmt.Println(v)
-					mailDebugStack += v + "<br>"
-					debugStack[k] = v
-				}
+				// mailDebugStack := ""
+				// debugStack := make(map[int]interface{})
+				// for k, v := range strings.Split(string(debug.Stack()), "\n") {
+				// 	//fmt.Println(v)
+				// 	mailDebugStack += v + "<br>"
+				// 	debugStack[k] = v
+				// }
 
 				fields := logging.ValueHTTPFields(c.Request.Context())
 				fields.Response = map[string]interface{}{
@@ -43,10 +41,9 @@ func ThrowPanic() gin.HandlerFunc {
 					"errmsg": "服务器错误",
 				}
 				fields.Code = http.StatusInternalServerError
-				fields.Trace = debugStack
+				// fields.Trace = debugStack
 
-				data, _ := conversion.StructToMap(fields)
-				resource.ServiceLogger.Error("panic", data) //这里不能打Fatal和Panic，否则程序会退出
+				resource.ServiceLogger.Error("panic", zap.Reflect("data", fields)) //这里不能打Fatal和Panic，否则程序会退出
 				response.Response(c, response.CodeServer, nil, "")
 				c.AbortWithStatus(http.StatusInternalServerError)
 

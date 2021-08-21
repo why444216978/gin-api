@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
+	"go.uber.org/zap"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -35,8 +36,9 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 
-		ctx, span := jaeger.ExtractHTTP(ctx, c.Request)
+		ctx, span, traceID := jaeger.ExtractHTTP(ctx, c.Request, logging.ValueLogID(ctx))
 		defer span.Finish()
+		ctx = logging.AddTraceID(ctx, traceID)
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()
@@ -55,8 +57,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		req, _ := json.Marshal(fields.Request)
 		jaeger.SetHTTPLog(span, string(req), resp)
 
-		data, _ := conversion.StructToMap(fields)
-		resource.ServiceLogger.Info("request info", data)
+		resource.ServiceLogger.Info("request info", zap.Reflect("data", fields))
 
 		fields.Cost = int64(time.Now().Sub(start))
 
