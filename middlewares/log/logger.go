@@ -38,7 +38,10 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		ctx, span, traceID := jaeger.ExtractHTTP(ctx, c.Request, logging.ValueLogID(ctx))
 		defer span.Finish()
+
+		ctx = logging.WithTraceID(ctx, traceID)
 		ctx = logging.AddTraceID(ctx, traceID)
+
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()

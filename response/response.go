@@ -1,6 +1,7 @@
 package response
 
 import (
+	"gin-api/libraries/logging"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,10 +26,11 @@ var codeText = map[uint64]string{
 }
 
 type response struct {
-	Code   uint64      `json:"code"`
-	Toast  string      `json:"toast"`
-	Data   interface{} `json:"data"`
-	ErrMsg string      `json:"errmsg"`
+	Code    uint64      `json:"code"`
+	Toast   string      `json:"toast"`
+	Data    interface{} `json:"data"`
+	ErrMsg  string      `json:"errmsg"`
+	TraceID string      `json:"trace_id"`
 }
 
 func Response(c *gin.Context, code uint64, data interface{}, errmsg string) {
@@ -41,10 +43,11 @@ func Response(c *gin.Context, code uint64, data interface{}, errmsg string) {
 		toast = ""
 	}
 	c.JSON(http.StatusOK, response{
-		Code:   code,
-		Toast:  toast,
-		Data:   data,
-		ErrMsg: errmsg,
+		Code:    code,
+		Toast:   toast,
+		Data:    data,
+		ErrMsg:  errmsg,
+		TraceID: logging.ValueTraceID(c.Request.Context()),
 	})
 	c.Abort()
 }
