@@ -14,76 +14,35 @@
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br>
 
-### app.toml：
-```
-AppName = "gin-api"
-AppPort = 777
-```
-
-### log.toml：
-```
-InfoFile = "./logs/info.log"
-ErrorFile = "./logs/error.wf.log"
-Level = "info"
-```
-
-
-### test_mysql:
-
-```
-[master]
-Host = "127.0.0.1"
-Port = "3306"
-User = "root"
-Password = "123456"
-DB = "test"
-Charset = "utf8mb4"
-MaxOpen = 8
-MaxIdle = 4
-ExecTimeout = 10000
-
-[slave]
-Host = "127.0.0.1"
-Port = "3306"
-User = "root"
-Password = "123456"
-DB = "test"
-Charset = "utf8mb4"
-MaxOpen = 8
-MaxIdle = 4
-ExecTimeout = 10000
-```
-
-### default_redis.toml:
-
-```
-Host = "127.0.0.1"
-Port = 6379
-Auth = ""
-DB = 0
-ConnectTimeout = 1
-ReadTimeout = 1
-WriteTimeout = 1
-MaxActive = 30
-MaxIdle = 10
-IsLog = true
-ExecTimeout = 100000
-```
-
-### jaeger.toml:
-
-```
-Host = "127.0.0.1"
-Port = "6831"
-```
-
+# 测试接口
+检测接口：http://localhost:777/ping 
+<br>
+panic接口：http://localhost:777/test/panic
+<br>
+db和redis测试接口：http://localhost:777/test/conn
+<br>
+分布式链路追踪测试：http://localhost:777/test/rpc
+<br>
 
 # 运行
 
-1. 创建上述基础配置文件
+1. 查看 conf_dev 目录的各个配置文件，改成符合自己的
 2. log配置中的目录确保本地存在且有写入权限
 3. go run main.go
 
+
+**注意：测试 /test/conn 和 /test/rpc 接口时，应确检查如下几项：**
+1. 创建 test 库
+2. 创建 test 表并随意插入数据
+```
+CREATE TABLE `test` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `goods_id` bigint(20) unsigned NOT NULL,
+  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_goods` (`goods_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
+```
 
 ```
 [why@localhost] ~/Desktop/go/gin-api$go run main.go 
@@ -105,16 +64,3 @@ Port = "6831"
 ```
 
 
-**注意：测试 /test/conn 接口时，应确检查如下几项：**
-1. mysql 和 redis 配置文件符合示例配置文件中的default（当然可以自定义，不过需要更改 test_model.go 和 goods_service.go 中的 DB_NAME ）
-2. 创建 test 库
-3. 创建 test 表并随意插入数据
-```
-CREATE TABLE `test` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `goods_id` bigint(20) unsigned NOT NULL,
-  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
-  PRIMARY KEY (`id`),
-  KEY `idx_goods` (`goods_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
-```
