@@ -29,7 +29,10 @@ const (
 
 func (srv *GoodsService) GetGoodsName(c *gin.Context, id int) (string, error) {
 	data, err := resource.RedisCache.Get(c.Request.Context(), GOODS_NAME_KEY+strconv.Itoa(id)).Result()
-	if err != nil && err != redis.Nil {
+	if err == redis.Nil {
+		err = nil
+	}
+	if err != nil {
 		err = errors.Wrap(err, "redis get goods price error：")
 	}
 	return data, err

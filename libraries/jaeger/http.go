@@ -19,31 +19,31 @@ type Response struct {
 	Response string
 }
 
+// ExtractHTTP is used to extract span context by HTTP middleware
 func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.Context, opentracing.Span, string) {
 	var span opentracing.Span
 
 	parentSpanContext, err := Tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	if parentSpanContext == nil || err != nil {
-		span = Tracer.StartSpan(req.URL.Path)
+	if parentSpanContext == nil || err == opentracing.ErrSpanContextNotFound {
+		span, ctx = opentracing.StartSpanFromContext(ctx, serverTagPrefix+req.URL.Path)
 	} else {
-		span = opentracing.StartSpan(
-			req.URL.Path,
-			opentracing.ChildOf(parentSpanContext),
+		span = Tracer.StartSpan(
+			serverTagPrefix+req.URL.Path,
 			ext.RPCServerOption(parentSpanContext),
-			ext.SpanKindRPCClient,
+			opentracing.Tag{Key: string(ext.Component), Value: operationTypeHTTP},
+			opentracing.Tag{Key: fieldLogID, Value: logID},
+			ext.SpanKindRPCServer,
 		)
 	}
-	span.SetTag(string(ext.Component), operationTypeHTTP)
-
+	span.SetTag(string(ext.Component), serverTagPrefix)
 	SetCommonTag(ctx, span)
-	span.SetTag(fieldLogID, logID)
 
 	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
 
 	return ctx, span, GetSpanID(span)
 }
 
-// JaegerSend 发送Jaeger请求
+// JaegerSend send HTTP and inject span
 func JaegerSend(ctx context.Context, method, url string, header map[string]string, body io.Reader, timeout time.Duration) (ret Response, err error) {
 	var req *http.Request
 
@@ -64,10 +64,7 @@ func JaegerSend(ctx context.Context, method, url string, header map[string]strin
 	}
 
 	//注入Jaeger
-	opentracingSpan, _ := injectHTTP(ctx, req.Header, req.URL.Path, operationTypeHTTP)
-	if opentracingSpan != nil {
-		defer opentracingSpan.Finish()
-	}
+	InjectHTTP(ctx, req)
 
 	//发送请求
 	resp, err := client.Do(req)
@@ -94,12 +91,13 @@ func JaegerSend(ctx context.Context, method, url string, header map[string]strin
 	return
 }
 
-func injectHTTP(ctx context.Context, header http.Header, operationName, operationType string) (span opentracing.Span, err error) {
-	parentSpanContext, ok := getInjectParent(ctx)
-	if !ok {
-		return
-	}
-	err = Tracer.Inject(parentSpanContext, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+// InjectHTTP is used to inject HTTP span
+func InjectHTTP(ctx context.Context, req *http.Request) {
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, clientTagPrefix+req.URL.Path, ext.SpanKindRPCClient)
+	defer span.Finish()
+	span.SetTag(string(ext.Component), operationTypeHTTP)
+
+	err := Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	if err != nil {
 		span.LogFields(opentracing_log.String("inject-next-error", err.Error()))
 	}
