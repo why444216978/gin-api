@@ -9,9 +9,7 @@ import (
 
 type handleFunc func() error
 
-var handlers = map[string]handleFunc{
-	"test": Test,
-}
+var handlers = map[string]handleFunc{}
 
 func Handle(job string) {
 	log.Println("start by " + job)

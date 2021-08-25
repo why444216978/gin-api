@@ -19,3 +19,8 @@ const (
 	logFieldsResponse = "response"
 	logFieldsArgs     = "args"
 )
+
+const (
+	clientTagPrefix = "Client-"
+	serverTagPrefix = "Server-"
+)

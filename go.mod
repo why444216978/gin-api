@@ -20,20 +20,19 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
-	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
+	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/why444216978/go-util v1.0.12
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
 	go.uber.org/zap v1.17.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	google.golang.org/grpc v1.32.0
 	gopkg.in/ini.v1 v1.57.0 // indirect
 	gorm.io/driver/mysql v1.1.0
 	gorm.io/gorm v1.21.9
 	gorm.io/plugin/dbresolver v1.1.0
+	icode.baidu.com/baidu/health/kylin v1.1.3 // indirect
 )
 
 replace github.com/gomodule/redigo v2.0.0+incompatible => github.com/gomodule/redigo/redis v0.0.0-20200429221454-e14091dffc1b
