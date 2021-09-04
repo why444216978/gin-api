@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"gin-api/libraries/jaeger"
-	"gin-api/libraries/registry"
-	"gin-api/libraries/registry/etcd"
 	"gin-api/resource"
 	"log"
 	"net/http"
@@ -13,17 +11,7 @@ import (
 )
 
 func Registry() (err error) {
-	cfg := &registry.DiscoveryConfig{}
-	if err = resource.Config.ReadConfig("services/test_etcd", "toml", cfg); err != nil {
-		panic(err)
-	}
-
-	ser, err := etcd.NewDiscovery(
-		etcd.WithDiscoverClient(resource.Etcd.Client),
-		etcd.WithDiscoverServiceName(cfg.ServiceName))
-	if err != nil {
-		panic(err)
-	}
+	ser := resource.Services["gin-api"]
 	defer ser.Close()
 	err = ser.WatchService(context.Background())
 	if err != nil {

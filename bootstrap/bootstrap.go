@@ -3,6 +3,8 @@ package bootstrap
 import (
 	"flag"
 	"log"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"gin-api/global"
@@ -12,6 +14,8 @@ import (
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
 	"gin-api/libraries/redis"
+	"gin-api/libraries/registry"
+	registry_etcd "gin-api/libraries/registry/etcd"
 	"gin-api/resource"
 )
 
@@ -36,6 +40,7 @@ func Bootstrap() {
 	initRedis("default_redis")
 	initJaeger()
 	initEtcd()
+	initServices()
 }
 
 func initConfig() {
@@ -152,4 +157,40 @@ func initEtcd() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func initServices() {
+	var (
+		err   error
+		dir   string
+		files []string
+	)
+
+	if dir, err = filepath.Abs(*conf); err != nil {
+		panic(err)
+	}
+
+	if files, err = filepath.Glob(filepath.Join(dir, "services", "*.toml")); err != nil {
+		panic(err)
+	}
+
+	resource.Services = make(map[string]registry.Discovery)
+	cfg := &registry.DiscoveryConfig{}
+
+	for _, f := range files {
+		f = path.Base(f)
+		f = strings.TrimSuffix(f, path.Ext(f))
+
+		if err = resource.Config.ReadConfig("services/"+f, "toml", cfg); err != nil {
+			panic(err)
+		}
+
+		if resource.Services[cfg.ServiceName], err = registry_etcd.NewDiscovery(
+			registry_etcd.WithDiscoverClient(resource.Etcd.Client),
+			registry_etcd.WithDiscoverServiceName(cfg.ServiceName)); err != nil {
+			panic(err)
+		}
+	}
+
+	return
 }

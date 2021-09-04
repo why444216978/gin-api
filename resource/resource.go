@@ -5,6 +5,7 @@ import (
 	"gin-api/libraries/etcd"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
+	"gin-api/libraries/registry"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -15,4 +16,5 @@ var (
 	ServiceLogger *logging.Logger
 	RedisCache    *redis.Client
 	Etcd          *etcd.Etcd
+	Services      map[string]registry.Discovery
 )

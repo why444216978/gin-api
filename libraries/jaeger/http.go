@@ -14,11 +14,6 @@ import (
 	opentracing_log "github.com/opentracing/opentracing-go/log"
 )
 
-type Response struct {
-	HTTPCode int
-	Response string
-}
-
 // ExtractHTTP is used to extract span context by HTTP middleware
 func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.Context, opentracing.Span, string) {
 	var span opentracing.Span
@@ -41,6 +36,11 @@ func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.
 	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), parentSpanContextKey, span.Context())
 
 	return ctx, span, GetSpanID(span)
+}
+
+type Response struct {
+	HTTPCode int
+	Response string
 }
 
 // JaegerSend send HTTP and inject span

@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"time"
 )
 
 type ServiceNode struct {
@@ -22,8 +21,6 @@ type Registrar interface {
 
 type DiscoveryConfig struct {
 	ServiceName string
-	Endpoints   string
-	DialTimeout time.Duration
 }
 
 // Discovery is service discovery
