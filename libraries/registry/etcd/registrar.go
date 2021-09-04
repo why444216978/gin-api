@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
+	"fmt"
+	"log"
 
 	"gin-api/libraries/registry"
 
@@ -16,10 +17,7 @@ type EtcdRegistrar struct {
 	serviceName   string
 	host          string
 	port          int
-	addr          string
-	endpoints     []string
 	cli           *clientv3.Client
-	dialTimeout   time.Duration
 	leaseID       clientv3.LeaseID
 	keepAliveChan <-chan *clientv3.LeaseKeepAliveResponse
 	key           string
@@ -31,6 +29,10 @@ type EtcdRegistrar struct {
 var _ registry.Registrar = (*EtcdRegistrar)(nil)
 
 type RegistrarOption func(*EtcdRegistrar)
+
+func WithRegistrarClient(cli *clientv3.Client) RegistrarOption {
+	return func(er *EtcdRegistrar) { er.cli = cli }
+}
 
 func WithRegistrarServiceName(serviceName string) RegistrarOption {
 	return func(er *EtcdRegistrar) { er.serviceName = serviceName }
@@ -44,10 +46,6 @@ func WithRegistarPort(port int) RegistrarOption {
 	return func(er *EtcdRegistrar) { er.port = port }
 }
 
-func WithRegistrarEndpoints(endpoints []string) RegistrarOption {
-	return func(er *EtcdRegistrar) { er.endpoints = endpoints }
-}
-
 func WithRegistrarLease(lease int64) RegistrarOption {
 	return func(er *EtcdRegistrar) { er.lease = lease }
 }
@@ -55,6 +53,7 @@ func WithRegistrarLease(lease int64) RegistrarOption {
 // NewRegistry
 func NewRegistry(opts ...RegistrarOption) (registry.Registrar, error) {
 	var err error
+
 	r := &EtcdRegistrar{
 		encode: JSONEncode,
 	}
@@ -63,32 +62,23 @@ func NewRegistry(opts ...RegistrarOption) (registry.Registrar, error) {
 		o(r)
 	}
 
-	r.cli, err = clientv3.New(clientv3.Config{
-		Endpoints:   r.endpoints,
-		DialTimeout: r.dialTimeout,
-	})
-	if err != nil {
-		return nil, err
-	}
+	r.key = fmt.Sprintf("%s.%s.%d", r.serviceName, r.host, r.port)
 
-	r.key = r.serviceName + "." + r.addr
-
-	val, err := r.encode(&registry.ServiceNode{
+	if r.val, err = r.encode(&registry.ServiceNode{
 		Host: r.host,
 		Port: r.port,
-	})
-	if err != nil {
-		return nil, errors.New("marshal node " + err.Error())
-	}
-	var ok bool
-	if r.val, ok = val.(string); !ok {
-		return nil, errors.New("assert val fail")
+	}); err != nil {
+		return nil, err
 	}
 
 	return r, nil
 }
 
 func (s *EtcdRegistrar) Register(ctx context.Context) error {
+	if s.cli == nil {
+		return errors.New("cli is nil")
+	}
+
 	//申请租约设置时间keepalive
 	if err := s.putKeyWithRegistrarLease(ctx, s.lease); err != nil {
 		return err
@@ -126,8 +116,8 @@ func (s *EtcdRegistrar) putKeyWithRegistrarLease(ctx context.Context, lease int6
 // listenLeaseRespChan
 func (s *EtcdRegistrar) listenLeaseRespChan() {
 	for leaseKeepResp := range s.keepAliveChan {
-		_ = leaseKeepResp
-		// log.Println("续租：", leaseKeepResp)
+		// _ = leaseKeepResp
+		log.Println("续租：", leaseKeepResp)
 	}
 }
 
@@ -141,10 +131,10 @@ func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
 	return s.cli.Close()
 }
 
-func JSONEncode(node *registry.ServiceNode) (interface{}, error) {
+func JSONEncode(node *registry.ServiceNode) (string, error) {
 	val, err := json.Marshal(node)
 	if err != nil {
-		return nil, errors.New("marshal node " + err.Error())
+		return "", errors.New("marshal node " + err.Error())
 	}
 
 	return string(val), nil

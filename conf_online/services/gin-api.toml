@@ -1,0 +1,2 @@
+ServiceName = "gin-api"
+DialTimeout = 5

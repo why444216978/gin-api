@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -99,7 +98,7 @@ func (a *App) registerService() {
 		cfg     = &registry.RegistryConfig{}
 	)
 
-	if err = resource.Config.ReadConfig("etcd", "toml", cfg); err != nil {
+	if err = resource.Config.ReadConfig("registry", "toml", cfg); err != nil {
 		panic(err)
 	}
 
@@ -108,10 +107,10 @@ func (a *App) registerService() {
 	}
 
 	if a.registrar, err = etcd.NewRegistry(
+		etcd.WithRegistrarClient(resource.Etcd.Client),
 		etcd.WithRegistrarServiceName(global.Global.AppName),
 		etcd.WithRegistarHost(localIP),
 		etcd.WithRegistarPort(global.Global.AppPort),
-		etcd.WithRegistrarEndpoints(strings.Split(cfg.Endpoints, ";")),
 		etcd.WithRegistrarLease(cfg.Lease)); err != nil {
 		panic(err)
 	}

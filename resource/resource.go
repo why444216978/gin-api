@@ -2,6 +2,7 @@ package resource
 
 import (
 	"gin-api/libraries/config"
+	"gin-api/libraries/etcd"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
 
@@ -13,4 +14,5 @@ var (
 	TestDB        *orm.Orm
 	ServiceLogger *logging.Logger
 	RedisCache    *redis.Client
+	Etcd          *etcd.Etcd
 )

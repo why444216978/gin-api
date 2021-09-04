@@ -3,9 +3,11 @@ package bootstrap
 import (
 	"flag"
 	"log"
+	"strings"
 
 	"gin-api/global"
 	"gin-api/libraries/config"
+	"gin-api/libraries/etcd"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
@@ -33,6 +35,7 @@ func Bootstrap() {
 	initMysql("test_mysql")
 	initRedis("default_redis")
 	initJaeger()
+	initEtcd()
 }
 
 func initConfig() {
@@ -57,9 +60,7 @@ func initApp() {
 }
 
 func initLogger() {
-	var (
-		err error
-	)
+	var err error
 	cfg := &logging.Config{}
 
 	if err = resource.Config.ReadConfig("log", "toml", &cfg); err != nil {
@@ -73,9 +74,7 @@ func initLogger() {
 }
 
 func initMysql(db string) {
-	var (
-		err error
-	)
+	var err error
 	cfg := &orm.Config{}
 	gormCfg := &logging.GormConfig{}
 
@@ -102,9 +101,7 @@ func initMysql(db string) {
 }
 
 func initRedis(db string) {
-	var (
-		err error
-	)
+	var err error
 	cfg := &redis.Config{}
 	logCfg := &logging.RedisConfig{}
 
@@ -127,9 +124,7 @@ func initRedis(db string) {
 }
 
 func initJaeger() {
-	var (
-		err error
-	)
+	var err error
 	cfg := &jaeger.Config{}
 
 	if err = resource.Config.ReadConfig("jaeger", "toml", cfg); err != nil {
@@ -137,6 +132,23 @@ func initJaeger() {
 	}
 
 	_, _, err = jaeger.NewJaegerTracer(cfg)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func initEtcd() {
+	var err error
+	cfg := &etcd.Config{}
+
+	if err = resource.Config.ReadConfig("etcd", "toml", cfg); err != nil {
+		panic(err)
+	}
+
+	resource.Etcd, err = etcd.NewClient(
+		etcd.WithEndpoints(strings.Split(cfg.Endpoints, ";")),
+		etcd.WithDialTimeout(cfg.DialTimeout),
+	)
 	if err != nil {
 		panic(err)
 	}

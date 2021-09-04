@@ -28,21 +28,16 @@ var _ registry.Discovery = (*EtcdDiscovery)(nil)
 
 type DiscoverOption func(*EtcdDiscovery)
 
+func WithDiscoverClient(cli *clientv3.Client) DiscoverOption {
+	return func(er *EtcdDiscovery) { er.cli = cli }
+}
+
 func WithDiscoverServiceName(serviceName string) DiscoverOption {
 	return func(ed *EtcdDiscovery) { ed.serviceName = serviceName }
 }
 
-func WithDiscoverEndpoints(endpoints []string) DiscoverOption {
-	return func(ed *EtcdDiscovery) { ed.endpoints = endpoints }
-}
-
-func WithDiscoverDialTimeout(duration time.Duration) DiscoverOption {
-	return func(ed *EtcdDiscovery) { ed.dialTimeout = duration * time.Second }
-}
-
 // NewDiscovery
 func NewDiscovery(opts ...DiscoverOption) (*EtcdDiscovery, error) {
-	var err error
 	ed := &EtcdDiscovery{
 		nodeList: make(map[string]string),
 		decode:   JSONDecode,
@@ -52,19 +47,15 @@ func NewDiscovery(opts ...DiscoverOption) (*EtcdDiscovery, error) {
 		o(ed)
 	}
 
-	ed.cli, err = clientv3.New(clientv3.Config{
-		Endpoints:   ed.endpoints,
-		DialTimeout: ed.dialTimeout,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	return ed, nil
 }
 
 // WatchService
 func (s *EtcdDiscovery) WatchService(ctx context.Context) error {
+	if s.cli == nil {
+		return errors.New("cli is nil")
+	}
+
 	//根据前缀获取现有的key
 	resp, err := s.cli.Get(ctx, s.serviceName, clientv3.WithPrefix())
 	if err != nil {
@@ -137,18 +128,9 @@ func (s *EtcdDiscovery) Close() error {
 	return s.cli.Close()
 }
 
-func JSONDecode(val interface{}) (*registry.ServiceNode, error) {
-	var (
-		ok        bool
-		stringVal string
-		node      = &registry.ServiceNode{}
-	)
-
-	if stringVal, ok = val.(string); !ok {
-		return nil, errors.New("val is not string")
-	}
-
-	err := json.Unmarshal([]byte(stringVal), node)
+func JSONDecode(val string) (*registry.ServiceNode, error) {
+	node := &registry.ServiceNode{}
+	err := json.Unmarshal([]byte(val), node)
 	if err != nil {
 		return nil, errors.New("Unmarshal val " + err.Error())
 	}

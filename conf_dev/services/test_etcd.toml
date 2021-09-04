@@ -1,3 +1,0 @@
-ServiceName = "test_etcd"
-Endpoints = "localhost:23790;localhost:23791;localhost:23792"
-DialTimeout = 5

@@ -11,8 +11,7 @@ type ServiceNode struct {
 }
 
 type RegistryConfig struct {
-	Endpoints string
-	Lease     int64
+	Lease int64
 }
 
 // Registrar is service registrar
@@ -37,7 +36,7 @@ type Discovery interface {
 }
 
 // Encode func is encode service node info
-type Encode func(node *ServiceNode) (interface{}, error)
+type Encode func(node *ServiceNode) (string, error)
 
 // Decode func is decode service node info
-type Decode func(val interface{}) (*ServiceNode, error)
+type Decode func(val string) (*ServiceNode, error)
