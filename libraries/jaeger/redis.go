@@ -30,11 +30,12 @@ func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 	if Tracer == nil {
 		return ctx, nil
 	}
-	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, cmd.Name())
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, componentRedis)
 	if span == nil {
 		return ctx, nil
 	}
-	span.SetTag(redisCmdName, cmd.Name())
+	SetCommonTag(ctx, span)
+
 	ctx = context.WithValue(ctx, ctxKey, span)
 	return ctx, nil
 }
@@ -68,8 +69,8 @@ func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cm
 		return ctx, nil
 	}
 	for _, cmd := range cmds {
-		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, cmd.Name())
-		span.SetTag(redisCmdName, cmd.Name())
+		_ = cmd
+		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, componentRedis)
 		ctx = context.WithValue(ctx, ctxKey, span)
 	}
 	return ctx, nil

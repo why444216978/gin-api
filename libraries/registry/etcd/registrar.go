@@ -116,8 +116,8 @@ func (s *EtcdRegistrar) putKeyWithRegistrarLease(ctx context.Context, lease int6
 // listenLeaseRespChan
 func (s *EtcdRegistrar) listenLeaseRespChan() {
 	for leaseKeepResp := range s.keepAliveChan {
-		// _ = leaseKeepResp
-		log.Println("续租：", leaseKeepResp)
+		_ = leaseKeepResp
+		// log.Println("续租：", leaseKeepResp)
 	}
 }
 
@@ -127,7 +127,7 @@ func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
 	if _, err := s.cli.Revoke(ctx, s.leaseID); err != nil {
 		return err
 	}
-	// log.Println("续租结束")
+	log.Println("deregister success")
 	return s.cli.Close()
 }
 

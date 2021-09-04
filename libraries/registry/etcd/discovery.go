@@ -93,7 +93,7 @@ func (s *EtcdDiscovery) SetServiceList(key, val string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.nodeList[key] = string(val)
-	log.Println("put key :", key, "val:", val)
+	log.Println("service:", s.serviceName, " put key:", key, "val:", val)
 }
 
 // DelServiceList
@@ -101,7 +101,7 @@ func (s *EtcdDiscovery) DelServiceList(key string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.nodeList, key)
-	log.Println("del key:", key)
+	log.Println("service:", s.serviceName, " del key:", key)
 }
 
 // GetServices

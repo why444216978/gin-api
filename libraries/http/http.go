@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gin-api/libraries/jaeger"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"gin-api/libraries/jaeger"
+	"gin-api/libraries/logging"
+	"gin-api/libraries/registry"
 )
 
 type Response struct {
@@ -17,7 +20,17 @@ type Response struct {
 }
 
 // Send is send HTTP request
-func Send(ctx context.Context, method, url string, header map[string]string, body io.Reader, timeout time.Duration) (ret Response, err error) {
+func Send(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration) (ret *Response, err error) {
+	ser := registry.Services["gin-api"]
+	if ser == nil {
+		return nil, errors.New("service is nil")
+	}
+
+	node := ser.GetServices()
+	if len(node) <= 0 {
+		return nil, errors.New("service node empty")
+	}
+
 	var req *http.Request
 
 	client := &http.Client{
@@ -26,7 +39,7 @@ func Send(ctx context.Context, method, url string, header map[string]string, bod
 	}
 
 	//构建req
-	req, err = http.NewRequestWithContext(ctx, method, url, body)
+	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node[0].Host, node[0].Port, uri), body)
 	if err != nil {
 		return
 	}
@@ -36,8 +49,13 @@ func Send(ctx context.Context, method, url string, header map[string]string, bod
 		req.Header.Add(k, v)
 	}
 
+	if ctx.Err() != nil {
+		return nil, err
+	}
+
 	//注入Jaeger
-	jaeger.InjectHTTP(ctx, req)
+	logID := req.Header.Get(logging.LogHeader)
+	jaeger.InjectHTTP(ctx, req, logID)
 
 	//发送请求
 	resp, err := client.Do(req)
@@ -51,7 +69,9 @@ func Send(ctx context.Context, method, url string, header map[string]string, bod
 		return
 	}
 
-	ret.HTTPCode = resp.StatusCode
+	ret = &Response{
+		HTTPCode: resp.StatusCode,
+	}
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New(fmt.Sprintf("http code is %d", resp.StatusCode))
 		return

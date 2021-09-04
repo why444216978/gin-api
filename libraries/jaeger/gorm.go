@@ -1,8 +1,6 @@
 package jaeger
 
 import (
-	"context"
-
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracing_log "github.com/opentracing/opentracing-go/log"
@@ -12,7 +10,6 @@ import (
 //gorm hook
 const (
 	gormSpanKey        = "gorm_span"
-	opentracingSpanKey = "gorm"
 	callBackBeforeName = "opentracing:before"
 	callBackAfterName  = "opentracing:after"
 )
@@ -22,7 +19,7 @@ func before(db *gorm.DB) {
 	if Tracer == nil {
 		return
 	}
-	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, Tracer, opentracingSpanKey)
+	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, Tracer, componentGorm)
 	db.InstanceSet(gormSpanKey, span)
 	return
 }
@@ -40,7 +37,8 @@ func after(db *gorm.DB) {
 	if !ok {
 		return
 	}
-	setGormTag(db.Statement.Context, span)
+	SetCommonTag(db.Statement.Context, span)
+
 	defer span.Finish()
 	if db.Error != nil {
 		span.LogFields(opentracing_log.Error(db.Error))
@@ -116,9 +114,4 @@ func (op *OpentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 	return nil
-}
-
-func setGormTag(ctx context.Context, span opentracing.Span) {
-	SetCommonTag(ctx, span)
-	span.SetTag(string(ext.Component), operationTypeGorm)
 }

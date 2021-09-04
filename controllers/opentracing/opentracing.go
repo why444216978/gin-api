@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"gin-api/global"
-	"gin-api/libraries/jaeger"
+	lib_http "gin-api/libraries/http"
 	"gin-api/libraries/logging"
 	"gin-api/response"
 
@@ -15,10 +14,10 @@ import (
 )
 
 func Rpc(c *gin.Context) {
-	sendUrl := fmt.Sprintf("http://localhost:%d/test/rpc1?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
+	uri := fmt.Sprintf("/test/rpc1?logid=%s", logging.ValueLogID(c))
 
 	header := map[string]string{logging.LogHeader: logging.ValueLogID(c.Request.Context())}
-	ret, err := jaeger.JaegerSend(c.Request.Context(), http.MethodPost, sendUrl, header, bytes.NewBufferString(`{"a":"a"}`), time.Second)
+	ret, err := lib_http.Send(c.Request.Context(), "gin-api", http.MethodPost, uri, header, bytes.NewBufferString(`{"a":"a"}`), time.Second)
 	if err != nil {
 		fmt.Println(ret)
 		fmt.Println(err)
@@ -29,10 +28,10 @@ func Rpc(c *gin.Context) {
 }
 
 func Rpc1(c *gin.Context) {
-	sendUrl := fmt.Sprintf("http://localhost:%d/test/conn?logid=%s", global.Global.AppPort, logging.ValueLogID(c))
+	uri := fmt.Sprintf("/test/conn?logid=%s", logging.ValueLogID(c))
 
 	header := map[string]string{logging.LogHeader: logging.ValueLogID(c.Request.Context())}
-	ret, err := jaeger.JaegerSend(c.Request.Context(), http.MethodPost, sendUrl, header, nil, time.Second)
+	ret, err := lib_http.Send(c.Request.Context(), "gin-api", http.MethodPost, uri, header, nil, time.Second)
 	if err != nil {
 		fmt.Println(ret)
 		fmt.Println(err)

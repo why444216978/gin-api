@@ -37,3 +37,5 @@ type Encode func(node *ServiceNode) (string, error)
 
 // Decode func is decode service node info
 type Decode func(val string) (*ServiceNode, error)
+
+var Services = make(map[string]Discovery)

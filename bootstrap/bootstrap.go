@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"flag"
 	"log"
 	"path"
@@ -174,9 +175,8 @@ func initServices() {
 		panic(err)
 	}
 
-	resource.Services = make(map[string]registry.Discovery)
 	cfg := &registry.DiscoveryConfig{}
-
+	discover := &registry_etcd.EtcdDiscovery{}
 	for _, f := range files {
 		f = path.Base(f)
 		f = strings.TrimSuffix(f, path.Ext(f))
@@ -185,11 +185,18 @@ func initServices() {
 			panic(err)
 		}
 
-		if resource.Services[cfg.ServiceName], err = registry_etcd.NewDiscovery(
+		if discover, err = registry_etcd.NewDiscovery(
 			registry_etcd.WithDiscoverClient(resource.Etcd.Client),
 			registry_etcd.WithDiscoverServiceName(cfg.ServiceName)); err != nil {
 			panic(err)
 		}
+
+		err = discover.WatchService(context.Background())
+		if err != nil {
+			panic(err)
+		}
+
+		registry.Services[cfg.ServiceName] = discover
 	}
 
 	return

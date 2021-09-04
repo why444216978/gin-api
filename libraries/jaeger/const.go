@@ -8,19 +8,15 @@ const (
 )
 
 const (
-	operationTypeHTTP     = "HTTP"
-	operationTypeGorm     = "Gorm"
-	operationTypeRedis    = "Redis"
-	operationTypeRabbitMQ = "RabbitMQ"
+	httpClientComponentPrefix = "HTTP-Client-"
+	httpServerComponentPrefix = "HTTP-Server-"
+	componentGorm             = "Gorm"
+	componentRedis            = "Redis"
+	componentRabbitMQ         = "RabbitMQ"
 )
 
 const (
 	logFieldsRequest  = "request"
 	logFieldsResponse = "response"
 	logFieldsArgs     = "args"
-)
-
-const (
-	clientTagPrefix = "Client-"
-	serverTagPrefix = "Server-"
 )
