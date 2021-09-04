@@ -2,6 +2,9 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"gin-api/libraries/registry"
 	"log"
 	"sync"
 	"time"
@@ -18,7 +21,10 @@ type EtcdDiscovery struct {
 	lock        sync.Mutex
 	endpoints   []string
 	dialTimeout time.Duration
+	decode      registry.Decode
 }
+
+var _ registry.Discovery = (*EtcdDiscovery)(nil)
 
 type DiscoverOption func(*EtcdDiscovery)
 
@@ -39,6 +45,7 @@ func NewDiscovery(opts ...DiscoverOption) (*EtcdDiscovery, error) {
 	var err error
 	ed := &EtcdDiscovery{
 		nodeList: make(map[string]string),
+		decode:   JSONDecode,
 	}
 
 	for _, o := range opts {
@@ -107,13 +114,17 @@ func (s *EtcdDiscovery) DelServiceList(key string) {
 }
 
 // GetServices
-func (s *EtcdDiscovery) GetServices() []string {
+func (s *EtcdDiscovery) GetServices() []*registry.ServiceNode {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	addrs := make([]string, 0)
+	addrs := make([]*registry.ServiceNode, 0)
 
 	for _, v := range s.nodeList {
-		addrs = append(addrs, v)
+		addr, err := s.decode(v)
+		if err != nil {
+			continue
+		}
+		addrs = append(addrs, addr)
 	}
 	return addrs
 }
@@ -124,4 +135,23 @@ func (s *EtcdDiscovery) Close() error {
 		return nil
 	}
 	return s.cli.Close()
+}
+
+func JSONDecode(val interface{}) (*registry.ServiceNode, error) {
+	var (
+		ok        bool
+		stringVal string
+		node      = &registry.ServiceNode{}
+	)
+
+	if stringVal, ok = val.(string); !ok {
+		return nil, errors.New("val is not string")
+	}
+
+	err := json.Unmarshal([]byte(stringVal), node)
+	if err != nil {
+		return nil, errors.New("Unmarshal val " + err.Error())
+	}
+
+	return node, nil
 }

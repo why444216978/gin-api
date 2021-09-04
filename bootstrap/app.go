@@ -109,7 +109,8 @@ func (a *App) registerService() {
 
 	if a.registrar, err = etcd.NewRegistry(
 		etcd.WithRegistrarServiceName(global.Global.AppName),
-		etcd.WithRegistarAddr(fmt.Sprintf("%s:%d", localIP, global.Global.AppPort)),
+		etcd.WithRegistarHost(localIP),
+		etcd.WithRegistarPort(global.Global.AppPort),
 		etcd.WithRegistrarEndpoints(strings.Split(cfg.Endpoints, ";")),
 		etcd.WithRegistrarLease(cfg.Lease)); err != nil {
 		panic(err)

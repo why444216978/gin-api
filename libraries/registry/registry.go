@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type ServiceNode struct {
+	Host string
+	Port int
+}
+
 type RegistryConfig struct {
 	Endpoints string
 	Lease     int64
@@ -24,9 +29,15 @@ type DiscoveryConfig struct {
 
 // Discovery is service discovery
 type Discovery interface {
-	WatchService(ctx context.Context, serviceName string) error
+	WatchService(ctx context.Context) error
 	SetServiceList(key, val string)
 	DelServiceList(key string)
-	GetServices() []string
+	GetServices() []*ServiceNode
 	Close() error
 }
+
+// Encode func is encode service node info
+type Encode func(node *ServiceNode) (interface{}, error)
+
+// Decode func is decode service node info
+type Decode func(val interface{}) (*ServiceNode, error)

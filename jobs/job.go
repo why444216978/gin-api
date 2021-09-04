@@ -10,7 +10,7 @@ import (
 type handleFunc func() error
 
 var handlers = map[string]handleFunc{
-	"test": Test,
+	"registry": Registry,
 }
 
 func Handle(job string) {

@@ -2,6 +2,8 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"gin-api/libraries/registry"
@@ -12,15 +14,18 @@ import (
 // EtcdRegistrar
 type EtcdRegistrar struct {
 	serviceName   string
+	host          string
+	port          int
 	addr          string
+	endpoints     []string
 	cli           *clientv3.Client
+	dialTimeout   time.Duration
 	leaseID       clientv3.LeaseID
 	keepAliveChan <-chan *clientv3.LeaseKeepAliveResponse
 	key           string
 	val           string
 	lease         int64
-	endpoints     []string
-	dialTimeout   time.Duration
+	encode        registry.Encode
 }
 
 var _ registry.Registrar = (*EtcdRegistrar)(nil)
@@ -31,8 +36,12 @@ func WithRegistrarServiceName(serviceName string) RegistrarOption {
 	return func(er *EtcdRegistrar) { er.serviceName = serviceName }
 }
 
-func WithRegistarAddr(addr string) RegistrarOption {
-	return func(er *EtcdRegistrar) { er.addr = addr }
+func WithRegistarHost(host string) RegistrarOption {
+	return func(er *EtcdRegistrar) { er.host = host }
+}
+
+func WithRegistarPort(port int) RegistrarOption {
+	return func(er *EtcdRegistrar) { er.port = port }
 }
 
 func WithRegistrarEndpoints(endpoints []string) RegistrarOption {
@@ -46,7 +55,9 @@ func WithRegistrarLease(lease int64) RegistrarOption {
 // NewRegistry
 func NewRegistry(opts ...RegistrarOption) (registry.Registrar, error) {
 	var err error
-	r := &EtcdRegistrar{}
+	r := &EtcdRegistrar{
+		encode: JSONEncode,
+	}
 
 	for _, o := range opts {
 		o(r)
@@ -60,8 +71,19 @@ func NewRegistry(opts ...RegistrarOption) (registry.Registrar, error) {
 		return nil, err
 	}
 
-	r.key = "/" + r.serviceName + "/" + r.addr
-	r.val = r.addr
+	r.key = r.serviceName + "." + r.addr
+
+	val, err := r.encode(&registry.ServiceNode{
+		Host: r.host,
+		Port: r.port,
+	})
+	if err != nil {
+		return nil, errors.New("marshal node " + err.Error())
+	}
+	var ok bool
+	if r.val, ok = val.(string); !ok {
+		return nil, errors.New("assert val fail")
+	}
 
 	return r, nil
 }
@@ -117,4 +139,13 @@ func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
 	}
 	// log.Println("续租结束")
 	return s.cli.Close()
+}
+
+func JSONEncode(node *registry.ServiceNode) (interface{}, error) {
+	val, err := json.Marshal(node)
+	if err != nil {
+		return nil, errors.New("marshal node " + err.Error())
+	}
+
+	return string(val), nil
 }
