@@ -14,15 +14,16 @@
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br>
 
-# 测试接口
+# 测试
 检测接口：http://localhost:777/ping 
 <br>
 panic接口：http://localhost:777/test/panic
 <br>
 db和redis测试接口：http://localhost:777/test/conn
 <br>
-分布式链路追踪测试：http://localhost:777/test/rpc
+分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc
 <br>
+服务发现测试脚本：go run main.go -job registry
 
 # 运行
 
@@ -64,3 +65,5 @@ CREATE TABLE `test` (
 ```
 
 
+# 分布式链路追踪
+<img src="https://github.com/why444216978/images/blob/master/jaeger.png" width="800" height="300" alt="jaeger"/>
