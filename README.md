@@ -32,7 +32,7 @@ db和redis测试接口：http://localhost:777/test/conn
 
 # 分布式链路追踪
 <img src="https://github.com/why444216978/images/blob/master/jaeger.png" width="800" height="300" alt="jaeger"/>
-<br><br>
+<br>
 
 # 运行
 1. 查看 conf_dev 目录的各个配置文件，改成符合自己的
