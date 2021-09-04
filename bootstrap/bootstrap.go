@@ -2,27 +2,27 @@ package bootstrap
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
-	"syscall"
-	"time"
 
 	"gin-api/global"
-	"gin-api/jobs"
 	"gin-api/libraries/config"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
 	"gin-api/libraries/redis"
 	"gin-api/resource"
-	"gin-api/routers"
 )
 
 var (
 	conf = flag.String("conf", "conf_dev", "config path")
-	job  = flag.String("job", "", "is job")
 )
+
+var confMap = map[string]struct{}{
+	"conf_dev":      struct{}{},
+	"conf_liantiao": struct{}{},
+	"conf_qa":       struct{}{},
+	"conf_online":   struct{}{},
+}
 
 func Bootstrap() {
 	flag.Parse()
@@ -33,19 +33,18 @@ func Bootstrap() {
 	initMysql("test_mysql")
 	initRedis("default_redis")
 	initJaeger()
-
-	if *job == "" {
-		log.Println("start by server")
-		initHTTP()
-	} else {
-		jobs.Handle(*job)
-	}
 }
 
 func initConfig() {
-	log.Println("The conf path is :" + *conf)
+	confPath := *conf
+	log.Println("The conf path is :" + confPath)
+
+	if _, ok := confMap[confPath]; !ok {
+		panic(confPath + " error")
+	}
+
 	var err error
-	resource.Config = config.InitConfig(*conf, "toml")
+	resource.Config = config.InitConfig(confPath, "toml")
 	if err != nil {
 		panic(err)
 	}
@@ -141,35 +140,4 @@ func initJaeger() {
 	if err != nil {
 		panic(err)
 	}
-
-	return
-}
-
-type HTTPConfig struct {
-	Port int
-}
-
-func initHTTP() {
-	router := routers.InitRouter()
-
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", global.Global.AppPort),
-		Handler:      router,
-		ReadTimeout:  time.Duration(global.Global.ReadTimeout) * time.Millisecond,
-		WriteTimeout: time.Duration(global.Global.WriteTimeout) * time.Millisecond,
-	}
-	log.Printf("Actual pid is %d", syscall.Getpid())
-	log.Printf("Actual port is %d", global.Global.AppPort)
-	err := server.ListenAndServe()
-	if err != nil {
-		panic(err)
-	}
-
-	// endless.DefaultReadTimeOut = 3 * time.Second
-	// endless.DefaultWriteTimeOut = 3 * time.Second
-	// serverEnd := endless.NewServer(fmt.Sprintf(":%d", global.Global.AppPort), router)
-	// err = serverEnd.ListenAndServe()
-	// if err != nil {
-	// 	log.Printf("Server err: %v", err)
-	// }
 }
