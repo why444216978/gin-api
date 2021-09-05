@@ -30,6 +30,7 @@ type DiscoveryConfig struct {
 	Type        uint8  `validate:"required,oneof=1 2"`
 	Host        string `validate:"required"`
 	Port        int    `validate:"required"`
+	LoadBalance string `validate:"required,oneof=random round_robin"`
 }
 
 // Discovery is service discovery
@@ -38,6 +39,7 @@ type Discovery interface {
 	SetServiceList(key string, val *ServiceNode)
 	DelServiceList(key string)
 	GetServices() []*ServiceNode
+	GetLoadBalance() string
 	Close() error
 }
 

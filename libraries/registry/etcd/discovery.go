@@ -153,6 +153,11 @@ func (s *EtcdDiscovery) GetServices() []*registry.ServiceNode {
 	return nodes
 }
 
+// GetLoadBalance
+func (s *EtcdDiscovery) GetLoadBalance() string {
+	return s.config.LoadBalance
+}
+
 // Close
 func (s *EtcdDiscovery) Close() error {
 	if s.cli == nil {

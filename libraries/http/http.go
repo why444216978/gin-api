@@ -7,11 +7,15 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/registry"
+
+	load_balance "github.com/why444216978/load-balance"
 )
 
 type Response struct {
@@ -21,14 +25,9 @@ type Response struct {
 
 // Send is send HTTP request
 func Send(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration) (ret *Response, err error) {
-	ser := registry.Services["gin-api"]
-	if ser == nil {
-		return nil, errors.New("service is nil")
-	}
-
-	node := ser.GetServices()
-	if len(node) <= 0 {
-		return nil, errors.New("service node empty")
+	node, err := loadBalance(serviceName)
+	if err != nil {
+		return
 	}
 
 	var req *http.Request
@@ -39,7 +38,7 @@ func Send(ctx context.Context, serviceName, method, uri string, header map[strin
 	}
 
 	//构建req
-	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node[0].Host, node[0].Port, uri), body)
+	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), body)
 	if err != nil {
 		return
 	}
@@ -82,4 +81,43 @@ func Send(ctx context.Context, serviceName, method, uri string, header map[strin
 	}
 
 	return
+}
+
+func loadBalance(serviceName string) (*registry.ServiceNode, error) {
+	ser := registry.Services[serviceName]
+	if ser == nil {
+		return nil, errors.New("service is nil")
+	}
+
+	_nodes := ser.GetServices()
+	l := len(_nodes)
+	if l <= 0 {
+		return nil, errors.New("service node empty")
+	}
+
+	nodes := make([]load_balance.Node, l)
+	for k, v := range _nodes {
+		nodes[k] = load_balance.Node{
+			Node: fmt.Sprintf("%s:%d", v.Host, v.Port),
+		}
+	}
+
+	load, err := load_balance.New(load_balance.BalanceType(ser.GetLoadBalance()))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := load.InitNodeList(nodes); err != nil {
+		return nil, err
+	}
+
+	target := load.GetNodeAddress()
+	arr := strings.Split(target, ":")
+	host := arr[0]
+	port, _ := strconv.Atoi(arr[1])
+
+	return &registry.ServiceNode{
+		Host: host,
+		Port: port,
+	}, nil
 }

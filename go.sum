@@ -332,6 +332,14 @@ github.com/why444216978/go-util v1.0.11 h1:3OhCxFcixYVVkM1wBWIVlhJDmX/4r0w7OQXod
 github.com/why444216978/go-util v1.0.11/go.mod h1:Ig1wkItwcPRQGjpAzv5+i3NRIUBadmyKCdV/Nl1OKLc=
 github.com/why444216978/go-util v1.0.12 h1:aMMY4lBSfXyPMmzdLK9adBhiHb7xLHMamtZAqsa1tRA=
 github.com/why444216978/go-util v1.0.12/go.mod h1:Ig1wkItwcPRQGjpAzv5+i3NRIUBadmyKCdV/Nl1OKLc=
+github.com/why444216978/load-balance v1.0.0 h1:R0gkkvPBN2WHKGZq4B+Bn05rVgy64vTgBrVnrnOX/0c=
+github.com/why444216978/load-balance v1.0.0/go.mod h1:fmqe1ZpADXld6g9tVKzTDz917oflsNqfWrNA6a0wrYA=
+github.com/why444216978/load-balance v1.0.1 h1:H2+AhWRzKMILyXupVQ+kSqMIqZV5tl1mn6yKFUlEFa8=
+github.com/why444216978/load-balance v1.0.1/go.mod h1:fmqe1ZpADXld6g9tVKzTDz917oflsNqfWrNA6a0wrYA=
+github.com/why444216978/load-balance v1.0.2 h1:KPTGL69JvLDgXpESP5UqFY3D8q2y/b19ZlexnUJmqic=
+github.com/why444216978/load-balance v1.0.2/go.mod h1:fmqe1ZpADXld6g9tVKzTDz917oflsNqfWrNA6a0wrYA=
+github.com/why444216978/load-balance v1.0.3 h1:05pxsDcRMaqbOVPc8D4j8MtkCWNd39A8j3NwnJo8Ad8=
+github.com/why444216978/load-balance v1.0.3/go.mod h1:fmqe1ZpADXld6g9tVKzTDz917oflsNqfWrNA6a0wrYA=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
