@@ -71,7 +71,7 @@ func initLogger() {
 	var err error
 	cfg := &logging.Config{}
 
-	if err = resource.Config.ReadConfig("log/service_log", "toml", &cfg); err != nil {
+	if err = resource.Config.ReadConfig("log/service", "toml", &cfg); err != nil {
 		panic(err)
 	}
 
@@ -90,7 +90,7 @@ func initMysql(db string) {
 		panic(err)
 	}
 
-	if err = resource.Config.ReadConfig("log/gorm_log", "toml", gormCfg); err != nil {
+	if err = resource.Config.ReadConfig("log/gorm", "toml", gormCfg); err != nil {
 		panic(err)
 	}
 
@@ -116,7 +116,7 @@ func initRedis(db string) {
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
 	}
-	if err = resource.Config.ReadConfig("log/redis_log", "toml", &logCfg); err != nil {
+	if err = resource.Config.ReadConfig("log/redis", "toml", &logCfg); err != nil {
 		panic(err)
 	}
 
@@ -208,7 +208,7 @@ func initHTTPRPC() {
 	var err error
 	cfg := &logging.RPCConfig{}
 
-	if err = resource.Config.ReadConfig("log/rpc_log", "toml", cfg); err != nil {
+	if err = resource.Config.ReadConfig("log/rpc", "toml", cfg); err != nil {
 		panic(err)
 	}
 

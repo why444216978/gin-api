@@ -15,7 +15,8 @@ import (
 
 type Logger struct {
 	*zap.Logger
-	level zapcore.Level
+	level    zapcore.Level
+	callSkip int
 }
 
 type Config struct {
@@ -25,6 +26,10 @@ type Config struct {
 }
 
 type Option func(l *Logger)
+
+func WithCallerSkip(skip int) Option {
+	return func(l *Logger) { l.callSkip = skip }
+}
 
 func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 	level, err := zapLevel(cfg.Level)
@@ -59,10 +64,13 @@ func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 		zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorEnabler),
 	)
 
+	if l.callSkip == 0 {
+		l.callSkip = 1
+	}
 	l.Logger = zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(errorEnabler),
-		zap.AddCallerSkip(1),
+		zap.AddCallerSkip(l.callSkip),
 		zap.Fields(
 			zap.Int(Port, config.App.AppPort),
 		),

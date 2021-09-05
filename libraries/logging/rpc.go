@@ -36,7 +36,7 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	})
+	}, WithCallerSkip(2))
 	if err != nil {
 		return
 	}
