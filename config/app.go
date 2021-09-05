@@ -1,6 +1,6 @@
-package global
+package config
 
-var Global struct {
+var App struct {
 	AppName        string
 	AppPort        int
 	ContextTimeout int

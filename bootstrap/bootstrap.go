@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gin-api/global"
+	app_config "gin-api/config"
 	"gin-api/libraries/config"
 	"gin-api/libraries/etcd"
 	"gin-api/libraries/jaeger"
@@ -60,7 +60,7 @@ func initConfig() {
 }
 
 func initApp() {
-	if err := resource.Config.ReadConfig("app", "toml", &global.Global); err != nil {
+	if err := resource.Config.ReadConfig("app", "toml", &app_config.App); err != nil {
 		panic(err)
 	}
 }
@@ -137,7 +137,7 @@ func initJaeger() {
 		panic(err)
 	}
 
-	_, _, err = jaeger.NewJaegerTracer(cfg)
+	_, _, err = jaeger.NewJaegerTracer(cfg, app_config.App.AppName)
 	if err != nil {
 		panic(err)
 	}
@@ -187,7 +187,7 @@ func initServices() {
 
 		if discover, err = registry_etcd.NewDiscovery(
 			registry_etcd.WithDiscoverClient(resource.Etcd.Client),
-			registry_etcd.WithDiscoverServiceName(cfg.ServiceName)); err != nil {
+			registry_etcd.WithDiscoverConfig(cfg)); err != nil {
 			panic(err)
 		}
 

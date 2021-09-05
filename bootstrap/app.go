@@ -4,18 +4,19 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"gin-api/global"
-	"gin-api/jobs"
-	"gin-api/libraries/registry"
-	"gin-api/libraries/registry/etcd"
-	"gin-api/resource"
-	"gin-api/routers"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"gin-api/config"
+	"gin-api/jobs"
+	"gin-api/libraries/registry"
+	"gin-api/libraries/registry/etcd"
+	"gin-api/resource"
+	"gin-api/routers"
 
 	"github.com/why444216978/go-util/sys"
 	"golang.org/x/sync/errgroup"
@@ -55,10 +56,10 @@ func newApp() *App {
 		ctx:    ctx,
 		cancel: cancel,
 		server: &http.Server{
-			Addr:         fmt.Sprintf(":%d", global.Global.AppPort),
+			Addr:         fmt.Sprintf(":%d", config.App.AppPort),
 			Handler:      routers.InitRouter(),
-			ReadTimeout:  time.Duration(global.Global.ReadTimeout) * time.Millisecond,
-			WriteTimeout: time.Duration(global.Global.WriteTimeout) * time.Millisecond,
+			ReadTimeout:  time.Duration(config.App.ReadTimeout) * time.Millisecond,
+			WriteTimeout: time.Duration(config.App.WriteTimeout) * time.Millisecond,
 		},
 	}
 }
@@ -108,9 +109,9 @@ func (a *App) registerService() {
 
 	if a.registrar, err = etcd.NewRegistry(
 		etcd.WithRegistrarClient(resource.Etcd.Client),
-		etcd.WithRegistrarServiceName(global.Global.AppName),
+		etcd.WithRegistrarServiceName(config.App.AppName),
 		etcd.WithRegistarHost(localIP),
-		etcd.WithRegistarPort(global.Global.AppPort),
+		etcd.WithRegistarPort(config.App.AppPort),
 		etcd.WithRegistrarLease(cfg.Lease)); err != nil {
 		panic(err)
 	}

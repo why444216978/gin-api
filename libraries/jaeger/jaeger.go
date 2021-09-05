@@ -2,7 +2,6 @@ package jaeger
 
 import (
 	"context"
-	"gin-api/global"
 	"io"
 
 	"github.com/opentracing/opentracing-go"
@@ -18,7 +17,7 @@ type Config struct {
 	Port string
 }
 
-func NewJaegerTracer(connCfg *Config) (opentracing.Tracer, io.Closer, error) {
+func NewJaegerTracer(connCfg *Config, serviceName string) (opentracing.Tracer, io.Closer, error) {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{
 			Type:  "const", //固定采样
@@ -30,7 +29,7 @@ func NewJaegerTracer(connCfg *Config) (opentracing.Tracer, io.Closer, error) {
 			LocalAgentHostPort: connCfg.Host + ":" + connCfg.Port,
 		},
 
-		ServiceName: global.Global.AppName,
+		ServiceName: serviceName,
 	}
 
 	tracer, closer, err := cfg.NewTracer()

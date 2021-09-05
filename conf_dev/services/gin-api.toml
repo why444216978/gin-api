@@ -1,1 +1,4 @@
 ServiceName = "gin-api"
+Type = 1 # 1-注册发现，2-IP+PORT，3-域名
+Host = "127.0.0.1"
+Port = 777

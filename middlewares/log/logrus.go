@@ -88,7 +88,7 @@ package log
 // 			Code:     c.Writer.Status(),
 // 			CallerIP: c.ClientIP(),
 // 			HostIP:   hostIP,
-// 			Port:     global.Global.AppPort,
+// 			Port:     config.App.AppPort,
 // 			API:      c.Request.RequestURI,
 // 			Module:   logging.ModuleHTTP,
 // 			Cost:     int64(time.Now().Sub(start)),

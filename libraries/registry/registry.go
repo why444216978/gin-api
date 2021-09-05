@@ -4,6 +4,12 @@ import (
 	"context"
 )
 
+const (
+	TypeRegistry   uint8 = 1
+	TypeHostPort   uint8 = 2
+	TypeHostDomain uint8 = 3
+)
+
 type ServiceNode struct {
 	Host string
 	Port int
@@ -20,13 +26,16 @@ type Registrar interface {
 }
 
 type DiscoveryConfig struct {
-	ServiceName string
+	ServiceName string `validate:"required"`
+	Type        uint8  `validate:"required,oneof=1 2"`
+	Host        string `validate:"required"`
+	Port        int    `validate:"required"`
 }
 
 // Discovery is service discovery
 type Discovery interface {
 	WatchService(ctx context.Context) error
-	SetServiceList(key, val string)
+	SetServiceList(key string, val *ServiceNode)
 	DelServiceList(key string)
 	GetServices() []*ServiceNode
 	Close() error

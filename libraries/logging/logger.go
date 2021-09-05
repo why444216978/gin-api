@@ -2,10 +2,11 @@ package logging
 
 import (
 	"errors"
-	"gin-api/global"
 	"io"
 	"strings"
 	"time"
+
+	"gin-api/config"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
@@ -63,7 +64,7 @@ func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 		zap.AddStacktrace(errorEnabler),
 		zap.AddCallerSkip(1),
 		zap.Fields(
-			zap.Int(Port, global.Global.AppPort),
+			zap.Int(Port, config.App.AppPort),
 		),
 	)
 
