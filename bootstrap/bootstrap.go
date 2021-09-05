@@ -11,6 +11,7 @@ import (
 	app_config "gin-api/config"
 	"gin-api/libraries/config"
 	"gin-api/libraries/etcd"
+	"gin-api/libraries/http"
 	"gin-api/libraries/jaeger"
 	"gin-api/libraries/logging"
 	"gin-api/libraries/orm"
@@ -42,6 +43,7 @@ func Bootstrap() {
 	initJaeger()
 	initEtcd()
 	initServices()
+	initHTTPRPC()
 }
 
 func initConfig() {
@@ -69,7 +71,7 @@ func initLogger() {
 	var err error
 	cfg := &logging.Config{}
 
-	if err = resource.Config.ReadConfig("log", "toml", &cfg); err != nil {
+	if err = resource.Config.ReadConfig("log/service_log", "toml", &cfg); err != nil {
 		panic(err)
 	}
 
@@ -88,7 +90,7 @@ func initMysql(db string) {
 		panic(err)
 	}
 
-	if err = resource.Config.ReadConfig("gorm_log", "toml", gormCfg); err != nil {
+	if err = resource.Config.ReadConfig("log/gorm_log", "toml", gormCfg); err != nil {
 		panic(err)
 	}
 
@@ -114,7 +116,7 @@ func initRedis(db string) {
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
 	}
-	if err = resource.Config.ReadConfig("redis_log", "toml", &logCfg); err != nil {
+	if err = resource.Config.ReadConfig("log/redis_log", "toml", &logCfg); err != nil {
 		panic(err)
 	}
 
@@ -200,4 +202,23 @@ func initServices() {
 	}
 
 	return
+}
+
+func initHTTPRPC() {
+	var err error
+	cfg := &logging.RPCConfig{}
+
+	if err = resource.Config.ReadConfig("log/rpc_log", "toml", cfg); err != nil {
+		panic(err)
+	}
+
+	rpcLogger, err := logging.NewRPCLogger(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	resource.HTTPRPC = http.New(http.WithLogger(rpcLogger))
+	if err != nil {
+		panic(err)
+	}
 }
