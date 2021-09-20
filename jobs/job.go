@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"fmt"
+	"gin-api/jobs/grpc"
 	"log"
 	"os"
 	"time"
@@ -10,7 +11,7 @@ import (
 type handleFunc func() error
 
 var handlers = map[string]handleFunc{
-	"registry": Registry,
+	"grpc-cmux": grpc.GrpcCmux,
 }
 
 func Handle(job string) {

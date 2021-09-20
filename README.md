@@ -25,8 +25,6 @@ panic接口：http://localhost:777/test/panic
 db和redis测试接口：http://localhost:777/test/conn
 <br>
 分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc
-<br>
-服务发现测试脚本：go run main.go -job registry
 <br><br>
 
 
