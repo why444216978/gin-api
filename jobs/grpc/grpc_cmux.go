@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"sync"
 	"time"
 
@@ -28,17 +27,13 @@ func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloReply{Message: in.Name + " world"}, nil
 }
 
-func startHTTP(ctx context.Context, s *server.Server) {
-	if err := s.InitGateway(ctx); err != nil {
+func registerHTTP(ctx context.Context, s *server.Server) {
+	if err := pb.RegisterGreeterHandler(ctx, s.ServerMux, s.GRPClientConn); err != nil {
 		panic(err)
 	}
-	if err := pb.RegisterGreeterHandler(ctx, s.ServerMux, s.GRPCConn); err != nil {
-		panic(err)
-	}
-	s.StartGateway()
 }
 
-func startGRPC(ctx context.Context, s *server.Server) {
+func registerGRPC(ctx context.Context, s *server.Server) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterGreeterServer(grpcServer, new(Server))
 	if err := grpcServer.Serve(s.GRPCListener); err != nil {
@@ -46,12 +41,7 @@ func startGRPC(ctx context.Context, s *server.Server) {
 	}
 }
 
-func client() {
-	cc, err := newClientConn(endpoint)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func send(cc *grpc.ClientConn) {
 	client := pb.NewGreeterClient(cc)
 
 	reply, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: "why"})
@@ -73,15 +63,10 @@ func newClientConn(target string) (*grpc.ClientConn, error) {
 }
 
 func GrpcCmux() (err error) {
-	conn, err := net.Listen("tcp", endpoint)
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close()
-
-	s := server.New(endpoint, conn,
-		server.WithGRPCStartFunc(startGRPC),
-		server.WithHTTPStartFunc(startHTTP))
+	s := server.New(
+		server.WithEndpoint(endpoint),
+		server.WithGRPCregisterFunc(registerGRPC),
+		server.WithHTTPregisterFunc(registerHTTP))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -90,9 +75,14 @@ func GrpcCmux() (err error) {
 		wg.Done()
 	}()
 
+	cc, err := newClientConn(endpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
-		client()
+		send(cc)
 	}
 
 	wg.Wait()
