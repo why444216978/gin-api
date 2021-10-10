@@ -3,9 +3,10 @@ package rabbitmq
 import (
 	"context"
 	"fmt"
-	"gin-api/libraries/logging"
 	srcLog "log"
 	"net/http"
+
+	"github.com/why444216978/gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"

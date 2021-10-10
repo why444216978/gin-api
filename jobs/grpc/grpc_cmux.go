@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	pb "gin-api/jobs/grpc/helloworld"
+	pb "github.com/why444216978/gin-api/jobs/grpc/helloworld"
 
-	server "gin-api/libraries/grpc"
+	server "github.com/why444216978/gin-api/libraries/grpc"
 
 	"google.golang.org/grpc"
 )

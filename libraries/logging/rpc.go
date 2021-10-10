@@ -2,10 +2,11 @@ package logging
 
 import (
 	"context"
-	"gin-api/libraries/registry"
 	"io"
 	"io/ioutil"
 	"time"
+
+	"github.com/why444216978/gin-api/libraries/registry"
 
 	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"

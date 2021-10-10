@@ -1,7 +1,7 @@
 package ping
 
 import (
-	"gin-api/response"
+	"github.com/why444216978/gin-api/response"
 
 	"github.com/gin-gonic/gin"
 )

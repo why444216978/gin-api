@@ -1,4 +1,4 @@
-module gin-api
+module github.com/why444216978/gin-api
 
 go 1.16
 

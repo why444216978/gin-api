@@ -8,17 +8,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	app_config "gin-api/config"
-	"gin-api/libraries/config"
-	"gin-api/libraries/etcd"
-	"gin-api/libraries/http"
-	"gin-api/libraries/jaeger"
-	"gin-api/libraries/logging"
-	"gin-api/libraries/orm"
-	"gin-api/libraries/redis"
-	"gin-api/libraries/registry"
-	registry_etcd "gin-api/libraries/registry/etcd"
-	"gin-api/resource"
+	app_config "github.com/why444216978/gin-api/config"
+	"github.com/why444216978/gin-api/libraries/config"
+	"github.com/why444216978/gin-api/libraries/etcd"
+	"github.com/why444216978/gin-api/libraries/http"
+	"github.com/why444216978/gin-api/libraries/jaeger"
+	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/libraries/orm"
+	"github.com/why444216978/gin-api/libraries/redis"
+	"github.com/why444216978/gin-api/libraries/registry"
+	registry_etcd "github.com/why444216978/gin-api/libraries/registry/etcd"
+	"github.com/why444216978/gin-api/resource"
 )
 
 var (

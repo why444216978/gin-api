@@ -1,9 +1,10 @@
 package main
 
 import (
-	"gin-api/bootstrap"
 	"log"
 	"syscall"
+
+	"github.com/why444216978/gin-api/bootstrap"
 )
 
 func main() {

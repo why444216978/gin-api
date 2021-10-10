@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gin-api/config"
+	"github.com/why444216978/gin-api/config"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"

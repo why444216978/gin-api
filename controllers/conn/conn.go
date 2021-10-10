@@ -3,13 +3,14 @@ package conn
 import (
 	"context"
 	"errors"
-	"gin-api/libraries/cache"
-	"gin-api/libraries/lock"
-	"gin-api/models/test_model"
-	"gin-api/resource"
-	"gin-api/response"
-	"gin-api/services/goods_service"
 	"time"
+
+	"github.com/why444216978/gin-api/libraries/cache"
+	"github.com/why444216978/gin-api/libraries/lock"
+	"github.com/why444216978/gin-api/models/test_model"
+	"github.com/why444216978/gin-api/resource"
+	"github.com/why444216978/gin-api/response"
+	"github.com/why444216978/gin-api/services/goods_service"
 
 	"golang.org/x/sync/errgroup"
 

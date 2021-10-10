@@ -1,7 +1,7 @@
 package log
 
 import (
-	"gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/sys"

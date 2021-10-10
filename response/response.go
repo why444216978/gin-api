@@ -1,8 +1,9 @@
 package response
 
 import (
-	"gin-api/libraries/logging"
 	"net/http"
+
+	"github.com/why444216978/gin-api/libraries/logging"
 
 	"github.com/gin-gonic/gin"
 )

@@ -3,10 +3,11 @@ package log
 import (
 	"bytes"
 	"encoding/json"
-	"gin-api/libraries/jaeger"
-	"gin-api/libraries/logging"
-	"gin-api/resource"
 	"time"
+
+	"github.com/why444216978/gin-api/libraries/jaeger"
+	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/resource"
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"

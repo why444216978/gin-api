@@ -11,12 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"gin-api/config"
-	"gin-api/jobs"
-	"gin-api/libraries/registry"
-	"gin-api/libraries/registry/etcd"
-	"gin-api/resource"
-	"gin-api/routers"
+	"github.com/why444216978/gin-api/config"
+	"github.com/why444216978/gin-api/jobs"
+	"github.com/why444216978/gin-api/libraries/registry"
+	"github.com/why444216978/gin-api/libraries/registry/etcd"
+	"github.com/why444216978/gin-api/resource"
+	"github.com/why444216978/gin-api/routers"
 
 	"github.com/why444216978/go-util/sys"
 	"golang.org/x/sync/errgroup"

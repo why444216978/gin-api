@@ -1,11 +1,11 @@
 package resource
 
 import (
-	"gin-api/libraries/config"
-	"gin-api/libraries/etcd"
-	"gin-api/libraries/http"
-	"gin-api/libraries/logging"
-	"gin-api/libraries/orm"
+	"github.com/why444216978/gin-api/libraries/config"
+	"github.com/why444216978/gin-api/libraries/etcd"
+	"github.com/why444216978/gin-api/libraries/http"
+	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/libraries/orm"
 
 	"github.com/go-redis/redis/v8"
 )

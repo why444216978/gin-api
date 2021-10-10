@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"gin-api/libraries/lock"
-	"gin-api/libraries/logging"
 	"time"
+
+	"github.com/why444216978/gin-api/libraries/lock"
+	"github.com/why444216978/gin-api/libraries/logging"
 
 	"github.com/go-redis/redis/v8"
 	util_ctx "github.com/why444216978/go-util/context"

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"gin-api/libraries/registry"
+	"github.com/why444216978/gin-api/libraries/registry"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

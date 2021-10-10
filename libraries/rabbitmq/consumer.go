@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 
-	"gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/libraries/logging"
 
 	"github.com/streadway/amqp"
 )

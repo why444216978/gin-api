@@ -2,10 +2,11 @@ package panic
 
 import (
 	"bytes"
-	"gin-api/libraries/logging"
-	"gin-api/resource"
-	"gin-api/response"
 	"net/http"
+
+	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/resource"
+	"github.com/why444216978/gin-api/response"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

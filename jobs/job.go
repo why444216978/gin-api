@@ -2,10 +2,11 @@ package jobs
 
 import (
 	"fmt"
-	"gin-api/jobs/grpc"
 	"log"
 	"os"
 	"time"
+
+	"github.com/why444216978/gin-api/jobs/grpc"
 )
 
 type handleFunc func() error

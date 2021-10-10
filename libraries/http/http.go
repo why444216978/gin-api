@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"gin-api/libraries/jaeger"
-	"gin-api/libraries/logging"
-	"gin-api/libraries/registry"
+	"github.com/why444216978/gin-api/libraries/jaeger"
+	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/libraries/registry"
 
 	load_balance "github.com/why444216978/load-balance"
 )
