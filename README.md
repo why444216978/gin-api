@@ -53,20 +53,20 @@ CREATE TABLE `test` (
 ```
 
 ```
-[why@localhost] ~/Desktop/go/gin-api$go run main.go 
-2020/12/20 17:44:43 load redis.json
-2020/12/20 17:44:43 load mysql.json
-2020/12/20 17:44:43 new test_dao
-2020/12/20 17:44:43 new test_service
-2020/12/20 17:44:43 load log.json
+[why@localhost] ~/Desktop/go/gin-api$go run main.go -env dev
+Actual pid is 34592
+The environment is :dev
 [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
  - using env:   export GIN_MODE=release
  - using code:  gin.SetMode(gin.ReleaseMode)
 
-2020/12/20 17:44:43 load env.json
-[GIN-debug] GET    /ping                     --> gin-api/api/ping.Ping (6 handlers)
-[GIN-debug] GET    /test/rpc                 --> gin-api/api/opentracing.Rpc (6 handlers)
-[GIN-debug] GET    /test/panic               --> gin-api/api/opentracing.Panic (6 handlers)
-[GIN-debug] GET    /test/conn                --> gin-api/api/conn.Do (6 handlers)
-2020/12/20 17:44:43 Actual pid is 9104
+[GIN-debug] GET    /ping                     --> github.com/why444216978/gin-api/api/ping.Ping (5 handlers)
+[GIN-debug] POST   /test/rpc                 --> github.com/why444216978/gin-api/api/test.Rpc (5 handlers)
+[GIN-debug] POST   /test/rpc1                --> github.com/why444216978/gin-api/api/test.Rpc1 (5 handlers)
+[GIN-debug] POST   /test/panic               --> github.com/why444216978/gin-api/api/test.Panic (5 handlers)
+[GIN-debug] POST   /test/conn                --> github.com/why444216978/gin-api/api/conn.Do (5 handlers)
+start by server
+Start with :777
+watching prefix:gin-api now...
+service gin-api  put key: gin-api.192.168.1.104.777 val: {"Host":"192.168.1.104","Port":777}
 ```
