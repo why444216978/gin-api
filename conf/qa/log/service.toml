@@ -1,0 +1,3 @@
+InfoFile = "./log/service/info.log"
+ErrorFile = "./log/service/error.wf.log"
+Level = "debug" # debug < info < warn < error < dpanic < panic < fatal

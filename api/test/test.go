@@ -1,12 +1,11 @@
 package test
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/why444216978/gin-api/library/http"
 	"github.com/why444216978/gin-api/response"
 	gin_api "github.com/why444216978/gin-api/rpc/gin-api"
-	"github.com/why444216978/go-util/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,11 +26,7 @@ type RPC1Request struct {
 
 func Rpc1(c *gin.Context) {
 	var req RPC1Request
-	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		response.Response(c, response.CodeParams, nil, err.Error())
-		return
-	}
-	if err := validate.Validate(&req); err != nil {
+	if err := http.ParseAndValidateBody(c.Request, &req); err != nil {
 		response.Response(c, response.CodeParams, nil, err.Error())
 		return
 	}

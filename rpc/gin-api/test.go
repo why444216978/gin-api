@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	lib_http "github.com/why444216978/gin-api/libraries/http"
-	"github.com/why444216978/gin-api/libraries/logging"
+	"github.com/why444216978/gin-api/library/logging"
+	lib_http "github.com/why444216978/gin-api/library/rpc/http"
 	"github.com/why444216978/gin-api/resource"
 )
 

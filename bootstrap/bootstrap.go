@@ -9,33 +9,38 @@ import (
 	"strings"
 
 	app_config "github.com/why444216978/gin-api/config"
-	"github.com/why444216978/gin-api/libraries/config"
-	"github.com/why444216978/gin-api/libraries/etcd"
-	"github.com/why444216978/gin-api/libraries/http"
-	"github.com/why444216978/gin-api/libraries/jaeger"
-	jaeger_gorm "github.com/why444216978/gin-api/libraries/jaeger/gorm"
-	jaeger_redis "github.com/why444216978/gin-api/libraries/jaeger/redis"
-	"github.com/why444216978/gin-api/libraries/logging"
-	logging_gorm "github.com/why444216978/gin-api/libraries/logging/gorm"
-	logging_redis "github.com/why444216978/gin-api/libraries/logging/redis"
-	logging_rpc "github.com/why444216978/gin-api/libraries/logging/rpc"
-	"github.com/why444216978/gin-api/libraries/orm"
-	"github.com/why444216978/gin-api/libraries/redis"
-	"github.com/why444216978/gin-api/libraries/registry"
-	registry_etcd "github.com/why444216978/gin-api/libraries/registry/etcd"
+	"github.com/why444216978/gin-api/library/config"
+	"github.com/why444216978/gin-api/library/etcd"
+	"github.com/why444216978/gin-api/library/jaeger"
+	jaeger_gorm "github.com/why444216978/gin-api/library/jaeger/gorm"
+	jaeger_redis "github.com/why444216978/gin-api/library/jaeger/redis"
+	"github.com/why444216978/gin-api/library/logging"
+	logging_gorm "github.com/why444216978/gin-api/library/logging/gorm"
+	logging_redis "github.com/why444216978/gin-api/library/logging/redis"
+	logging_rpc "github.com/why444216978/gin-api/library/logging/rpc"
+	"github.com/why444216978/gin-api/library/orm"
+	"github.com/why444216978/gin-api/library/redis"
+	"github.com/why444216978/gin-api/library/registry"
+	registry_etcd "github.com/why444216978/gin-api/library/registry/etcd"
+	"github.com/why444216978/gin-api/library/rpc/http"
 	"github.com/why444216978/gin-api/resource"
 )
 
 var (
-	conf = flag.String("conf", "conf_dev", "config path")
+	envFlag = flag.String("env", "dev", "config path")
 )
 
-var confMap = map[string]struct{}{
-	"conf_dev":      struct{}{},
-	"conf_liantiao": struct{}{},
-	"conf_qa":       struct{}{},
-	"conf_online":   struct{}{},
+var envMap = map[string]struct{}{
+	"dev":      struct{}{},
+	"liantiao": struct{}{},
+	"qa":       struct{}{},
+	"online":   struct{}{},
 }
+
+var (
+	env      string
+	confPath string
+)
 
 func Bootstrap() {
 	flag.Parse()
@@ -52,12 +57,14 @@ func Bootstrap() {
 }
 
 func initConfig() {
-	confPath := *conf
-	log.Println("The conf path is :" + confPath)
+	env = *envFlag
+	log.Println("The environment is :" + env)
 
-	if _, ok := confMap[confPath]; !ok {
-		panic(confPath + " error")
+	if _, ok := envMap[env]; !ok {
+		panic(env + " error")
 	}
+
+	confPath = "conf/" + env
 
 	var err error
 	resource.Config = config.InitConfig(confPath, "toml")
@@ -80,7 +87,7 @@ func initLogger() {
 		panic(err)
 	}
 
-	resource.ServiceLogger, err = logging.NewLogger(cfg)
+	resource.ServiceLogger, err = logging.NewLogger(cfg, logging.WithModule(logging.ModuleHTTP))
 	if err != nil {
 		panic(err)
 	}
@@ -174,7 +181,7 @@ func initServices() {
 		files []string
 	)
 
-	if dir, err = filepath.Abs(*conf); err != nil {
+	if dir, err = filepath.Abs(confPath); err != nil {
 		panic(err)
 	}
 

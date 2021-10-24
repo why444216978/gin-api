@@ -1,3 +1,0 @@
-InfoFile = "./logs/rpc/info.log"
-ErrorFile = "./logs/rpc/error.wf.log"
-Level = "info" # debug < info < warn < error < dpanic < panic < fatal

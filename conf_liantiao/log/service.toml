@@ -1,3 +1,0 @@
-InfoFile = "./logs/service/info.log"
-ErrorFile = "./logs/service/error.wf.log"
-Level = "debug" # debug < info < warn < error < dpanic < panic < fatal

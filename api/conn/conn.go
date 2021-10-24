@@ -7,8 +7,8 @@ import (
 
 	goods_respository "github.com/why444216978/gin-api/internal/goods/respository"
 	goods_service "github.com/why444216978/gin-api/internal/goods/service"
-	redis_cache "github.com/why444216978/gin-api/libraries/cache/redis"
-	redis_lock "github.com/why444216978/gin-api/libraries/lock/redis"
+	redis_cache "github.com/why444216978/gin-api/library/cache/redis"
+	redis_lock "github.com/why444216978/gin-api/library/lock/redis"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
 

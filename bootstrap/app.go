@@ -12,11 +12,12 @@ import (
 	"time"
 
 	"github.com/why444216978/gin-api/config"
-	"github.com/why444216978/gin-api/jobs"
-	"github.com/why444216978/gin-api/libraries/registry"
-	"github.com/why444216978/gin-api/libraries/registry/etcd"
+	"github.com/why444216978/gin-api/internal/test/job/grpc"
+	job_service "github.com/why444216978/gin-api/library/job"
+	"github.com/why444216978/gin-api/library/registry"
+	"github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/resource"
-	"github.com/why444216978/gin-api/routers"
+	"github.com/why444216978/gin-api/router"
 
 	"github.com/why444216978/go-util/sys"
 	"golang.org/x/sync/errgroup"
@@ -35,7 +36,10 @@ type App struct {
 
 func StartApp() {
 	if *job != "" {
-		jobs.Handle(*job)
+		job_service.Handlers = map[string]job_service.HandleFunc{
+			"grpc-cmux": grpc.GrpcCmux,
+		}
+		job_service.Handle(*job)
 		return
 	}
 
@@ -57,7 +61,7 @@ func newApp() *App {
 		cancel: cancel,
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%d", config.App.AppPort),
-			Handler:      routers.InitRouter(),
+			Handler:      router.InitRouter(),
 			ReadTimeout:  time.Duration(config.App.ReadTimeout) * time.Millisecond,
 			WriteTimeout: time.Duration(config.App.WriteTimeout) * time.Millisecond,
 		},

@@ -1,6 +1,0 @@
-SlowThreshold = 1000
-InfoFile = "./logs/gorm/info.log"
-ErrorFile = "./logs/gorm/error.wf.log"
-Level = 4 # Silent(1) < Error(2) < Warn(3) < Info(4)
-SkipCallerLookup = false
-IgnoreRecordNotFoundError = true

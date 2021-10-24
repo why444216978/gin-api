@@ -1,0 +1,5 @@
+AppName = "gin-api"
+AppPort = 1000
+ContextTimeout = 100000
+ReadTimeout =  100000
+WriteTimeout =  100000
