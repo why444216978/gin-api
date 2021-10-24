@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// cacheData cache data struct
-type cacheData struct {
+// CacheData cache data struct
+type CacheData struct {
 	ExpireAt int64  // ExpireAt 失效时间
 	Data     string // Data 真实数据
 }
@@ -24,10 +24,4 @@ type Cacher interface {
 	// FlushCache flush cache
 	// if cache not exist, load data and save cache
 	FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error)
-
-	// getCache get data from cache and conversion to cacheData
-	getCache(ctx context.Context, key string) (data *cacheData, err error)
-
-	// setCache set cache
-	setCache(ctx context.Context, key, val string, expiration time.Duration, ttl time.Duration) (err error)
 }

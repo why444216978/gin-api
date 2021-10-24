@@ -5,18 +5,16 @@ import (
 	"errors"
 	"time"
 
-	"github.com/why444216978/gin-api/libraries/cache"
+	redis_cache "github.com/why444216978/gin-api/libraries/cache/redis"
 	"github.com/why444216978/gin-api/libraries/lock"
 	"github.com/why444216978/gin-api/models/test_model"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
 	"github.com/why444216978/gin-api/services/goods_service"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/gin-gonic/gin"
-
 	"github.com/why444216978/go-util/orm"
+	"golang.org/x/sync/errgroup"
 )
 
 func Do(c *gin.Context) {
@@ -101,7 +99,7 @@ func Do(c *gin.Context) {
 		return
 	}
 
-	cache, err := cache.New(resource.RedisCache, lock)
+	cache, err := redis_cache.New(resource.RedisCache, lock)
 	if err != nil {
 		return
 	}

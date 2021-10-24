@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/why444216978/gin-api/libraries/cache"
 	"github.com/why444216978/gin-api/libraries/lock"
 	"github.com/why444216978/gin-api/libraries/logging"
 
@@ -18,9 +19,9 @@ type redisCache struct {
 	lock lock.Locker
 }
 
-var _ Cacher = (*redisCache)(nil)
+var _ cache.Cacher = (*redisCache)(nil)
 
-func New(c *redis.Client, locker lock.Locker) (Cacher, error) {
+func New(c *redis.Client, locker lock.Locker) (cache.Cacher, error) {
 	if c == nil {
 		return nil, errors.New("redis is nil")
 	}
@@ -35,7 +36,7 @@ func New(c *redis.Client, locker lock.Locker) (Cacher, error) {
 	}, nil
 }
 
-func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error) {
+func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f cache.LoadFunc, data interface{}) (err error) {
 	cache, err := rc.getCache(ctx, key)
 	if err != nil {
 		return
@@ -62,7 +63,7 @@ func (rc *redisCache) GetData(ctx context.Context, key string, expiration time.D
 	return
 }
 
-func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f LoadFunc, data interface{}) (err error) {
+func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f cache.LoadFunc, data interface{}) (err error) {
 	lockKey := "LOCK::" + key
 	random := logging.NewObjectId().Hex()
 
@@ -90,8 +91,8 @@ func (rc *redisCache) FlushCache(ctx context.Context, key string, expiration tim
 	return
 }
 
-func (rc *redisCache) getCache(ctx context.Context, key string) (data *cacheData, err error) {
-	data = &cacheData{}
+func (rc *redisCache) getCache(ctx context.Context, key string) (data *cache.CacheData, err error) {
+	data = &cache.CacheData{}
 
 	res, err := rc.c.Get(ctx, key).Result()
 	if err == redis.Nil {
@@ -114,7 +115,7 @@ func (rc *redisCache) getCache(ctx context.Context, key string) (data *cacheData
 }
 
 func (rc *redisCache) setCache(ctx context.Context, key, val string, expiration time.Duration, ttl time.Duration) (err error) {
-	_data := cacheData{
+	_data := cache.CacheData{
 		ExpireAt: time.Now().Add(ttl).Unix(),
 		Data:     val,
 	}
