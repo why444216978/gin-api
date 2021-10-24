@@ -2,13 +2,10 @@ package logging
 
 import (
 	"context"
-	"io"
-	"io/ioutil"
 	"time"
 
-	"github.com/why444216978/gin-api/libraries/registry"
-
 	"github.com/why444216978/go-util/conversion"
+
 	"go.uber.org/zap"
 )
 
@@ -46,13 +43,9 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 	return
 }
 
-func (rl *RPCLogger) Fields(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration,
-	node *registry.ServiceNode, resp string, err error) []zap.Field {
+func (rl *RPCLogger) Fields(ctx context.Context, serviceName, method, uri string, header map[string]string, body []byte, timeout time.Duration,
+	remoteHost string, remotePort int, resp string, err error) []zap.Field {
 
-	var b []byte
-	if body != nil {
-		b, _ = ioutil.ReadAll(body)
-	}
 	response, _ := conversion.JsonToMap(resp)
 	return []zap.Field{
 		zap.String(LogID, ValueTraceID(ctx)),
@@ -60,8 +53,10 @@ func (rl *RPCLogger) Fields(ctx context.Context, serviceName, method, uri string
 		zap.String("service_name", serviceName),
 		zap.String("method", method),
 		zap.String("uri", uri),
+		zap.String("remote_host", remoteHost),
+		zap.Int("remote_port", remotePort),
 		zap.Reflect("header", header),
-		zap.Reflect("request", string(b)),
+		zap.Reflect("request", string(body)),
 		zap.Reflect("response", response),
 		zap.Error(err),
 	}

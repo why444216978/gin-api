@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -45,14 +46,20 @@ func New(opts ...Option) *RPC {
 // Send is send HTTP request
 func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration) (ret *Response, err error) {
 	node := &registry.ServiceNode{}
-	_req := body
+
+	var buf []byte
+	if body != nil {
+		buf, _ := ioutil.ReadAll(body)
+		body = ioutil.NopCloser(bytes.NewBuffer(buf))
+	}
+
 	ret = &Response{}
 
 	defer func() {
 		if r.logger == nil {
 			return
 		}
-		fields := r.logger.Fields(ctx, serviceName, method, uri, header, _req, timeout, node, ret.Response, err)
+		fields := r.logger.Fields(ctx, serviceName, method, uri, header, buf, timeout, node.Host, node.Port, ret.Response, err)
 		if err == nil {
 			r.logger.Info("http rpc", fields...)
 			return
@@ -153,66 +160,6 @@ func (r *RPC) loadBalance(serviceName string) (*registry.ServiceNode, error) {
 		Host: host,
 		Port: port,
 	}, nil
-}
-
-// Send is send HTTP request
-func Send(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration) (ret *Response, err error) {
-	node, err := loadBalance(serviceName)
-	if err != nil {
-		return
-	}
-
-	var req *http.Request
-
-	client := &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   timeout,
-	}
-
-	//构建req
-	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), body)
-	if err != nil {
-		return
-	}
-
-	//设置请求header
-	for k, v := range header {
-		req.Header.Add(k, v)
-	}
-
-	if ctx.Err() != nil {
-		return nil, err
-	}
-
-	//注入Jaeger
-	logID := req.Header.Get(logging.LogHeader)
-	jaeger_http.InjectHTTP(ctx, req, logID)
-
-	//发送请求
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
-	ret = &Response{
-		HTTPCode: resp.StatusCode,
-	}
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("http code is %d", resp.StatusCode)
-		return
-	}
-
-	if b != nil {
-		ret.Response = string(b)
-	}
-
-	return
 }
 
 func loadBalance(serviceName string) (*registry.ServiceNode, error) {

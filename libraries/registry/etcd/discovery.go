@@ -72,6 +72,7 @@ func (s *EtcdDiscovery) WatchService(ctx context.Context) error {
 			Host: host.IP.String(),
 			Port: 80,
 		})
+		return nil
 	}
 
 	if s.cli == nil {
