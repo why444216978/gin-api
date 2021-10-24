@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/why444216978/gin-api/libraries/logging"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +16,7 @@ type RedisConfig struct {
 
 // RedisLogger is go-redis logger Hook
 type RedisLogger struct {
-	*Logger
+	*logging.Logger
 }
 
 type RedisOption func(rl *RedisLogger)
@@ -28,11 +29,11 @@ func NewRedisLogger(cfg *RedisConfig, opts ...RedisOption) (rl *RedisLogger, err
 		o(rl)
 	}
 
-	l, err := NewLogger(&Config{
+	l, err := logging.NewLogger(&logging.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	})
+	}, logging.WithModule(logging.ModuleRedis))
 	if err != nil {
 		return
 	}
@@ -95,8 +96,8 @@ func (rl *RedisLogger) AfterProcessPipeline(ctx context.Context, cmds []redis.Cm
 
 func (rl *RedisLogger) fields(ctx context.Context, cmd redis.Cmder, err error) []zap.Field {
 	return []zap.Field{
-		zap.String(LogID, ValueTraceID(ctx)),
-		zap.String(TraceID, ValueLogID(ctx)),
+		zap.String(logging.LogID, logging.ValueTraceID(ctx)),
+		zap.String(logging.TraceID, logging.ValueLogID(ctx)),
 		zap.String("cmd", cmd.Name()),
 		zap.Reflect("args", cmd.Args()),
 		zap.String("result", cmd.String()),

@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/why444216978/go-util/conversion"
+	"github.com/why444216978/gin-api/libraries/logging"
 
+	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +18,7 @@ type RPCConfig struct {
 
 // RPCLogger is go-redis logger Hook
 type RPCLogger struct {
-	*Logger
+	*logging.Logger
 }
 
 type RPCOption func(rl *RPCLogger)
@@ -30,11 +31,11 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 		o(rl)
 	}
 
-	l, err := NewLogger(&Config{
+	l, err := logging.NewLogger(&logging.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	}, WithCallerSkip(2))
+	}, logging.WithCallerSkip(2), logging.WithModule(logging.ModuleRPC))
 	if err != nil {
 		return
 	}
@@ -48,8 +49,8 @@ func (rl *RPCLogger) Fields(ctx context.Context, serviceName, method, uri string
 
 	response, _ := conversion.JsonToMap(resp)
 	return []zap.Field{
-		zap.String(LogID, ValueTraceID(ctx)),
-		zap.String(TraceID, ValueLogID(ctx)),
+		zap.String(logging.LogID, logging.ValueTraceID(ctx)),
+		zap.String(logging.TraceID, logging.ValueLogID(ctx)),
 		zap.String("service_name", serviceName),
 		zap.String("method", method),
 		zap.String("uri", uri),

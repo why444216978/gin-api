@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/why444216978/gin-api/config"
-
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -17,6 +15,7 @@ type Logger struct {
 	*zap.Logger
 	level    zapcore.Level
 	callSkip int
+	module   string
 }
 
 type Config struct {
@@ -29,6 +28,10 @@ type Option func(l *Logger)
 
 func WithCallerSkip(skip int) Option {
 	return func(l *Logger) { l.callSkip = skip }
+}
+
+func WithModule(module string) Option {
+	return func(l *Logger) { l.module = module }
 }
 
 func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
@@ -67,12 +70,17 @@ func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 	if l.callSkip == 0 {
 		l.callSkip = 1
 	}
+
+	if l.module == "" {
+		l.module = "default"
+	}
+
 	l.Logger = zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(errorEnabler),
 		zap.AddCallerSkip(l.callSkip),
 		zap.Fields(
-			zap.Int(Port, config.App.AppPort),
+			zap.String(Module, l.module),
 		),
 	)
 

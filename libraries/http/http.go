@@ -14,6 +14,7 @@ import (
 
 	jaeger_http "github.com/why444216978/gin-api/libraries/jaeger/http"
 	"github.com/why444216978/gin-api/libraries/logging"
+	logging_rpc "github.com/why444216978/gin-api/libraries/logging/rpc"
 	"github.com/why444216978/gin-api/libraries/registry"
 
 	load_balance "github.com/why444216978/load-balance"
@@ -25,12 +26,12 @@ type Response struct {
 }
 
 type RPC struct {
-	logger *logging.RPCLogger
+	logger *logging_rpc.RPCLogger
 }
 
 type Option func(r *RPC)
 
-func WithLogger(logger *logging.RPCLogger) Option {
+func WithLogger(logger *logging_rpc.RPCLogger) Option {
 	return func(r *RPC) { r.logger = logger }
 }
 

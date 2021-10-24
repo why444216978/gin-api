@@ -16,6 +16,9 @@ import (
 	jaeger_gorm "github.com/why444216978/gin-api/libraries/jaeger/gorm"
 	jaeger_redis "github.com/why444216978/gin-api/libraries/jaeger/redis"
 	"github.com/why444216978/gin-api/libraries/logging"
+	logging_gorm "github.com/why444216978/gin-api/libraries/logging/gorm"
+	logging_redis "github.com/why444216978/gin-api/libraries/logging/redis"
+	logging_rpc "github.com/why444216978/gin-api/libraries/logging/rpc"
 	"github.com/why444216978/gin-api/libraries/orm"
 	"github.com/why444216978/gin-api/libraries/redis"
 	"github.com/why444216978/gin-api/libraries/registry"
@@ -86,7 +89,7 @@ func initLogger() {
 func initMysql(db string) {
 	var err error
 	cfg := &orm.Config{}
-	gormCfg := &logging.GormConfig{}
+	gormCfg := &logging_gorm.GormConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
@@ -96,7 +99,7 @@ func initMysql(db string) {
 		panic(err)
 	}
 
-	gormLogger, err := logging.NewGorm(gormCfg)
+	gormLogger, err := logging_gorm.NewGorm(gormCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +116,7 @@ func initMysql(db string) {
 func initRedis(db string) {
 	var err error
 	cfg := &redis.Config{}
-	logCfg := &logging.RedisConfig{}
+	logCfg := &logging_redis.RedisConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
@@ -122,7 +125,7 @@ func initRedis(db string) {
 		panic(err)
 	}
 
-	logger, err := logging.NewRedisLogger(logCfg)
+	logger, err := logging_redis.NewRedisLogger(logCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -208,13 +211,13 @@ func initServices() {
 
 func initHTTPRPC() {
 	var err error
-	cfg := &logging.RPCConfig{}
+	cfg := &logging_rpc.RPCConfig{}
 
 	if err = resource.Config.ReadConfig("log/rpc", "toml", cfg); err != nil {
 		panic(err)
 	}
 
-	rpcLogger, err := logging.NewRPCLogger(cfg)
+	rpcLogger, err := logging_rpc.NewRPCLogger(cfg)
 	if err != nil {
 		panic(err)
 	}

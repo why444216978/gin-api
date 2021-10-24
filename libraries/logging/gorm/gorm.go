@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/why444216978/gin-api/libraries/logging"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gorm.io/gorm"
@@ -58,11 +59,11 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 		o(gl)
 	}
 
-	l, err := NewLogger(&Config{
+	l, err := logging.NewLogger(&logging.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     zapLever,
-	})
+	}, logging.WithModule(logging.ModuleMySQL))
 	if err != nil {
 		return
 	}
@@ -111,19 +112,26 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	}
 
 	elapsed := time.Since(begin)
+
+	sql, rows := fc()
+	fields := []zapcore.Field{
+		zap.Error(err),
+		zap.Duration("elapsed", elapsed),
+		zap.Int64("rows", rows),
+		zap.String("sql", sql),
+		zap.String(logging.LogID,
+			logging.ValueTraceID(ctx)),
+		zap.String(logging.TraceID,
+			logging.ValueLogID(ctx)),
+	}
+
 	switch {
 	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
-		sql, rows := fc()
-		l.logger().Error("trace", zap.Error(err), zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
-			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
+		l.logger().Error("trace", fields...)
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
-		sql, rows := fc()
-		l.logger().Warn("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
-			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
+		l.logger().Warn("trace", fields...)
 	case l.LogLevel >= logger.Info:
-		sql, rows := fc()
-		l.logger().Info("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql),
-			zap.String(LogID, ValueTraceID(ctx)), zap.String(TraceID, ValueLogID(ctx)))
+		l.logger().Info("trace", fields...)
 	}
 }
 

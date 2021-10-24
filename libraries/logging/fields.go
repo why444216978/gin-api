@@ -8,14 +8,12 @@ const (
 	LogHeader = "Log-Id"
 )
 
-type MODULE string
-
 const (
-	ModuleHTTP     MODULE = "HTTP"
-	ModuleRPC      MODULE = "RPC"
-	ModuleMySQL    MODULE = "MySQL"
-	ModuleRedis    MODULE = "Redis"
-	ModuleRabbitMQ MODULE = "RabbitMQ"
+	ModuleHTTP     = "HTTP"
+	ModuleRPC      = "RPC"
+	ModuleMySQL    = "MySQL"
+	ModuleRedis    = "Redis"
+	ModuleRabbitMQ = "RabbitMQ"
 )
 
 const (
@@ -47,6 +45,6 @@ type Fields struct {
 	HostIP   string      `json:"host_ip"`
 	API      string      `json:"api"`
 	Cost     int64       `json:"cost"`
-	Module   MODULE      `json:"module"`
+	Module   string      `json:"module"`
 	// Trace    interface{} `json:"trace"`
 }
