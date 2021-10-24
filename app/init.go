@@ -1,4 +1,4 @@
-package bootstrap
+package app
 
 import (
 	"context"
@@ -42,7 +42,7 @@ var (
 	confPath string
 )
 
-func Bootstrap() {
+func Init() {
 	flag.Parse()
 
 	initConfig()

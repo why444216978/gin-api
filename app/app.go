@@ -1,4 +1,4 @@
-package bootstrap
+package app
 
 import (
 	"context"
@@ -34,7 +34,7 @@ type App struct {
 	cancel    func()
 }
 
-func StartApp() {
+func Start() {
 	if *job != "" {
 		job_service.Handlers = map[string]job_service.HandleFunc{
 			"grpc-cmux": grpc.GrpcCmux,
