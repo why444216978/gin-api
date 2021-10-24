@@ -6,7 +6,7 @@ import (
 	"time"
 
 	redis_cache "github.com/why444216978/gin-api/libraries/cache/redis"
-	"github.com/why444216978/gin-api/libraries/lock"
+	redis_lock "github.com/why444216978/gin-api/libraries/lock/redis"
 	"github.com/why444216978/gin-api/models/test_model"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
@@ -94,7 +94,7 @@ func Do(c *gin.Context) {
 
 	data := &Data{}
 
-	lock, err := lock.New(resource.RedisCache)
+	lock, err := redis_lock.New(resource.RedisCache)
 	if err != nil {
 		return
 	}

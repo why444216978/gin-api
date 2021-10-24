@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/why444216978/gin-api/libraries/lock"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -15,7 +17,7 @@ const (
 	lockLua     = `if redis.call("GET", KEYS[1]) == ARGV[1] then redis.call("DEL", KEYS[1]) return 1 else return 0 end`
 )
 
-var _ Locker = (*redisLock)(nil)
+var _ lock.Locker = (*redisLock)(nil)
 
 var (
 	ErrClientNil = errors.New("client is nil")
