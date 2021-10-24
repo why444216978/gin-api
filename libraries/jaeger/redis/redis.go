@@ -3,6 +3,8 @@ package jaeger
 import (
 	"context"
 
+	"github.com/why444216978/gin-api/libraries/jaeger"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -10,6 +12,7 @@ import (
 )
 
 const (
+	componentRedis                        = "Redis"
 	ctxKey                         string = "redis_span"
 	redisCmdName                   string = "command"
 	redisCmdArgs                   string = "args"
@@ -27,14 +30,14 @@ func NewJaegerHook() *jaegerHook {
 
 //BeforeProcess redis before execute action do something
 func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	if Tracer == nil {
+	if jaeger.Tracer == nil {
 		return ctx, nil
 	}
-	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, componentRedis)
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, componentRedis)
 	if span == nil {
 		return ctx, nil
 	}
-	SetCommonTag(ctx, span)
+	jaeger.SetCommonTag(ctx, span)
 
 	ctx = context.WithValue(ctx, ctxKey, span)
 	return ctx, nil
@@ -42,7 +45,7 @@ func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 
 //AfterProcess redis after execute action do something
 func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	if Tracer == nil {
+	if jaeger.Tracer == nil {
 		return nil
 	}
 	_span := ctx.Value(ctxKey)
@@ -65,12 +68,12 @@ func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 
 // BeforeProcessPipeline before command process handle
 func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
-	if Tracer == nil {
+	if jaeger.Tracer == nil {
 		return ctx, nil
 	}
 	for _, cmd := range cmds {
 		_ = cmd
-		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, Tracer, componentRedis)
+		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, componentRedis)
 		ctx = context.WithValue(ctx, ctxKey, span)
 	}
 	return ctx, nil
@@ -78,7 +81,7 @@ func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cm
 
 // AfterProcessPipeline after command process handle
 func (jh *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
-	if Tracer == nil {
+	if jaeger.Tracer == nil {
 		return nil
 	}
 	for _, cmd := range cmds {

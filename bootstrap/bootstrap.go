@@ -13,6 +13,8 @@ import (
 	"github.com/why444216978/gin-api/libraries/etcd"
 	"github.com/why444216978/gin-api/libraries/http"
 	"github.com/why444216978/gin-api/libraries/jaeger"
+	jaeger_gorm "github.com/why444216978/gin-api/libraries/jaeger/gorm"
+	jaeger_redis "github.com/why444216978/gin-api/libraries/jaeger/redis"
 	"github.com/why444216978/gin-api/libraries/logging"
 	"github.com/why444216978/gin-api/libraries/orm"
 	"github.com/why444216978/gin-api/libraries/redis"
@@ -100,7 +102,7 @@ func initMysql(db string) {
 	}
 
 	resource.TestDB, err = orm.NewOrm(cfg,
-		orm.WithTrace(jaeger.GormTrace),
+		orm.WithTrace(jaeger_gorm.GormTrace),
 		orm.WithLogger(gormLogger),
 	)
 	if err != nil {
@@ -126,7 +128,7 @@ func initRedis(db string) {
 	}
 
 	rc := redis.NewClient(cfg)
-	rc.AddHook(jaeger.NewJaegerHook())
+	rc.AddHook(jaeger_redis.NewJaegerHook())
 	rc.AddHook(logger)
 	resource.RedisCache = rc
 }

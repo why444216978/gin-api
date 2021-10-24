@@ -2,7 +2,10 @@ package jaeger
 
 import (
 	"context"
+	"errors"
 	"strings"
+
+	"github.com/why444216978/gin-api/libraries/jaeger"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -35,11 +38,10 @@ func (c MDReaderWriter) Set(key, val string) {
 
 // ClientInterceptor grpc client
 func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string,
-		req, reply interface{}, cc *grpc.ClientConn,
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		if Tracer == nil {
-			return nil
+		if jaeger.Tracer == nil {
+			return errors.New("jaeger client is nil")
 		}
 
 		span := opentracing.StartSpan(
@@ -58,7 +60,7 @@ func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInte
 			md = md.Copy()
 		}
 
-		err := Tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
+		err := jaeger.Tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
 		if err != nil {
 			span.LogFields(log.String("inject-error", err.Error()))
 		}

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/why444216978/gin-api/libraries/jaeger"
+	jaeger_http "github.com/why444216978/gin-api/libraries/jaeger/http"
 	"github.com/why444216978/gin-api/libraries/logging"
 	"github.com/why444216978/gin-api/resource"
 
@@ -37,7 +37,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 
-		ctx, span, traceID := jaeger.ExtractHTTP(ctx, c.Request, logging.ValueLogID(ctx))
+		ctx, span, traceID := jaeger_http.ExtractHTTP(ctx, c.Request, logging.ValueLogID(ctx))
 		defer span.Finish()
 
 		ctx = logging.WithTraceID(ctx, traceID)
@@ -59,7 +59,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 		ctx = logging.WithHTTPRequestBody(ctx, fields.Request)
 
 		req, _ := json.Marshal(fields.Request)
-		jaeger.SetHTTPLog(span, string(req), resp)
+		jaeger_http.SetHTTPLog(span, string(req), resp)
 
 		fields.Cost = time.Since(start).Milliseconds()
 		ctx = logging.WithHTTPFields(ctx, fields)

@@ -10,6 +10,19 @@ import (
 	"github.com/uber/jaeger-client-go/config"
 )
 
+const (
+	FieldLogID           = "Log-Id"
+	FieldTraceID         = "Trace-Id"
+	FieldSpanID          = "Span-Id"
+	ParentSpanContextKey = "Span"
+)
+
+const (
+	LogFieldsRequest  = "request"
+	LogFieldsResponse = "response"
+	LogFieldsArgs     = "args"
+)
+
 var Tracer opentracing.Tracer
 
 type Config struct {
@@ -46,13 +59,13 @@ func SetError(span opentracing.Span, err error) {
 }
 
 func SetResponse(span opentracing.Span, resp string) {
-	span.LogFields(opentracing_log.String(logFieldsResponse, resp))
+	span.LogFields(opentracing_log.String(LogFieldsResponse, resp))
 }
 
 func SetCommonTag(ctx context.Context, span opentracing.Span) {
 	jaegerSpanContext := spanContextToJaegerContext(span.Context())
-	span.SetTag(fieldTraceID, jaegerSpanContext.TraceID().String())
-	span.SetTag(fieldSpanID, jaegerSpanContext.SpanID().String())
+	span.SetTag(FieldTraceID, jaegerSpanContext.TraceID().String())
+	span.SetTag(FieldSpanID, jaegerSpanContext.SpanID().String())
 }
 
 func GetTraceID(span opentracing.Span) string {
@@ -68,7 +81,7 @@ func GetSpanID(span opentracing.Span) string {
 func getInjectParent(ctx context.Context) (spanContext opentracing.SpanContext, ok bool) {
 	var _spanContext interface{}
 
-	_spanContext = ctx.Value(parentSpanContextKey)
+	_spanContext = ctx.Value(ParentSpanContextKey)
 	spanContext, ok = _spanContext.(opentracing.SpanContext)
 	if !ok {
 		return

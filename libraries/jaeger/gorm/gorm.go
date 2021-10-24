@@ -1,6 +1,8 @@
 package jaeger
 
 import (
+	"github.com/why444216978/gin-api/libraries/jaeger"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracing_log "github.com/opentracing/opentracing-go/log"
@@ -9,6 +11,7 @@ import (
 
 //gorm hook
 const (
+	componentGorm      = "Gorm"
 	gormSpanKey        = "gorm_span"
 	callBackBeforeName = "opentracing:before"
 	callBackAfterName  = "opentracing:after"
@@ -16,18 +19,18 @@ const (
 
 //before gorm before execute action do something
 func before(db *gorm.DB) {
-	if Tracer == nil {
+	if jaeger.Tracer == nil {
 		return
 	}
-	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, Tracer, componentGorm)
+	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, jaeger.Tracer, componentGorm)
 	db.InstanceSet(gormSpanKey, span)
 	return
 }
 
 //after gorm after execute action do something
 func after(db *gorm.DB) {
-	if Tracer == nil {
-		panic(ErrNotJaeger)
+	if jaeger.Tracer == nil {
+		return
 	}
 	_span, isExist := db.InstanceGet(gormSpanKey)
 	if !isExist {
@@ -37,7 +40,7 @@ func after(db *gorm.DB) {
 	if !ok {
 		return
 	}
-	SetCommonTag(db.Statement.Context, span)
+	jaeger.SetCommonTag(db.Statement.Context, span)
 
 	defer span.Finish()
 	if db.Error != nil {

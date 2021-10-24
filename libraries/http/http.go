@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/why444216978/gin-api/libraries/jaeger"
+	jaeger_http "github.com/why444216978/gin-api/libraries/jaeger/http"
 	"github.com/why444216978/gin-api/libraries/logging"
 	"github.com/why444216978/gin-api/libraries/registry"
 
@@ -89,7 +89,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 
 	//注入Jaeger
 	logID := req.Header.Get(logging.LogHeader)
-	jaeger.InjectHTTP(ctx, req, logID)
+	jaeger_http.InjectHTTP(ctx, req, logID)
 
 	//发送请求
 	resp, err := client.Do(req)
@@ -186,7 +186,7 @@ func Send(ctx context.Context, serviceName, method, uri string, header map[strin
 
 	//注入Jaeger
 	logID := req.Header.Get(logging.LogHeader)
-	jaeger.InjectHTTP(ctx, req, logID)
+	jaeger_http.InjectHTTP(ctx, req, logID)
 
 	//发送请求
 	resp, err := client.Do(req)
