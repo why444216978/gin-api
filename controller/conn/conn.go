@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
+	goods_service "github.com/why444216978/gin-api/internal/goods/service"
 	redis_cache "github.com/why444216978/gin-api/libraries/cache/redis"
 	redis_lock "github.com/why444216978/gin-api/libraries/lock/redis"
 	"github.com/why444216978/gin-api/models/test_model"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
-	"github.com/why444216978/gin-api/services/goods_service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/orm"

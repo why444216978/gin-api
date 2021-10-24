@@ -8,5 +8,4 @@ import (
 
 func Ping(c *gin.Context) {
 	response.Response(c, response.CodeSuccess, nil, "")
-
 }

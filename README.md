@@ -64,9 +64,9 @@ CREATE TABLE `test` (
  - using code:  gin.SetMode(gin.ReleaseMode)
 
 2020/12/20 17:44:43 load env.json
-[GIN-debug] GET    /ping                     --> gin-api/controllers/ping.Ping (6 handlers)
-[GIN-debug] GET    /test/rpc                 --> gin-api/controllers/opentracing.Rpc (6 handlers)
-[GIN-debug] GET    /test/panic               --> gin-api/controllers/opentracing.Panic (6 handlers)
-[GIN-debug] GET    /test/conn                --> gin-api/controllers/conn.Do (6 handlers)
+[GIN-debug] GET    /ping                     --> gin-api/controller/ping.Ping (6 handlers)
+[GIN-debug] GET    /test/rpc                 --> gin-api/controller/opentracing.Rpc (6 handlers)
+[GIN-debug] GET    /test/panic               --> gin-api/controller/opentracing.Panic (6 handlers)
+[GIN-debug] GET    /test/conn                --> gin-api/controller/conn.Do (6 handlers)
 2020/12/20 17:44:43 Actual pid is 9104
 ```

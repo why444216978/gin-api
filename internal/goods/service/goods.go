@@ -1,14 +1,13 @@
-package goods_service
+package service
 
 import (
 	"strconv"
 
 	"github.com/why444216978/gin-api/resource"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
-
-	"github.com/gin-gonic/gin"
 )
 
 type GoodsInterface interface {

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/why444216978/gin-api/config"
-	"github.com/why444216978/gin-api/controllers/conn"
-	"github.com/why444216978/gin-api/controllers/opentracing"
-	"github.com/why444216978/gin-api/controllers/ping"
+	"github.com/why444216978/gin-api/controller/conn"
+	"github.com/why444216978/gin-api/controller/opentracing"
+	"github.com/why444216978/gin-api/controller/ping"
 	"github.com/why444216978/gin-api/middlewares/limiter"
 	"github.com/why444216978/gin-api/middlewares/log"
 	"github.com/why444216978/gin-api/middlewares/panic"
