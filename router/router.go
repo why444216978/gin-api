@@ -10,6 +10,7 @@ import (
 	"github.com/why444216978/gin-api/config"
 	"github.com/why444216978/gin-api/middleware/limiter"
 	"github.com/why444216978/gin-api/middleware/log"
+	"github.com/why444216978/gin-api/middleware/panic"
 	"github.com/why444216978/gin-api/middleware/timeout"
 	"github.com/why444216978/gin-api/response"
 
@@ -21,7 +22,7 @@ func InitRouter() *gin.Engine {
 
 	server.Use(log.InitContext())
 
-	// server.Use(panic.ThrowPanic())
+	server.Use(panic.ThrowPanic())
 
 	server.Use(timeout.TimeoutMiddleware(time.Duration(config.App.ContextTimeout) * time.Millisecond))
 
