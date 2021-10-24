@@ -20,7 +20,7 @@ type EtcdDiscovery struct {
 	config   *registry.DiscoveryConfig
 	cli      *clientv3.Client
 	nodeList map[string]*registry.ServiceNode //node list
-	lock     sync.Mutex
+	lock     sync.RWMutex
 	decode   registry.Decode
 }
 
@@ -145,8 +145,8 @@ func (s *EtcdDiscovery) DelServiceList(key string) {
 
 // GetServices
 func (s *EtcdDiscovery) GetServices() []*registry.ServiceNode {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	nodes := make([]*registry.ServiceNode, 0)
 
 	for _, node := range s.nodeList {
