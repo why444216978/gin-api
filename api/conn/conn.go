@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
+	goods_respository "github.com/why444216978/gin-api/internal/goods/respository"
 	goods_service "github.com/why444216978/gin-api/internal/goods/service"
 	redis_cache "github.com/why444216978/gin-api/libraries/cache/redis"
 	redis_lock "github.com/why444216978/gin-api/libraries/lock/redis"
-	"github.com/why444216978/gin-api/models/test_model"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
 
@@ -20,7 +20,7 @@ import (
 func Do(c *gin.Context) {
 	var (
 		err   error
-		goods test_model.Test
+		goods goods_respository.Test
 	)
 
 	ctx := c.Request.Context()
@@ -49,7 +49,7 @@ func Do(c *gin.Context) {
 		return
 	}
 
-	_, err = orm.Insert(ctx, db, &test_model.Test{
+	_, err = orm.Insert(ctx, db, &goods_respository.Test{
 		GoodsId: 333,
 		Name:    "a",
 	})
@@ -60,12 +60,12 @@ func Do(c *gin.Context) {
 	where := map[string]interface{}{"goods_id": 333}
 	update := map[string]interface{}{"name": 333}
 
-	_, err = orm.Update(ctx, db, &test_model.Test{}, where, update)
+	_, err = orm.Update(ctx, db, &goods_respository.Test{}, where, update)
 	if err != nil {
 		return
 	}
 
-	_, err = orm.Delete(ctx, db, &test_model.Test{}, where)
+	_, err = orm.Delete(ctx, db, &goods_respository.Test{}, where)
 	if err != nil {
 		return
 	}

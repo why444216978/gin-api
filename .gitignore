@@ -12,8 +12,6 @@ development
 .vscode
 *node*
 .DS_Store
-test/*
-test.go
 __debug_bin
 cover.out
 cover.html

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/why444216978/gin-api/api/conn"
+	"github.com/why444216978/gin-api/api/ping"
+	"github.com/why444216978/gin-api/api/test"
 	"github.com/why444216978/gin-api/config"
-	"github.com/why444216978/gin-api/controller/conn"
-	"github.com/why444216978/gin-api/controller/opentracing"
-	"github.com/why444216978/gin-api/controller/ping"
 	"github.com/why444216978/gin-api/middlewares/limiter"
 	"github.com/why444216978/gin-api/middlewares/log"
 	"github.com/why444216978/gin-api/middlewares/panic"
@@ -42,9 +42,9 @@ func InitRouter() *gin.Engine {
 
 	testGroup := server.Group("/test")
 	{
-		testGroup.POST("/rpc", opentracing.Rpc)
-		testGroup.POST("/rpc1", opentracing.Rpc1)
-		testGroup.POST("/panic", opentracing.Panic)
+		testGroup.POST("/rpc", test.Rpc)
+		testGroup.POST("/rpc1", test.Rpc1)
+		testGroup.POST("/panic", test.Panic)
 		testGroup.POST("/conn", conn.Do)
 	}
 

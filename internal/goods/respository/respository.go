@@ -1,4 +1,4 @@
-package test_model
+package respository
 
 type Test struct {
 	Id      uint   `gorm:"column:id" json:"id"`
