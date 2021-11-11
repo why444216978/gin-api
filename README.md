@@ -2,7 +2,6 @@
  * @Descripttion:
  * @Author: weihaoyu
 -->
-<img src="https://github.com/why444216978/images/blob/master/qrcode.png" width="300" height="100" alt="公众号"/>
 
 # gin-api
 基于 Gin 开发的 api 框架，封装各种常用组件，包括配置、日志、DB、RabbitMQ、Redis、缓存处理（解决缓存穿透、击穿、雪崩）、分布式链路追踪等，目的在于提高Go应用开发效率。
