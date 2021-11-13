@@ -12,6 +12,10 @@
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br><br>
 
+# 统一日志
+基于 zap 二次封装，抽象统一接口、数据库、缓存、RPC 调用日志结构，便于后期日志收集和搜索
+<br><br>
+
 # 服务发现
 目前支持 etcd， <a href="https://success.blog.csdn.net/article/details/119827014">集群搭建教程</a>，相关配置无需更改的情况下，按照教程搭建运行即可。
 <br><br>
