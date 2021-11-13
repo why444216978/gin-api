@@ -11,8 +11,9 @@ import (
 )
 
 type Config struct {
-	Master *instanceConfig
-	Slave  *instanceConfig
+	ServiceName string
+	Master      *instanceConfig
+	Slave       *instanceConfig
 }
 
 type instanceConfig struct {

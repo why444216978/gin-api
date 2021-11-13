@@ -15,6 +15,7 @@ import (
 )
 
 type GormConfig struct {
+	ServiceName               string
 	SlowThreshold             int
 	InfoFile                  string
 	ErrorFile                 string
@@ -24,6 +25,7 @@ type GormConfig struct {
 }
 
 type GormLogger struct {
+	Config                    *GormConfig
 	ZapLogger                 *zap.Logger
 	LogLevel                  logger.LogLevel
 	SlowThreshold             time.Duration
@@ -37,6 +39,7 @@ var _ logger.Interface = (*GormLogger)(nil)
 
 func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 	gl = &GormLogger{
+		Config:                    cfg,
 		LogLevel:                  logger.LogLevel(cfg.Level),
 		SlowThreshold:             time.Duration(cfg.SlowThreshold) * time.Millisecond,
 		SkipCallerLookup:          cfg.SkipCallerLookup,
@@ -63,7 +66,7 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     zapLever,
-	}, logging.WithModule(logging.ModuleMySQL))
+	}, logging.WithModule(logging.ModuleMySQL), logging.WithServiceName(logging.ModuleMySQL))
 	if err != nil {
 		return
 	}
@@ -84,54 +87,47 @@ func (l *GormLogger) LogMode(level logger.LogLevel) logger.Interface {
 	}
 }
 
-func (l *GormLogger) Info(ctx context.Context, msg string, args ...interface{}) {
-	if l.LogLevel < logger.Info {
-		return
-	}
-	l.logger().Info(msg, zap.Reflect("data", args))
+func (l *GormLogger) Info(ctx context.Context, msg string, args ...interface{}) {}
 
-}
+func (l *GormLogger) Warn(ctx context.Context, msg string, args ...interface{}) {}
 
-func (l *GormLogger) Warn(ctx context.Context, msg string, args ...interface{}) {
-	if l.LogLevel < logger.Warn {
-		return
-	}
-	l.logger().Warn(msg, zap.Reflect("data", args))
-}
-
-func (l *GormLogger) Error(ctx context.Context, msg string, args ...interface{}) {
-	if l.LogLevel < logger.Error {
-		return
-	}
-	l.logger().Error(msg, zap.Reflect("data", args))
-}
+func (l *GormLogger) Error(ctx context.Context, msg string, args ...interface{}) {}
 
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel <= 0 {
 		return
 	}
 
+	logFields := logging.ValueHTTPFields(ctx)
+
 	elapsed := time.Since(begin)
 
 	sql, rows := fc()
+	sqlSlice := strings.Split(sql, " ")
+	api := ""
+	if len(sqlSlice) > 1 {
+		api = sqlSlice[0]
+	}
+
 	fields := []zapcore.Field{
-		zap.Error(err),
-		zap.Duration("elapsed", elapsed),
-		zap.Int64("rows", rows),
-		zap.String("sql", sql),
-		zap.String(logging.LogID,
-			logging.ValueTraceID(ctx)),
-		zap.String(logging.TraceID,
-			logging.ValueLogID(ctx)),
+		zap.String(logging.LogID, logging.ValueTraceID(ctx)),
+		zap.String(logging.TraceID, logging.ValueLogID(ctx)),
+		zap.Int64(logging.Cost, elapsed.Milliseconds()),
+		zap.String(logging.Request, sql),
+		zap.Int64(logging.Response, rows),
+		zap.String(logging.API, api),
+		zap.String(logging.ClientIP, logFields.ServerIP),
+		zap.Int(logging.ClientPort, logFields.ServerPort),
+		zap.String(logging.SericeName, l.Config.ServiceName),
 	}
 
 	switch {
 	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
-		l.logger().Error("trace", fields...)
+		l.logger().Error(err.Error(), fields...)
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
-		l.logger().Warn("trace", fields...)
+		l.logger().Warn("warn", fields...)
 	case l.LogLevel >= logger.Info:
-		l.logger().Info("trace", fields...)
+		l.logger().Info("info", fields...)
 	}
 }
 

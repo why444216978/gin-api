@@ -45,27 +45,45 @@ func New(opts ...Option) *RPC {
 }
 
 // Send is send HTTP request
-func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header map[string]string, body io.Reader, timeout time.Duration) (ret *Response, err error) {
+func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, body io.Reader, timeout time.Duration) (ret *Response, err error) {
+	var cost int64
+
 	node := &registry.ServiceNode{}
 
 	var buf []byte
 	if body != nil {
-		buf, _ := ioutil.ReadAll(body)
+		buf, _ = ioutil.ReadAll(body)
 		body = ioutil.NopCloser(bytes.NewBuffer(buf))
 	}
 
 	ret = &Response{}
 
+	if header == nil {
+		header = http.Header{}
+	}
+
 	defer func() {
 		if r.logger == nil {
 			return
 		}
-		fields := r.logger.Fields(ctx, serviceName, method, uri, header, buf, timeout, node.Host, node.Port, ret.Response, err)
+		fields := logging_rpc.RPCLogFields{
+			ServiceName: serviceName,
+			Header:      header,
+			Method:      method,
+			URI:         uri,
+			Request:     buf,
+			Response:    ret.Response,
+			ServerIP:    node.Host,
+			ServerPort:  node.Port,
+			HTTPCode:    ret.HTTPCode,
+			Cost:        cost,
+			Timeout:     timeout,
+		}
 		if err == nil {
-			r.logger.Info("http rpc", fields...)
+			r.logger.Info(ctx, "rpc success", fields)
 			return
 		}
-		r.logger.Error("http rpc errpr", fields...)
+		r.logger.Error(ctx, err.Error(), fields)
 	}()
 
 	node, err = r.loadBalance(serviceName)
@@ -87,9 +105,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 
 	//设置请求header
-	for k, v := range header {
-		req.Header.Add(k, v)
-	}
+	req.Header = header
 
 	if ctx.Err() != nil {
 		return nil, err
@@ -100,7 +116,9 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	jaeger_http.InjectHTTP(ctx, req, logID)
 
 	//发送请求
+	start := time.Now()
 	resp, err := client.Do(req)
+	cost = time.Since(start).Milliseconds()
 	if err != nil {
 		return
 	}
@@ -164,4 +182,3 @@ func (r *RPC) loadBalance(serviceName string) (*registry.ServiceNode, error) {
 		Port: port,
 	}, nil
 }
-

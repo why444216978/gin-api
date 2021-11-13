@@ -18,14 +18,12 @@ const (
 
 func RPC(ctx context.Context) (ret *lib_http.Response, err error) {
 	uri := fmt.Sprintf("/test/rpc1?logid=%s", logging.ValueLogID(ctx))
-	header := map[string]string{logging.LogHeader: logging.ValueLogID(ctx)}
 
-	return resource.HTTPRPC.Send(ctx, "gin-api", http.MethodPost, uri, header, bytes.NewBufferString(`{"a":"a"}`), time.Second)
+	return resource.HTTPRPC.Send(ctx, "gin-api", http.MethodPost, uri, nil, bytes.NewBufferString(`{"rpc":"rpc"}`), time.Second)
 }
 
 func RPC1(ctx context.Context) (ret *lib_http.Response, err error) {
 	uri := fmt.Sprintf("/test/conn?logid=%s", logging.ValueLogID(ctx))
-	header := map[string]string{logging.LogHeader: logging.ValueLogID(ctx)}
 
-	return resource.HTTPRPC.Send(ctx, "gin-api", http.MethodPost, uri, header, nil, time.Second)
+	return resource.HTTPRPC.Send(ctx, "gin-api", http.MethodPost, uri, nil, bytes.NewBufferString(`{"rpc1":"rpc1"}`), time.Second)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/why444216978/gin-api/response"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
@@ -21,6 +20,8 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 			return
 		}
 
+		ctx := c.Request.Context()
+
 		fields := logging.ValueHTTPFields(c.Request.Context())
 		fields.Response = map[string]interface{}{
 			"code":   http.StatusServiceUnavailable,
@@ -29,8 +30,11 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 			"errmsg": "服务暂时不可用",
 		}
 		fields.Code = http.StatusInternalServerError
+		ctx = logging.WithHTTPFields(ctx, fields)
 
-		resource.ServiceLogger.Error("panic", zap.Reflect("data", fields)) //这里不能打Fatal和Panic，否则程序会退出
+		c.Request = c.Request.WithContext(ctx)
+
+		resource.ServiceLogger.Error(ctx, "panic") //这里不能打Fatal和Panic，否则程序会退出
 		response.Response(c, response.CodeUnavailable, nil, "")
 		c.AbortWithStatus(http.StatusInternalServerError)
 

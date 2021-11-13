@@ -9,11 +9,13 @@ import (
 	"strings"
 
 	app_config "github.com/why444216978/gin-api/config"
+	redis_cache "github.com/why444216978/gin-api/library/cache/redis"
 	"github.com/why444216978/gin-api/library/config"
 	"github.com/why444216978/gin-api/library/etcd"
 	"github.com/why444216978/gin-api/library/jaeger"
 	jaeger_gorm "github.com/why444216978/gin-api/library/jaeger/gorm"
 	jaeger_redis "github.com/why444216978/gin-api/library/jaeger/redis"
+	redis_lock "github.com/why444216978/gin-api/library/lock/redis"
 	"github.com/why444216978/gin-api/library/logging"
 	logging_gorm "github.com/why444216978/gin-api/library/logging/gorm"
 	logging_redis "github.com/why444216978/gin-api/library/logging/redis"
@@ -54,6 +56,8 @@ func Init() {
 	initEtcd()
 	initServices()
 	initHTTPRPC()
+	initLock()
+	initCache()
 }
 
 func initConfig() {
@@ -87,7 +91,10 @@ func initLogger() {
 		panic(err)
 	}
 
-	resource.ServiceLogger, err = logging.NewLogger(cfg, logging.WithModule(logging.ModuleHTTP))
+	resource.ServiceLogger, err = logging.NewLogger(cfg,
+		logging.WithModule(logging.ModuleHTTP),
+		logging.WithServiceName(app_config.App.AppName),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -96,17 +103,18 @@ func initLogger() {
 func initMysql(db string) {
 	var err error
 	cfg := &orm.Config{}
-	gormCfg := &logging_gorm.GormConfig{}
+	logCfg := &logging_gorm.GormConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
 	}
 
-	if err = resource.Config.ReadConfig("log/gorm", "toml", gormCfg); err != nil {
+	if err = resource.Config.ReadConfig("log/gorm", "toml", logCfg); err != nil {
 		panic(err)
 	}
 
-	gormLogger, err := logging_gorm.NewGorm(gormCfg)
+	logCfg.ServiceName = cfg.ServiceName
+	gormLogger, err := logging_gorm.NewGorm(logCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -132,6 +140,10 @@ func initRedis(db string) {
 		panic(err)
 	}
 
+	logCfg.ServiceName = cfg.ServiceName
+	logCfg.Host = cfg.Host
+	logCfg.Port = cfg.Port
+
 	logger, err := logging_redis.NewRedisLogger(logCfg)
 	if err != nil {
 		panic(err)
@@ -140,7 +152,24 @@ func initRedis(db string) {
 	rc := redis.NewClient(cfg)
 	rc.AddHook(jaeger_redis.NewJaegerHook())
 	rc.AddHook(logger)
-	resource.RedisCache = rc
+	resource.RedisDefault = rc
+}
+
+func initLock() {
+	var err error
+	resource.RedisLock, err = redis_lock.New(resource.RedisDefault)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func initCache() {
+	var err error
+
+	resource.RedisCache, err = redis_cache.New(resource.RedisDefault, resource.RedisLock)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initJaeger() {

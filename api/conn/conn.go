@@ -5,10 +5,9 @@ import (
 	"errors"
 	"time"
 
-	redis_cache "github.com/why444216978/gin-api/library/cache/redis"
-	redis_lock "github.com/why444216978/gin-api/library/lock/redis"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
+	"github.com/why444216978/gin-api/services/goods/respository"
 	goods_service "github.com/why444216978/gin-api/services/goods/service"
 
 	"github.com/gin-gonic/gin"
@@ -16,13 +15,28 @@ import (
 )
 
 func Do(c *gin.Context) {
+	var (
+		err   error
+		goods respository.Test
+	)
+
 	ctx := c.Request.Context()
 
-	goods, err := goods_service.Instance.CrudGoods(ctx)
+	defer func() {
+		if err != nil {
+			resource.ServiceLogger.Error(ctx, err.Error())
+			response.Response(c, response.CodeServer, goods, err.Error())
+			return
+		}
+		response.Response(c, response.CodeSuccess, goods, "")
+	}()
+
+	goods, err = goods_service.Instance.CrudGoods(ctx)
 	if err != nil {
-		response.Response(c, response.CodeServer, goods, err.Error())
 		return
 	}
+
+	data := &Data{}
 
 	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() (err error) {
@@ -30,24 +44,11 @@ func Do(c *gin.Context) {
 		_, err = goods_service.Instance.GetGoodsName(ctx, 1)
 		return
 	})
+	g.Go(func() (err error) {
+		err = resource.RedisCache.GetData(ctx, "cache_key", time.Hour, time.Hour, GetDataA, data)
+		return
+	})
 	err = g.Wait()
-	if err != nil {
-		return
-	}
-
-	data := &Data{}
-
-	lock, err := redis_lock.New(resource.RedisCache)
-	if err != nil {
-		return
-	}
-
-	cache, err := redis_cache.New(resource.RedisCache, lock)
-	if err != nil {
-		return
-	}
-
-	err = cache.GetData(ctx, "key", time.Hour, time.Hour, GetDataA, data)
 	if err != nil {
 		return
 	}

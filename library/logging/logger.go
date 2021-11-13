@@ -1,21 +1,24 @@
 package logging
 
 import (
+	"context"
 	"errors"
 	"io"
 	"strings"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 type Logger struct {
 	*zap.Logger
-	level    zapcore.Level
-	callSkip int
-	module   string
+	level       zapcore.Level
+	callSkip    int
+	module      string
+	serviceName string
 }
 
 type Config struct {
@@ -32,6 +35,10 @@ func WithCallerSkip(skip int) Option {
 
 func WithModule(module string) Option {
 	return func(l *Logger) { l.module = module }
+}
+
+func WithServiceName(serviceName string) Option {
+	return func(l *Logger) { l.serviceName = serviceName }
 }
 
 func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
@@ -71,17 +78,21 @@ func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 		l.callSkip = 1
 	}
 
-	if l.module == "" {
-		l.module = "default"
+	fields := make([]zapcore.Field, 0)
+
+	if l.module != "" {
+		fields = append(fields, zap.String(Module, l.module))
+	}
+
+	if l.serviceName != "" {
+		fields = append(fields, zap.String(SericeName, l.serviceName))
 	}
 
 	l.Logger = zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(errorEnabler),
 		zap.AddCallerSkip(l.callSkip),
-		zap.Fields(
-			zap.String(Module, l.module),
-		),
+		zap.Fields(fields...),
 	)
 
 	return
@@ -164,4 +175,38 @@ func zapLevel(level string) (zapcore.Level, error) {
 	default:
 		return 0, errors.New("error level:" + level)
 	}
+}
+
+func (l *Logger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Debug(msg, append(fields, l.extractFields(ctx)...)...)
+}
+
+func (l *Logger) Info(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Info(msg, append(fields, l.extractFields(ctx)...)...)
+}
+
+func (l *Logger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Warn(msg, append(fields, l.extractFields(ctx)...)...)
+}
+
+func (l *Logger) Error(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Error(msg, append(fields, l.extractFields(ctx)...)...)
+}
+
+func (l *Logger) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Fatal(msg, append(fields, l.extractFields(ctx)...)...)
+}
+
+func (l *Logger) extractFields(ctx context.Context) []zap.Field {
+	fieldsMap, _ := conversion.StructToMap(ValueHTTPFields(ctx))
+
+	fields := make([]zap.Field, len(fieldsMap))
+
+	i := 0
+	for k, v := range fieldsMap {
+		fields[i] = zap.Reflect(k, v)
+		i = i + 1
+	}
+
+	return fields
 }

@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/why444216978/gin-api/library/logging"
@@ -35,7 +36,7 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	}, logging.WithCallerSkip(2), logging.WithModule(logging.ModuleRPC))
+	}, logging.WithCallerSkip(4), logging.WithModule(logging.ModuleRPC))
 	if err != nil {
 		return
 	}
@@ -44,21 +45,55 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 	return
 }
 
-func (rl *RPCLogger) Fields(ctx context.Context, serviceName, method, uri string, header map[string]string, body []byte, timeout time.Duration,
-	remoteHost string, remotePort int, resp string, err error) []zap.Field {
+type RPCLogFields struct {
+	ServiceName string
+	Header      http.Header
+	Method      string
+	URI         string
+	Request     []byte
+	Response    string
+	ServerIP    string
+	ServerPort  int
+	HTTPCode    int
+	Cost        int64
+	Timeout     time.Duration
+}
 
-	response, _ := conversion.JsonToMap(resp)
-	return []zap.Field{
-		zap.String(logging.LogID, logging.ValueTraceID(ctx)),
-		zap.String(logging.TraceID, logging.ValueLogID(ctx)),
-		zap.String("service_name", serviceName),
-		zap.String("method", method),
-		zap.String("uri", uri),
-		zap.String("remote_host", remoteHost),
-		zap.Int("remote_port", remotePort),
-		zap.Reflect("header", header),
-		zap.Reflect("request", string(body)),
-		zap.Reflect("response", response),
-		zap.Error(err),
+func (rl *RPCLogger) Info(ctx context.Context, msg string, fields RPCLogFields) {
+	newCtx, logFields := rl.fields(ctx, fields)
+	rl.Logger.Info(newCtx, msg, logFields...)
+}
+
+func (rl *RPCLogger) Error(ctx context.Context, msg string, fields RPCLogFields) {
+	newCtx, logFields := rl.fields(ctx, fields)
+	rl.Logger.Error(newCtx, msg, logFields...)
+}
+
+func (rl *RPCLogger) fields(ctx context.Context, fields RPCLogFields) (context.Context, []zap.Field) {
+	//添加通用header
+	fields.Header.Add(logging.LogHeader, logging.ValueLogID(ctx))
+
+	response, _ := conversion.JsonToMap(fields.Response)
+	request, _ := conversion.JsonToMap(string(fields.Request))
+
+	logFields := logging.ValueHTTPFields(ctx)
+	logFields.Method = fields.Method
+	logFields.Header = fields.Header
+	logFields.ClientIP = logFields.ServerIP
+	logFields.ClientPort = logFields.ServerPort
+	logFields.ServerIP = fields.ServerIP
+	logFields.ServerPort = fields.ServerPort
+	logFields.API = fields.URI
+	logFields.Request = request
+	logFields.Response = response
+	logFields.Cost = fields.Cost
+	logFields.Code = fields.HTTPCode
+
+	newCtx := context.WithValue(ctx, "rpc", "rpc")
+	newCtx = logging.WithHTTPFields(newCtx, logFields)
+
+	return newCtx, []zap.Field{
+		zap.String("service_name", fields.ServiceName),
+		zap.Duration("timeout", fields.Timeout),
 	}
 }

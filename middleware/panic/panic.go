@@ -46,7 +46,7 @@ func ThrowPanic() gin.HandlerFunc {
 				ctx := logging.WithHTTPFields(c.Request.Context(), fields)
 				c.Request = c.Request.WithContext(ctx)
 
-				resource.ServiceLogger.Error("panic", zap.Reflect("data", fields)) //这里不能打Fatal和Panic，否则程序会退出
+				resource.ServiceLogger.Error(ctx, "panic", zap.Reflect("data", fields)) //这里不能打Fatal和Panic，否则程序会退出
 				response.Response(c, response.CodeServer, nil, "")
 				c.AbortWithStatus(http.StatusInternalServerError)
 

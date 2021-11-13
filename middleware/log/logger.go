@@ -2,7 +2,6 @@ package log
 
 import (
 	"bytes"
-	"encoding/json"
 	"time"
 
 	jaeger_http "github.com/why444216978/gin-api/library/jaeger/http"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
-	"go.uber.org/zap"
 )
 
 //定义新的struck，继承gin的ResponseWriter
@@ -43,28 +41,29 @@ func LoggerMiddleware() gin.HandlerFunc {
 		ctx = logging.WithTraceID(ctx, traceID)
 		ctx = logging.AddTraceID(ctx, traceID)
 
+		//这里需要写入ctx，否则会断开
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()
 
-		ctx = c.Request.Context()
+		fields := logging.ValueHTTPFields(ctx)
 
+		//resp处理
 		resp := responseWriter.body.String()
 		respMap, _ := conversion.JsonToMap(resp)
 
-		fields := logging.ValueHTTPFields(ctx)
-		fields.Response = respMap
-		fields.Code = c.Writer.Status()
-
-		ctx = logging.WithHTTPRequestBody(ctx, fields.Request)
-
-		req, _ := json.Marshal(fields.Request)
+		//span写入req和resp
+		req, _ := conversion.JsonEncode(fields.Request)
 		jaeger_http.SetHTTPLog(span, string(req), resp)
 
+		//追加fields
+		fields.Response = respMap
+		fields.Code = c.Writer.Status()
 		fields.Cost = time.Since(start).Milliseconds()
+
 		ctx = logging.WithHTTPFields(ctx, fields)
 
-		resource.ServiceLogger.Info("request info", zap.Reflect("data", fields))
+		resource.ServiceLogger.Info(ctx, "request info")
 
 		c.Request = c.Request.WithContext(ctx)
 	}

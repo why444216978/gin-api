@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	ServiceName    string
 	Host           string
 	Port           int
 	Auth           string

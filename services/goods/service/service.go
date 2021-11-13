@@ -31,7 +31,7 @@ const (
 )
 
 func (gs *GoodsService) GetGoodsName(ctx context.Context, id int) (string, error) {
-	data, err := resource.RedisCache.Get(ctx, GOODS_NAME_KEY+strconv.Itoa(id)).Result()
+	data, err := resource.RedisDefault.Get(ctx, GOODS_NAME_KEY+strconv.Itoa(id)).Result()
 	if err == redis.Nil {
 		err = nil
 	}

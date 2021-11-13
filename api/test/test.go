@@ -1,8 +1,6 @@
 package test
 
 import (
-	"fmt"
-
 	"github.com/why444216978/gin-api/library/http"
 	"github.com/why444216978/gin-api/response"
 	gin_api "github.com/why444216978/gin-api/rpc/gin-api"
@@ -30,7 +28,6 @@ func Rpc1(c *gin.Context) {
 		response.Response(c, response.CodeParams, nil, err.Error())
 		return
 	}
-	fmt.Println(req)
 
 	ret, err := gin_api.RPC1(c.Request.Context())
 	if err != nil {

@@ -59,9 +59,10 @@ func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 		span.LogFields(tracerLog.Error(err))
 		span.SetTag(string(ext.Error), true)
 	}
+
 	span.LogFields(tracerLog.String(redisCmdName, cmd.Name()))
 	span.LogFields(tracerLog.Object(redisCmdArgs, cmd.Args()))
-	span.LogFields(tracerLog.String(redisCmdResult, cmd.String()))
+	span.LogFields(tracerLog.Object(redisCmdResult, cmd.String()))
 
 	return nil
 }
