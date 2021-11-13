@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
-	goods_service "github.com/why444216978/gin-api/internal/goods/service"
 	redis_cache "github.com/why444216978/gin-api/library/cache/redis"
 	redis_lock "github.com/why444216978/gin-api/library/lock/redis"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/response"
+	goods_service "github.com/why444216978/gin-api/services/goods/service"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -27,7 +27,7 @@ func Do(c *gin.Context) {
 	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() (err error) {
 		goods.Name = "golang"
-		_, err = goods_service.Instance.GetGoodsName(c, 1)
+		_, err = goods_service.Instance.GetGoodsName(ctx, 1)
 		return
 	})
 	err = g.Wait()

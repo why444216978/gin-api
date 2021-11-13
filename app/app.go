@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/why444216978/gin-api/config"
-	"github.com/why444216978/gin-api/internal/test/job/grpc"
 	job_service "github.com/why444216978/gin-api/library/job"
 	"github.com/why444216978/gin-api/library/registry"
 	"github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/router"
+	"github.com/why444216978/gin-api/services/test/job/grpc"
 
 	"github.com/why444216978/go-util/sys"
 	"golang.org/x/sync/errgroup"

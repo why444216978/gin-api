@@ -1,11 +1,11 @@
-package service
+package goods
 
 import (
 	"context"
 	"strconv"
 
-	"github.com/why444216978/gin-api/internal/goods/respository"
 	"github.com/why444216978/gin-api/resource"
+	"github.com/why444216978/gin-api/services/goods/respository"
 	"github.com/why444216978/go-util/orm"
 
 	"github.com/go-redis/redis/v8"
