@@ -51,7 +51,7 @@ func WithRegistrarLease(lease int64) RegistrarOption {
 }
 
 // NewRegistry
-func NewRegistry(opts ...RegistrarOption) (registry.Registrar, error) {
+func NewRegistry(opts ...RegistrarOption) (*EtcdRegistrar, error) {
 	var err error
 
 	r := &EtcdRegistrar{

@@ -21,7 +21,7 @@ type redisCache struct {
 
 var _ cache.Cacher = (*redisCache)(nil)
 
-func New(c *redis.Client, locker lock.Locker) (cache.Cacher, error) {
+func New(c *redis.Client, locker lock.Locker) (*redisCache, error) {
 	if c == nil {
 		return nil, errors.New("redis is nil")
 	}
