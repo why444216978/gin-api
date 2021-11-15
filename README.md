@@ -43,6 +43,60 @@ gRPC
 熔断
 <br><br>
 
+# 目录结构
+```
+- gin-api 
+  - api //对外暴露api
+    - module1 //模块1
+    - module2 // 模块2
+  - app //应用启动
+    - app.go //app启动和优雅关闭
+    - init.go //资源初始化
+  - conf //服务配置文件目录
+    - dev
+    - liantiao
+    - online
+    - qa
+  - config //启动加载配置目录
+    - app.go //应用配置
+  - library //类库
+    - apollo //阿波罗
+    - cache //分布式缓存
+    - config //配置加载
+    - endless //endless
+    - etcd //etcd
+    - grpc //grpc封装
+    - http //http常用工具函数
+    - jaeger //jaeger分布式链路追踪
+    - job //离线任务
+    - lock //分布式锁
+    - logging //日志
+    - orm //db orm
+    - rabbitmq //rabbitmq
+    - redis //redis
+    - registry //注册中心
+    - rpc //rpc调用封装
+      - grpc //grpc
+      - http //http
+    - xhop //rpc xhop
+    - resource
+      - resource.go //全局资源
+    - response
+      - response.go //http响应
+    - rpc //三方rpc调用封装
+      - gin-api //gin-api服务
+    - services //模块核心实现
+      - gin-rpc //gin-rpc调用
+    .gitignore
+    Dockerfile
+    LICENSE
+    Makefile
+    README.md
+    go.mod
+    go.sum
+    main.go
+```
+
 # 配置相关
 基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
 <br><br>
