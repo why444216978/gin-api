@@ -98,7 +98,7 @@ gRPC
 ```
 
 # 配置相关
-基于三方组件viper，文件配置需放到main.go同级目录conf_xx下
+基于三方组件viper，文件配置需放到main.go同级目录conf/xxx下
 <br><br>
 
 # 统一日志
