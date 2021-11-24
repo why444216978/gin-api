@@ -86,7 +86,8 @@ gRPC
     - rpc //三方rpc调用封装
       - gin-api //gin-api服务
     - services //模块核心实现
-      - gin-rpc //gin-rpc调用
+      - goods //商品模块
+      - test //测试模块
     .gitignore
     Dockerfile
     LICENSE
