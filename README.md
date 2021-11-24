@@ -132,7 +132,7 @@ db和redis测试接口：http://localhost:777/test/conn
 <br>
 
 
-**注意：测试 /test/conn 和 /test/rpc 接口时，应确检查如下几项：**
+**注意：测试 /test/conn 和 /test/rpc 接口时，应完成如下几项：**
 1. 创建 test 库
 2. 创建 test 表并随意插入数据
 ```
