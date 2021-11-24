@@ -59,7 +59,7 @@ gRPC
     - qa
   - config //启动加载配置目录
     - app.go //应用配置
-  - library //类库
+  - library //基础组件库
     - apollo //阿波罗
     - cache //分布式缓存
     - config //配置加载
