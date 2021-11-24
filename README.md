@@ -126,7 +126,7 @@ db和redis测试接口：http://localhost:777/test/conn
 <br>
 
 # 运行
-1. 查看 conf_dev 目录的各个配置文件，改成符合自己的
+1. 查看 conf/xxx 目录的各个配置文件，改成符合自己的
 2. log 配置中的目录确保本地存在且有写入权限
 3. go run main.go
 <br>
