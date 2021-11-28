@@ -98,6 +98,8 @@ func initLogger() {
 	if err != nil {
 		panic(err)
 	}
+
+	RegisterCloseFunc(resource.ServiceLogger.Sync())
 }
 
 func initMysql(db string) {

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -28,10 +29,9 @@ var (
 )
 
 type App struct {
-	ctx       context.Context
-	server    *http.Server
-	registrar registry.Registrar
-	cancel    func()
+	ctx    context.Context
+	server *http.Server
+	cancel func()
 }
 
 func Start() {
@@ -44,13 +44,29 @@ func Start() {
 	}
 
 	app := newApp()
-	go app.start()
 
-	app.registerService()
-
-	app.registerSignal()
-
-	<-app.ctx.Done()
+	g, _ := errgroup.WithContext(context.Background())
+	//start serever
+	g.Go(func() (err error) {
+		err = app.start()
+		return
+	})
+	g.Go(func() (err error) {
+		app.registerSignal()
+		return
+	})
+	g.Go(func() (err error) {
+		err = app.registerService()
+		if err != nil {
+			panic(err)
+		}
+		return
+	})
+	g.Go(func() (err error) {
+		app.shutdown()
+		return
+	})
+	log.Printf("%s: errgroup exit %v\n", time.Now().Format("2006-01-02 15:04:05"), g.Wait())
 }
 
 func newApp() *App {
@@ -68,72 +84,84 @@ func newApp() *App {
 	}
 }
 
+func (a *App) start() error {
+	err := a.server.ListenAndServe()
+	if err == http.ErrServerClosed {
+		return nil
+	}
+	return err
+}
+
 func (a *App) registerSignal() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 
-	timeout := time.Second * 3
+	log.Printf("%s: exit by signal %v\n", time.Now().Format("2006-01-02 15:04:05"), <-ch)
 
-	sig := <-ch
-	var cancel context.CancelFunc
-	a.ctx, cancel = context.WithTimeout(context.Background(), timeout)
-	a.shutdown()
-	cancel()
-	log.Println(fmt.Sprintf("%s exit by signal %v\n", time.Now(), sig))
+	//trigger shutdown
+	a.cancel()
 }
 
-func (a *App) start() {
-	g, _ := errgroup.WithContext(a.ctx)
-	g.Go(func() (err error) {
-		log.Println("start by server")
-		log.Println("Start with " + a.server.Addr)
-		err = a.server.ListenAndServe()
-		return
-	})
-	err := g.Wait()
-	if err != nil && err != http.ErrServerClosed {
-		panic(err)
-	}
-}
-
-func (a *App) registerService() {
+func (a *App) registerService() (err error) {
 	var (
-		err     error
-		localIP string
-		cfg     = &registry.RegistryConfig{}
+		localIP   string
+		cfg       = &registry.RegistryConfig{}
+		registrar *etcd.EtcdRegistrar
 	)
 
 	if err = resource.Config.ReadConfig("registry", "toml", cfg); err != nil {
-		panic(err)
+		return err
 	}
 
 	if localIP, err = sys.LocalIP(); err != nil {
-		panic(err)
+		return err
 	}
 
-	if a.registrar, err = etcd.NewRegistry(
+	if registrar, err = etcd.NewRegistry(
 		etcd.WithRegistrarClient(resource.Etcd.Client),
 		etcd.WithRegistrarServiceName(config.App.AppName),
 		etcd.WithRegistarHost(localIP),
 		etcd.WithRegistarPort(config.App.AppPort),
 		etcd.WithRegistrarLease(cfg.Lease)); err != nil {
-		panic(err)
+		return
 	}
-	if err = a.registrar.Register(a.ctx); err != nil {
-		panic(err)
+	if err = registrar.Register(a.ctx); err != nil {
+		return err
 	}
+
+	err = RegisterCloseFunc(registrar.DeRegister)
+
+	return nil
 }
 
 func (a *App) shutdown() {
-	defer a.cancel()
+	<-a.ctx.Done()
 
-	err := a.registrar.DeRegister(a.ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	//资源清理
+	for _, f := range closeFunc {
+		f(ctx)
+	}
+
+	//server shutdown
+	err := a.server.Shutdown(ctx)
 	if err != nil {
 		log.Println(err)
 	}
+}
 
-	err = a.server.Shutdown(a.ctx)
-	if err != nil {
-		log.Println(err)
+// closeFunc 资源回收方法列表
+var closeFunc = make([]func(ctx context.Context) error, 0)
+
+// RegisterCloseFunc 注册资源回收方法
+func RegisterCloseFunc(cf interface{}) error {
+	f, ok := cf.(func(ctx context.Context) error)
+	if !ok {
+		return errors.New("func type error")
 	}
+
+	closeFunc = append(closeFunc, f)
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/why444216978/gin-api/library/registry"
 
@@ -127,7 +126,6 @@ func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
 	if _, err := s.cli.Revoke(ctx, s.leaseID); err != nil {
 		return err
 	}
-	log.Println("deregister success")
 	return s.cli.Close()
 }
 
