@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/why444216978/gin-api/library/cache"
-	"github.com/why444216978/gin-api/library/lock"
-	"github.com/why444216978/gin-api/library/logging"
-
+	"github.com/dino-ma/snowflake"
 	"github.com/go-redis/redis/v8"
 	util_ctx "github.com/why444216978/go-util/context"
+
+	"github.com/why444216978/gin-api/library/cache"
+	"github.com/why444216978/gin-api/library/lock"
 )
 
 type RedisCache struct {
@@ -36,7 +36,7 @@ func New(c *redis.Client, locker lock.Locker) (*RedisCache, error) {
 	}, nil
 }
 
-func (rc *RedisCache) GetData(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f cache.LoadFunc, data interface{}) (err error) {
+func (rc *RedisCache) GetData(ctx context.Context, key string, ttl time.Duration, virtualTTL time.Duration, f cache.LoadFunc, data interface{}) (err error) {
 	cache, err := rc.getCache(ctx, key)
 	if err != nil {
 		return
@@ -44,7 +44,7 @@ func (rc *RedisCache) GetData(ctx context.Context, key string, expiration time.D
 
 	// 无缓存
 	if cache.ExpireAt == 0 || cache.Data == "" {
-		rc.FlushCache(ctx, key, expiration, ttl, f, data)
+		err = rc.FlushCache(ctx, key, ttl, virtualTTL, f, data)
 		return
 	}
 
@@ -58,24 +58,37 @@ func (rc *RedisCache) GetData(ctx context.Context, key string, expiration time.D
 	}
 
 	ctxNew := util_ctx.RemoveCancel(ctx)
-	go rc.FlushCache(ctxNew, key, expiration, ttl, f, data)
+	go rc.FlushCache(ctxNew, key, ttl, virtualTTL, f, data)
 
 	return
 }
 
-func (rc *RedisCache) FlushCache(ctx context.Context, key string, expiration time.Duration, ttl time.Duration, f cache.LoadFunc, data interface{}) (err error) {
+func (rc *RedisCache) FlushCache(ctx context.Context, key string, ttl time.Duration, virtualTTL time.Duration, f cache.LoadFunc, data interface{}) (err error) {
 	lockKey := "LOCK::" + key
-	random := logging.NewObjectId().Hex()
+	node, _ := snowflake.NewNode(1)
+	random := node.Generate().String()
 
-	// lock
-	err = rc.lock.Lock(ctx, lockKey, random, time.Second*10)
+	//获取锁，自旋三次
+	//TODO 这里可优化为客户端传入控制
+	try := 0
+	for {
+		try = try + 1
+		if try > 3 {
+			break
+		}
+		err = rc.lock.Lock(ctx, lockKey, random, time.Second*10)
+		if err == lock.ErrLock {
+			continue
+		}
+		break
+	}
 	if err != nil {
 		return
 	}
 	defer rc.lock.Unlock(ctx, lockKey, random)
 
 	// load data
-	err = f(ctx, data)
+	err = cache.HandleLoad(ctx, f, data)
 	if err != nil {
 		return
 	}
@@ -86,7 +99,7 @@ func (rc *RedisCache) FlushCache(ctx context.Context, key string, expiration tim
 	}
 
 	// save cache
-	err = rc.setCache(ctx, key, string(dataStr), expiration, ttl)
+	err = rc.setCache(ctx, key, string(dataStr), ttl, virtualTTL)
 
 	return
 }
@@ -114,9 +127,9 @@ func (rc *RedisCache) getCache(ctx context.Context, key string) (data *cache.Cac
 	return
 }
 
-func (rc *RedisCache) setCache(ctx context.Context, key, val string, expiration time.Duration, ttl time.Duration) (err error) {
+func (rc *RedisCache) setCache(ctx context.Context, key, val string, ttl time.Duration, virtualTTL time.Duration) (err error) {
 	_data := cache.CacheData{
-		ExpireAt: time.Now().Add(ttl).Unix(),
+		ExpireAt: time.Now().Add(virtualTTL).Unix(),
 		Data:     val,
 	}
 	data, err := json.Marshal(_data)
@@ -124,7 +137,7 @@ func (rc *RedisCache) setCache(ctx context.Context, key, val string, expiration 
 		return
 	}
 
-	_, err = rc.c.Set(ctx, key, string(data), expiration).Result()
+	_, err = rc.c.Set(ctx, key, string(data), ttl).Result()
 	if err != nil {
 		return
 	}
