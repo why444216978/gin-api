@@ -1,6 +1,8 @@
 package test
 
 import (
+	"time"
+
 	"github.com/why444216978/gin-api/library/http"
 	"github.com/why444216978/gin-api/response"
 	gin_api "github.com/why444216978/gin-api/rpc/gin-api"
@@ -9,6 +11,7 @@ import (
 )
 
 func Rpc(c *gin.Context) {
+	time.Sleep(time.Millisecond * 30)
 	ret, err := gin_api.RPC(c.Request.Context())
 	if err != nil {
 		response.Response(c, response.CodeServer, ret, err.Error())
@@ -23,6 +26,7 @@ type RPC1Request struct {
 }
 
 func Rpc1(c *gin.Context) {
+	time.Sleep(time.Millisecond * 99)
 	var req RPC1Request
 	if err := http.ParseAndValidateBody(c.Request, &req); err != nil {
 		response.Response(c, response.CodeParams, nil, err.Error())

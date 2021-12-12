@@ -1,4 +1,4 @@
-AppName = "gin-api"
+AppName = "gin-api-liantiao"
 AppPort = 888
 ContextTimeout = 100000
 ReadTimeout =  100000

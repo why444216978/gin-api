@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
+	load_balance "github.com/why444216978/load-balance"
+
 	jaeger_http "github.com/why444216978/gin-api/library/jaeger/http"
 	"github.com/why444216978/gin-api/library/logging"
 	logging_rpc "github.com/why444216978/gin-api/library/logging/rpc"
 	"github.com/why444216978/gin-api/library/registry"
-
-	load_balance "github.com/why444216978/load-balance"
+	timeoutLib "github.com/why444216978/gin-api/library/timeout"
 )
 
 type Response struct {
@@ -104,19 +105,29 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		return
 	}
 
+	//超时传递
+	remain, err := timeoutLib.CalcRemainTimeout(ctx)
+	if err != nil {
+		return
+	}
+	header.Set(timeoutLib.TimeoutKey, strconv.FormatInt(remain, 10))
+
 	//设置请求header
 	req.Header = header
-
-	if ctx.Err() != nil {
-		return nil, err
-	}
 
 	//注入Jaeger
 	logID := req.Header.Get(logging.LogHeader)
 	jaeger_http.InjectHTTP(ctx, req, logID)
 
-	//发送请求
+	//请求开始时间
 	start := time.Now()
+
+	//判断是否cancel
+	if err = ctx.Err(); err != nil {
+		return
+	}
+
+	//发送请求
 	resp, err := client.Do(req)
 	cost = time.Since(start).Milliseconds()
 	if err != nil {

@@ -8,10 +8,10 @@ import (
 	"github.com/why444216978/gin-api/api/ping"
 	"github.com/why444216978/gin-api/api/test"
 	"github.com/why444216978/gin-api/config"
+	"github.com/why444216978/gin-api/library/timeout"
 	"github.com/why444216978/gin-api/middleware/limiter"
 	"github.com/why444216978/gin-api/middleware/log"
 	"github.com/why444216978/gin-api/middleware/panic"
-	"github.com/why444216978/gin-api/middleware/timeout"
 	"github.com/why444216978/gin-api/response"
 
 	"github.com/gin-gonic/gin"
@@ -20,11 +20,11 @@ import (
 func InitRouter() *gin.Engine {
 	server := gin.New()
 
-	server.Use(log.InitContext())
+	server.Use(timeout.TimeoutMiddleware(time.Duration(config.App.ContextTimeout) * time.Millisecond))
 
 	server.Use(panic.ThrowPanic())
 
-	server.Use(timeout.TimeoutMiddleware(time.Duration(config.App.ContextTimeout) * time.Millisecond))
+	server.Use(log.InitContext())
 
 	server.Use(limiter.Limiter(10))
 
