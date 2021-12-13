@@ -10,9 +10,11 @@
 ## 目前已支持
 ✅ &nbsp;多格式配置读取
 <br>
-✅ &nbsp;资源回收方法注册，优雅关闭自动回收
+✅ &nbsp;服务优雅关闭
 <br>
-✅ &nbsp;日志抽象和标准统一（请求、DB、Redis、RPC）
+✅ &nbsp;进程结束资源自动回收
+<br>
+✅ &nbsp;日志抽象和标准字段统一（请求、DB、Redis、RPC）
 <br>
 ✅ &nbsp;DB
 <br>
@@ -52,7 +54,7 @@ gRPC
 - gin-api 
   - api //对外暴露api
     - module1 //模块1
-    - module2 // 模块2
+    - module2 //模块2
   - app //应用启动
     - app.go //app启动和优雅关闭
     - init.go //资源初始化
