@@ -20,17 +20,17 @@
 <br>
 ✅ &nbsp;Redis
 <br>
-✅ &nbsp;缓存处理（解决缓存穿透、击穿、雪崩）
+✅ &nbsp;分布式缓存（解决缓存穿透、击穿、雪崩）
+<br>
+✅ &nbsp;分布式链路追踪
+<br>
+✅ &nbsp;分布式锁
 <br>
 ✅ &nbsp;服务注册
 <br>
 ✅ &nbsp;服务发现
 <br>
 ✅ &nbsp;HTTP-RPC 超时传递
-<br>
-✅ &nbsp;分布式锁
-<br>
-✅ &nbsp;分布式链路追踪
 <br><br>
 
 ## 后续逐渐支持
