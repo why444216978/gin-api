@@ -26,6 +26,8 @@
 <br>
 ✅ &nbsp;服务发现
 <br>
+✅ &nbsp;HTTP-RPC 超时传递
+<br>
 ✅ &nbsp;分布式锁
 <br>
 ✅ &nbsp;分布式链路追踪
