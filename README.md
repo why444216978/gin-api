@@ -121,9 +121,9 @@ gRPC
 <br>
 panic 接口：http://localhost:777/test/panic
 <br>
-db 和 redis测试接口：http://localhost:777/test/conn（依赖 mysql 和 redis）
+db 和 redis测试接口：http://localhost:777/test/conn （依赖 mysql 和 redis）
 <br>
-分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc（依赖 mysql 和 redis）
+分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc (依赖 mysql 和 redis）
 <br><br>
 
 
