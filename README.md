@@ -119,11 +119,11 @@ gRPC
 # 测试
 检测接口：http://localhost:777/ping 
 <br>
-panic接口：http://localhost:777/test/panic
+panic 接口：http://localhost:777/test/panic
 <br>
-db和redis测试接口：http://localhost:777/test/conn
+db 和 redis测试接口：http://localhost:777/test/conn（依赖 mysql 和 redis）
 <br>
-分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc
+分布式链路追踪+服务注册+服务发现接口：http://localhost:777/test/rpc（依赖 mysql 和 redis）
 <br><br>
 
 
@@ -132,9 +132,10 @@ db和redis测试接口：http://localhost:777/test/conn
 <br>
 
 # 运行
-1. 查看 conf/xxx 目录的各个配置文件，改成符合自己的
-2. log 配置中的目录确保本地存在且有写入权限
-3. go run main.go -env dev（不带 -env 参数默认用 dev 配置）
+1. app 目录下的资源初始化和服务注册是留给开发者自己扩展的，您可自行调整资源加载。
+2. 查看 conf/xxx 目录的各个配置文件，改成符合自己的
+3. log 配置中的目录确保本地存在且有写入权限
+4. go run main.go -env dev（不带 -env 参数默认用 dev 配置）
 <br>
 
 
