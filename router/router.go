@@ -38,6 +38,7 @@ func InitRouter() *gin.Engine {
 	pingGroup := server.Group("/ping")
 	{
 		pingGroup.GET("", ping.Ping)
+		pingGroup.GET("/rpc", ping.RPC)
 	}
 
 	testGroup := server.Group("/test")

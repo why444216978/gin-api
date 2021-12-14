@@ -230,9 +230,13 @@ func initServices() {
 			panic(err)
 		}
 
-		if discover, err = registry_etcd.NewDiscovery(
-			registry_etcd.WithDiscoverClient(resource.Etcd.Client),
-			registry_etcd.WithDiscoverConfig(cfg)); err != nil {
+		opts := []registry_etcd.DiscoverOption{
+			registry_etcd.WithDiscoverConfig(cfg),
+		}
+		if resource.Etcd != nil && resource.Etcd.Client != nil {
+			opts = append(opts, registry_etcd.WithDiscoverClient(resource.Etcd.Client))
+		}
+		if discover, err = registry_etcd.NewDiscovery(opts...); err != nil {
 			panic(err)
 		}
 

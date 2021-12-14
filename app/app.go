@@ -117,6 +117,10 @@ func (a *App) registerService() (err error) {
 		return err
 	}
 
+	if resource.Etcd == nil || resource.Etcd.Client == nil {
+		return
+	}
+
 	if registrar, err = etcd.NewRegistry(
 		etcd.WithRegistrarClient(resource.Etcd.Client),
 		etcd.WithRegistrarServiceName(config.App.AppName),

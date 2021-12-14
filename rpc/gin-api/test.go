@@ -27,3 +27,9 @@ func RPC1(ctx context.Context) (ret *lib_http.Response, err error) {
 
 	return resource.HTTPRPC.Send(ctx, "gin-api-dev", http.MethodPost, uri, nil, bytes.NewBufferString(`{"rpc1":"rpc1"}`), time.Second)
 }
+
+func Ping(ctx context.Context) (ret *lib_http.Response, err error) {
+	uri := fmt.Sprintf("/ping?logid=%s", logging.ValueLogID(ctx))
+
+	return resource.HTTPRPC.Send(ctx, "gin-api-dev", http.MethodGet, uri, nil, nil, time.Second)
+}
