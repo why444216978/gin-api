@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/valyala/bytebufferpool"
 	load_balance "github.com/why444216978/load-balance"
 
 	jaeger_http "github.com/why444216978/gin-api/library/jaeger/http"
@@ -23,6 +24,7 @@ import (
 
 type Response struct {
 	HTTPCode int
+	Resp     []byte
 	Response string
 }
 
@@ -135,20 +137,34 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
 	ret.HTTPCode = resp.StatusCode
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("http code is %d", resp.StatusCode)
 		return
 	}
 
-	if b != nil {
-		ret.Response = string(b)
+	b := bytebufferpool.Get()
+	_, err = b.ReadFrom(resp.Body)
+	if err != nil {
+		return
 	}
+
+	l := b.Len()
+	if l < 0 {
+		return
+	}
+
+	ret.Resp = b.Bytes()
+	ret.Response = string(b.Bytes())
+
+	// b, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return
+	// }
+
+	// if b != nil {
+	// 	ret.Response = string(b)
+	// }
 
 	return
 }
