@@ -5,8 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,10 +13,9 @@ import (
 	"github.com/valyala/bytebufferpool"
 	load_balance "github.com/why444216978/load-balance"
 
-	jaeger_http "github.com/why444216978/gin-api/library/jaeger/http"
-	"github.com/why444216978/gin-api/library/logging"
 	logging_rpc "github.com/why444216978/gin-api/library/logging/rpc"
 	"github.com/why444216978/gin-api/library/registry"
+	"github.com/why444216978/gin-api/library/rpc/codec"
 	timeoutLib "github.com/why444216978/gin-api/library/timeout"
 )
 
@@ -29,13 +26,27 @@ type Response struct {
 }
 
 type RPC struct {
-	logger *logging_rpc.RPCLogger
+	codec         codec.Codec
+	logger        *logging_rpc.RPCLogger
+	beforePlugins []BeforeRequestPlugin
+	afterPlugins  []AfterRequestPlugin
 }
 
 type Option func(r *RPC)
 
+func WithCodec(c codec.Codec) Option {
+	return func(r *RPC) { r.codec = c }
+}
+
 func WithLogger(logger *logging_rpc.RPCLogger) Option {
 	return func(r *RPC) { r.logger = logger }
+}
+
+func WithBeforePlugins(plugins ...BeforeRequestPlugin) Option {
+	return func(r *RPC) { r.beforePlugins = plugins }
+}
+func WithAfterPlugins(plugins ...AfterRequestPlugin) Option {
+	return func(r *RPC) { r.afterPlugins = plugins }
 }
 
 func New(opts ...Option) *RPC {
@@ -44,22 +55,20 @@ func New(opts ...Option) *RPC {
 		o(r)
 	}
 
+	if r.codec == nil {
+		panic("codec is nil")
+	}
+
 	return r
 }
 
 // Send is send HTTP request
-func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, body io.Reader, timeout time.Duration) (ret *Response, err error) {
-	var cost int64
-
-	node := &registry.ServiceNode{}
-
-	var buf []byte
-	if body != nil {
-		buf, _ = ioutil.ReadAll(body)
-		body = ioutil.NopCloser(bytes.NewBuffer(buf))
-	}
-
-	ret = &Response{}
+func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, reqData interface{}, timeout time.Duration) (ret Response, err error) {
+	var (
+		reqByte []byte
+		cost    int64
+		node    = &registry.ServiceNode{}
+	)
 
 	if header == nil {
 		header = http.Header{}
@@ -74,7 +83,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 			Header:      header,
 			Method:      method,
 			URI:         uri,
-			Request:     buf,
+			Request:     reqByte,
 			Response:    ret.Response,
 			ServerIP:    node.Host,
 			ServerPort:  node.Port,
@@ -89,6 +98,11 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		r.logger.Error(ctx, err.Error(), fields)
 	}()
 
+	reqByte, err = r.codec.Encode(reqData)
+	if err != nil {
+		return
+	}
+
 	node, err = r.loadBalance(serviceName)
 	if err != nil {
 		return
@@ -102,7 +116,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 
 	//构建req
-	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), body)
+	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), bytes.NewReader(reqByte))
 	if err != nil {
 		return
 	}
@@ -117,9 +131,10 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	//设置请求header
 	req.Header = header
 
-	//注入Jaeger
-	logID := req.Header.Get(logging.LogHeader)
-	jaeger_http.InjectHTTP(ctx, req, logID)
+	//请求结束前插件
+	for _, plugin := range r.beforePlugins {
+		_ = plugin.Handle(ctx, req)
+	}
 
 	//请求开始时间
 	start := time.Now()
@@ -131,6 +146,12 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 
 	//发送请求
 	resp, err := client.Do(req)
+
+	//请求结束后插件
+	for _, plugin := range r.afterPlugins {
+		_ = plugin.Handle(ctx, req, resp)
+	}
+
 	cost = time.Since(start).Milliseconds()
 	if err != nil {
 		return
@@ -156,15 +177,6 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 
 	ret.Resp = b.Bytes()
 	ret.Response = string(b.Bytes())
-
-	// b, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return
-	// }
-
-	// if b != nil {
-	// 	ret.Response = string(b)
-	// }
 
 	return
 }

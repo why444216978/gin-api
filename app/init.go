@@ -24,6 +24,7 @@ import (
 	"github.com/why444216978/gin-api/library/redis"
 	"github.com/why444216978/gin-api/library/registry"
 	registry_etcd "github.com/why444216978/gin-api/library/registry/etcd"
+	"github.com/why444216978/gin-api/library/rpc/codec"
 	"github.com/why444216978/gin-api/library/rpc/http"
 	"github.com/why444216978/gin-api/resource"
 )
@@ -264,7 +265,10 @@ func initHTTPRPC() {
 		panic(err)
 	}
 
-	resource.HTTPRPC = http.New(http.WithLogger(rpcLogger))
+	resource.HTTPRPC = http.New(
+		http.WithCodec(codec.JSONCodec{}),
+		http.WithLogger(rpcLogger),
+		http.WithBeforePlugins(&http.JaegerBeforePlugin{}))
 	if err != nil {
 		panic(err)
 	}
