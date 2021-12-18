@@ -11,8 +11,11 @@ const (
 )
 
 type ServiceNode struct {
-	Host string
-	Port int
+	Host      string
+	Port      int
+	CaCrt     []byte
+	ClientPem []byte
+	ClientKey []byte
 }
 
 type RegistryConfig struct {
@@ -31,6 +34,9 @@ type DiscoveryConfig struct {
 	Host        string `validate:"required"`
 	Port        int    `validate:"required"`
 	LoadBalance string `validate:"required,oneof=random round_robin"`
+	CaCrt       string
+	ClientPem   string
+	ClientKey   string
 }
 
 // Discovery is service discovery

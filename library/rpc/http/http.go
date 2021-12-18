@@ -3,17 +3,20 @@ package http
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/valyala/bytebufferpool"
-	load_balance "github.com/why444216978/load-balance"
+	loadBalance "github.com/why444216978/load-balance"
 
-	logging_rpc "github.com/why444216978/gin-api/library/logging/rpc"
+	loggingRPC "github.com/why444216978/gin-api/library/logging/rpc"
 	"github.com/why444216978/gin-api/library/registry"
 	"github.com/why444216978/gin-api/library/rpc/codec"
 	timeoutLib "github.com/why444216978/gin-api/library/timeout"
@@ -26,7 +29,7 @@ type Response struct {
 
 type RPC struct {
 	codec         codec.Codec
-	logger        *logging_rpc.RPCLogger
+	logger        *loggingRPC.RPCLogger
 	beforePlugins []BeforeRequestPlugin
 	afterPlugins  []AfterRequestPlugin
 }
@@ -37,7 +40,7 @@ func WithCodec(c codec.Codec) Option {
 	return func(r *RPC) { r.codec = c }
 }
 
-func WithLogger(logger *logging_rpc.RPCLogger) Option {
+func WithLogger(logger *loggingRPC.RPCLogger) Option {
 	return func(r *RPC) { r.logger = logger }
 }
 
@@ -77,7 +80,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		if r.logger == nil {
 			return
 		}
-		fields := logging_rpc.RPCLogFields{
+		fields := loggingRPC.RPCLogFields{
 			ServiceName: serviceName,
 			Header:      header,
 			Method:      method,
@@ -102,16 +105,11 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		return
 	}
 
-	node, err = r.loadBalance(serviceName)
-	if err != nil {
-		return
-	}
-
 	var req *http.Request
 
-	client := &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   timeout,
+	client, err := r.getClient(serviceName)
+	if err != nil {
+		return
 	}
 
 	//构建req
@@ -181,7 +179,56 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	return
 }
 
-func (r *RPC) loadBalance(serviceName string) (*registry.ServiceNode, error) {
+func (r *RPC) getClient(serviceName string) (client *http.Client, err error) {
+	node, err := r.pick(serviceName)
+	if err != nil {
+		return
+	}
+	address := fmt.Sprintf("%s:%d", node.Host, node.Port)
+
+	tp := &http.Transport{
+		MaxIdleConnsPerHost: 30,
+		MaxConnsPerHost:     30,
+		IdleConnTimeout:     time.Minute,
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			conn, err := (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 60 * time.Second,
+			}).DialContext(context.TODO(), "tcp", address)
+			if err != nil {
+				return nil, err
+			}
+			return conn, nil
+		},
+		DialTLSContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			pool := x509.NewCertPool()
+			pool.AppendCertsFromPEM(node.CaCrt)
+			cliCrt, err := tls.X509KeyPair(node.ClientPem, node.ClientKey)
+			if err != nil {
+				err = errors.New("server pem error " + err.Error())
+				return nil, err
+			}
+
+			conn, err := (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 60 * time.Second,
+			}).DialContext(context.TODO(), "tcp", address)
+			if err != nil {
+				return nil, err
+			}
+
+			return tls.Client(conn, &tls.Config{
+				RootCAs:      pool,
+				Certificates: []tls.Certificate{cliCrt},
+				ServerName:   serviceName,
+			}), err
+		},
+	}
+
+	return &http.Client{Transport: tp}, nil
+}
+
+func (r *RPC) pick(serviceName string) (*registry.ServiceNode, error) {
 	node := &registry.ServiceNode{}
 
 	ser := registry.Services[serviceName]
@@ -195,14 +242,14 @@ func (r *RPC) loadBalance(serviceName string) (*registry.ServiceNode, error) {
 		return node, errors.New("service node empty")
 	}
 
-	nodes := make([]load_balance.Node, l)
+	nodes := make([]loadBalance.Node, l)
 	for k, v := range _nodes {
-		nodes[k] = load_balance.Node{
+		nodes[k] = loadBalance.Node{
 			Node: fmt.Sprintf("%s:%d", v.Host, v.Port),
 		}
 	}
 
-	load, err := load_balance.New(load_balance.BalanceType(ser.GetLoadBalance()))
+	load, err := loadBalance.New(loadBalance.BalanceType(ser.GetLoadBalance()))
 	if err != nil {
 		return node, err
 	}
