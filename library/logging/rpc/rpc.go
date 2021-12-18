@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/why444216978/gin-api/library/logging"
-
-	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"
+
+	"github.com/why444216978/gin-api/library/logging"
 )
 
 type RPCConfig struct {
@@ -50,8 +49,8 @@ type RPCLogFields struct {
 	Header      http.Header
 	Method      string
 	URI         string
-	Request     []byte
-	Response    string
+	Request     interface{}
+	Response    interface{}
 	ServerIP    string
 	ServerPort  int
 	HTTPCode    int
@@ -73,19 +72,17 @@ func (rl *RPCLogger) fields(ctx context.Context, fields RPCLogFields) (context.C
 	//添加通用header
 	fields.Header.Add(logging.LogHeader, logging.ValueLogID(ctx))
 
-	response, _ := conversion.JsonToMap(fields.Response)
-	request, _ := conversion.JsonToMap(string(fields.Request))
-
 	logFields := logging.ValueHTTPFields(ctx)
-	logFields.Method = fields.Method
+
 	logFields.Header = fields.Header
+	logFields.Method = fields.Method
 	logFields.ClientIP = logFields.ServerIP
 	logFields.ClientPort = logFields.ServerPort
 	logFields.ServerIP = fields.ServerIP
 	logFields.ServerPort = fields.ServerPort
 	logFields.API = fields.URI
-	logFields.Request = request
-	logFields.Response = response
+	logFields.Request = fields.Request
+	logFields.Response = fields.Response
 	logFields.Cost = fields.Cost
 	logFields.Code = fields.HTTPCode
 

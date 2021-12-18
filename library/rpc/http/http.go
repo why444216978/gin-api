@@ -21,8 +21,7 @@ import (
 
 type Response struct {
 	HTTPCode int
-	Resp     []byte
-	Response string
+	Response []byte
 }
 
 type RPC struct {
@@ -63,7 +62,7 @@ func New(opts ...Option) *RPC {
 }
 
 // Send is send HTTP request
-func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, reqData interface{}, timeout time.Duration) (ret Response, err error) {
+func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, timeout time.Duration, reqData interface{}, respData interface{}) (ret Response, err error) {
 	var (
 		reqByte []byte
 		cost    int64
@@ -83,8 +82,8 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 			Header:      header,
 			Method:      method,
 			URI:         uri,
-			Request:     reqByte,
-			Response:    ret.Response,
+			Request:     reqData,
+			Response:    respData,
 			ServerIP:    node.Host,
 			ServerPort:  node.Port,
 			HTTPCode:    ret.HTTPCode,
@@ -175,8 +174,9 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		return
 	}
 
-	ret.Resp = b.Bytes()
-	ret.Response = string(b.Bytes())
+	ret.Response = b.Bytes()
+
+	err = r.codec.Decode(ret.Response, respData)
 
 	return
 }
