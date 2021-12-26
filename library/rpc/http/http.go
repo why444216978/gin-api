@@ -241,6 +241,7 @@ func (r *RPC) pick(serviceName string) (*registry.ServiceNode, error) {
 	if l <= 0 {
 		return node, errors.New("service node empty")
 	}
+	//TODO 如果只有一个直接返回
 
 	nodes := make([]loadBalance.Node, l)
 	for k, v := range _nodes {
@@ -249,6 +250,7 @@ func (r *RPC) pick(serviceName string) (*registry.ServiceNode, error) {
 		}
 	}
 
+	//TODO 初始化 services 的时候设置selector，无需重复New
 	load, err := loadBalance.New(loadBalance.BalanceType(ser.GetLoadBalance()))
 	if err != nil {
 		return node, err
