@@ -22,8 +22,6 @@ type Registrar interface {
 
 // Discovery is service discovery
 type Discovery interface {
-	SetServiceList(key string, val *Node)
-	DelServiceList(key string)
 	GetNodes() []*Node
 	Close() error
 }

@@ -232,10 +232,14 @@ func initServices(ctx context.Context) {
 			panic(err)
 		}
 
-		if resource.Etcd != nil && resource.Etcd.Client != nil {
+		if cfg.Type == servicer.TypeRegistry {
+			if resource.Etcd == nil {
+				panic("initServices resource.Etcd nil")
+			}
 			opts := []registry_etcd.DiscoverOption{
 				registry_etcd.WithContext(ctx),
 				registry_etcd.WithServierName(cfg.ServiceName),
+				registry_etcd.WithRefreshDuration(cfg.RefreshSecond),
 				registry_etcd.WithDiscoverClient(resource.Etcd.Client),
 			}
 			if discover, err = registry_etcd.NewDiscovery(opts...); err != nil {

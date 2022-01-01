@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	typeRegistry     uint8 = 1
-	typeIPPort       uint8 = 2
-	typeDomainDomain uint8 = 3
+	TypeRegistry uint8 = 1
+	TypeIPPort   uint8 = 2
+	TypeDomain   uint8 = 3
 )
 
 var Servicers = make(map[string]Servicer)
@@ -39,14 +39,15 @@ type Servicer interface {
 }
 
 type Config struct {
-	ServiceName string `validate:"required"`
-	Type        uint8  `validate:"required,oneof=1 2"`
-	Host        string `validate:"required"`
-	Port        int    `validate:"required"`
-	Selector    string `validate:"required,oneof=wr"` //TODO 后续支持其它
-	CaCrt       string
-	ClientPem   string
-	ClientKey   string
+	ServiceName   string `validate:"required"`
+	Type          uint8  `validate:"required,oneof=1 2"`
+	Host          string `validate:"required"`
+	Port          int    `validate:"required"`
+	Selector      string `validate:"required,oneof=wr"` //TODO 后续支持其它
+	CaCrt         string
+	ClientPem     string
+	ClientKey     string
+	RefreshSecond int
 }
 
 type Service struct {
@@ -93,12 +94,12 @@ func (s *Service) Pick(ctx context.Context) (node *Node, err error) {
 		Port: s.config.Port,
 	}
 
-	if s.config.Type == typeIPPort {
+	if s.config.Type == TypeIPPort {
 		node.Host = s.config.Host
 		return
 	}
 
-	if s.config.Type == typeDomainDomain {
+	if s.config.Type == TypeDomain {
 		var host *net.IPAddr
 		host, err = net.ResolveIPAddr("ip", s.config.Host)
 		if err != nil {
@@ -121,7 +122,7 @@ func (s *Service) Pick(ctx context.Context) (node *Node, err error) {
 }
 
 func (s *Service) initSelector() (err error) {
-	if s.config.Type != typeRegistry {
+	if s.config.Type != TypeRegistry {
 		return nil
 	}
 
