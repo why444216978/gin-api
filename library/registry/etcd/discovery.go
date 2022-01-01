@@ -64,7 +64,7 @@ func (s *EtcdDiscovery) WatchService(ctx context.Context) error {
 	}
 
 	if s.config.Type == registry.TypeHostDomain {
-		host, err := net.ResolveIPAddr("ip", "localhost")
+		host, err := net.ResolveIPAddr("ip", s.config.Host)
 		if err != nil {
 			panic(err)
 		}
