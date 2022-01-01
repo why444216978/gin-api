@@ -45,7 +45,7 @@ func Start() {
 
 	app := newApp()
 
-	g, _ := errgroup.WithContext(context.Background())
+	g, _ := errgroup.WithContext(app.ctx)
 	//start serever
 	g.Go(func() (err error) {
 		err = app.start()
@@ -71,6 +71,8 @@ func Start() {
 
 func newApp() *App {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	initResource(ctx)
 
 	return &App{
 		ctx:    ctx,

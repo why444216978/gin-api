@@ -15,11 +15,12 @@ import (
 func TestNewNode(t *testing.T) {
 	convey.Convey("TestNewNode", t, func() {
 		convey.Convey("success", func() {
-			address := "127.0.0.1:80"
+			ip := "127.0.0.1"
+			port := 80
 			weight := 10
 			meta := selector.Meta{}
-			node := NewNode(address, weight, meta)
-			assert.Equal(t, node.Address(), address)
+			node := NewNode(ip, port, weight, meta)
+			assert.Equal(t, node.Address(), selector.GenerateAddress(ip, port))
 			assert.Equal(t, node.Weight(), weight)
 			assert.Equal(t, node.Meta(), meta)
 		})
@@ -201,11 +202,7 @@ func testNoDeleteHandle(t *testing.T, nodes []*Node) []selector.Node {
 		if random != 0 {
 			err = nil
 		}
-		info := selector.HandleInfo{
-			Err:  err,
-			Node: node,
-		}
-		_ = s.AfterHandle(info)
+		s.AfterHandle(node.Address(), err)
 		i++
 	}
 
@@ -232,17 +229,14 @@ func testDeleteHandle(t *testing.T, nodes []*Node) []selector.Node {
 		if random != 0 {
 			err = nil
 		}
-		info := selector.HandleInfo{
-			Err:  err,
-			Node: node,
-		}
 
-		_ = s.AfterHandle(info)
+		s.AfterHandle(node.Address(), err)
 		i++
 	}
 
 	del := nodes[2]
-	_ = s.DeleteNode(del)
+	host, port := selector.ExtractAddress(del.address)
+	_ = s.DeleteNode(host, port)
 	i = 1
 	for {
 		if i > 1000 {
@@ -255,13 +249,9 @@ func testDeleteHandle(t *testing.T, nodes []*Node) []selector.Node {
 		if random != 0 {
 			err = nil
 		}
-		info := selector.HandleInfo{
-			Err:  err,
-			Node: node,
-		}
 
 		assert.Equal(t, node.Address() != del.address, true)
-		_ = s.AfterHandle(info)
+		s.AfterHandle(node.Address(), err)
 		i++
 	}
 

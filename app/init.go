@@ -26,6 +26,7 @@ import (
 	registry_etcd "github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/library/rpc/codec"
 	"github.com/why444216978/gin-api/library/rpc/http"
+	"github.com/why444216978/gin-api/library/servicer"
 	"github.com/why444216978/gin-api/resource"
 )
 
@@ -45,7 +46,7 @@ var (
 	confPath string
 )
 
-func Init() {
+func initResource(ctx context.Context) {
 	flag.Parse()
 
 	initConfig()
@@ -55,7 +56,7 @@ func Init() {
 	initRedis("default_redis")
 	initJaeger()
 	initEtcd()
-	initServices()
+	initServices(ctx)
 	initHTTPRPC()
 	initLock()
 	initCache()
@@ -206,7 +207,7 @@ func initEtcd() {
 	}
 }
 
-func initServices() {
+func initServices(ctx context.Context) {
 	var (
 		err   error
 		dir   string
@@ -221,8 +222,8 @@ func initServices() {
 		panic(err)
 	}
 
-	cfg := &registry.DiscoveryConfig{}
-	discover := &registry_etcd.EtcdDiscovery{}
+	var discover registry.Discovery
+	cfg := &servicer.Config{}
 	for _, f := range files {
 		f = path.Base(f)
 		f = strings.TrimSuffix(f, path.Ext(f))
@@ -231,22 +232,20 @@ func initServices() {
 			panic(err)
 		}
 
-		opts := []registry_etcd.DiscoverOption{
-			registry_etcd.WithDiscoverConfig(cfg),
-		}
 		if resource.Etcd != nil && resource.Etcd.Client != nil {
-			opts = append(opts, registry_etcd.WithDiscoverClient(resource.Etcd.Client))
-		}
-		if discover, err = registry_etcd.NewDiscovery(opts...); err != nil {
-			panic(err)
+			opts := []registry_etcd.DiscoverOption{
+				registry_etcd.WithContext(ctx),
+				registry_etcd.WithServierName(cfg.ServiceName),
+				registry_etcd.WithDiscoverClient(resource.Etcd.Client),
+			}
+			if discover, err = registry_etcd.NewDiscovery(opts...); err != nil {
+				panic(err)
+			}
 		}
 
-		err = discover.WatchService(context.Background())
-		if err != nil {
+		if err = servicer.LoadService(cfg, servicer.WithDiscovery(discover)); err != nil {
 			panic(err)
 		}
-
-		registry.Services[cfg.ServiceName] = discover
 	}
 
 	return

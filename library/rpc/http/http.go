@@ -10,15 +10,13 @@ import (
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/valyala/bytebufferpool"
-	loadBalance "github.com/why444216978/load-balance"
 
 	loggingRPC "github.com/why444216978/gin-api/library/logging/rpc"
-	"github.com/why444216978/gin-api/library/registry"
 	"github.com/why444216978/gin-api/library/rpc/codec"
+	"github.com/why444216978/gin-api/library/servicer"
 	timeoutLib "github.com/why444216978/gin-api/library/timeout"
 )
 
@@ -69,7 +67,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	var (
 		reqByte []byte
 		cost    int64
-		node    = &registry.ServiceNode{}
+		node    = &servicer.Node{}
 	)
 
 	if header == nil {
@@ -105,9 +103,18 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		return
 	}
 
-	var req *http.Request
+	var (
+		client *http.Client
+		req    *http.Request
+	)
 
-	client, err := r.getClient(serviceName)
+	service, ok := servicer.Servicers[serviceName]
+	if !ok {
+		err = errors.New("service is nil")
+		return
+	}
+
+	client, node, err = r.getClient(ctx, serviceName, service)
 	if err != nil {
 		return
 	}
@@ -144,6 +151,8 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	//发送请求
 	resp, err := client.Do(req)
 
+	_ = service.Done(ctx, node, err)
+
 	//请求结束后插件
 	for _, plugin := range r.afterPlugins {
 		_ = plugin.Handle(ctx, req, resp)
@@ -179,11 +188,12 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	return
 }
 
-func (r *RPC) getClient(serviceName string) (client *http.Client, err error) {
-	node, err := r.pick(serviceName)
+func (r *RPC) getClient(ctx context.Context, serviceName string, service servicer.Servicer) (client *http.Client, node *servicer.Node, err error) {
+	node, err = service.Pick(ctx)
 	if err != nil {
 		return
 	}
+
 	address := fmt.Sprintf("%s:%d", node.Host, node.Port)
 
 	tp := &http.Transport{
@@ -202,8 +212,8 @@ func (r *RPC) getClient(serviceName string) (client *http.Client, err error) {
 		},
 		DialTLSContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
 			pool := x509.NewCertPool()
-			pool.AppendCertsFromPEM(node.CaCrt)
-			cliCrt, err := tls.X509KeyPair(node.ClientPem, node.ClientKey)
+			pool.AppendCertsFromPEM(service.GetCaCrt())
+			cliCrt, err := tls.X509KeyPair(service.GetClientPem(), service.GetClientKey())
 			if err != nil {
 				err = errors.New("server pem error " + err.Error())
 				return nil, err
@@ -224,49 +234,7 @@ func (r *RPC) getClient(serviceName string) (client *http.Client, err error) {
 			}), err
 		},
 	}
+	client = &http.Client{Transport: tp}
 
-	return &http.Client{Transport: tp}, nil
-}
-
-func (r *RPC) pick(serviceName string) (*registry.ServiceNode, error) {
-	node := &registry.ServiceNode{}
-
-	ser := registry.Services[serviceName]
-	if ser == nil {
-		return node, errors.New("service is nil")
-	}
-
-	_nodes := ser.GetServices()
-	l := len(_nodes)
-	if l <= 0 {
-		return node, errors.New("service node empty")
-	}
-	//TODO 如果只有一个直接返回
-
-	nodes := make([]loadBalance.Node, l)
-	for k, v := range _nodes {
-		nodes[k] = loadBalance.Node{
-			Node: fmt.Sprintf("%s:%d", v.Host, v.Port),
-		}
-	}
-
-	//TODO 初始化 services 的时候设置selector，无需重复New
-	load, err := loadBalance.New(loadBalance.BalanceType(ser.GetLoadBalance()))
-	if err != nil {
-		return node, err
-	}
-
-	if err := load.InitNodeList(nodes); err != nil {
-		return node, err
-	}
-
-	target := load.GetNodeAddress()
-	arr := strings.Split(target, ":")
-	host := arr[0]
-	port, _ := strconv.Atoi(arr[1])
-
-	return &registry.ServiceNode{
-		Host: host,
-		Port: port,
-	}, nil
+	return
 }

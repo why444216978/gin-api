@@ -10,6 +10,5 @@ import (
 func main() {
 	log.Printf("Actual pid is %d", syscall.Getpid())
 
-	app.Init()
 	app.Start()
 }

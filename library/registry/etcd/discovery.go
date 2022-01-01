@@ -5,44 +5,44 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"net"
 	"sync"
 
 	"github.com/why444216978/gin-api/library/registry"
 
-	"github.com/why444216978/go-util/validate"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 //EtcdDiscovery 服务发现
 type EtcdDiscovery struct {
-	config   *registry.DiscoveryConfig
-	cli      *clientv3.Client
-	nodeList map[string]*registry.ServiceNode //node list
-	lock     sync.RWMutex
-	decode   registry.Decode
+	ctx         context.Context
+	serviceName string
+	cli         *clientv3.Client
+	nodeList    map[string]*registry.Node //node list
+	lock        sync.RWMutex
+	decode      registry.Decode
 }
 
 var _ registry.Discovery = (*EtcdDiscovery)(nil)
 
 type DiscoverOption func(*EtcdDiscovery)
 
-func WithDiscoverConfig(config *registry.DiscoveryConfig) DiscoverOption {
-	if err := validate.ValidateCamel(config); err != nil {
-		panic(err)
-	}
-	return func(ed *EtcdDiscovery) { ed.config = config }
+func WithContext(ctx context.Context) DiscoverOption {
+	return func(ed *EtcdDiscovery) { ed.ctx = ctx }
+}
+
+func WithServierName(serviceName string) DiscoverOption {
+	return func(ed *EtcdDiscovery) { ed.serviceName = serviceName }
 }
 
 func WithDiscoverClient(cli *clientv3.Client) DiscoverOption {
-	return func(er *EtcdDiscovery) { er.cli = cli }
+	return func(ed *EtcdDiscovery) { ed.cli = cli }
 }
 
 // NewDiscovery
-func NewDiscovery(opts ...DiscoverOption) (*EtcdDiscovery, error) {
+func NewDiscovery(opts ...DiscoverOption) (registry.Discovery, error) {
 	ed := &EtcdDiscovery{
-		nodeList: make(map[string]*registry.ServiceNode),
+		nodeList: make(map[string]*registry.Node),
 		decode:   JSONDecode,
 	}
 
@@ -50,37 +50,29 @@ func NewDiscovery(opts ...DiscoverOption) (*EtcdDiscovery, error) {
 		o(ed)
 	}
 
+	if ed.serviceName == "" {
+		return nil, errors.New("serviceName is nil")
+	}
+
+	if ed.cli == nil {
+		return nil, errors.New("cli is nil")
+	}
+
+	if ed.ctx == nil {
+		ed.ctx = context.Background()
+	}
+
+	if err := ed.init(); err != nil {
+		return nil, err
+	}
+
 	return ed, nil
 }
 
 // WatchService
-func (s *EtcdDiscovery) WatchService(ctx context.Context) error {
-	if s.config.Type == registry.TypeHostPort {
-		s.SetServiceList(s.config.ServiceName, &registry.ServiceNode{
-			Host: s.config.Host,
-			Port: s.config.Port,
-		})
-		return nil
-	}
-
-	if s.config.Type == registry.TypeHostDomain {
-		host, err := net.ResolveIPAddr("ip", s.config.Host)
-		if err != nil {
-			panic(err)
-		}
-		s.SetServiceList(s.config.ServiceName, &registry.ServiceNode{
-			Host: host.IP.String(),
-			Port: 80,
-		})
-		return nil
-	}
-
-	if s.cli == nil {
-		return errors.New("cli is nil")
-	}
-
+func (s *EtcdDiscovery) init() error {
 	//根据前缀获取现有的key
-	resp, err := s.cli.Get(ctx, s.config.ServiceName, clientv3.WithPrefix())
+	resp, err := s.cli.Get(s.ctx, s.serviceName, clientv3.WithPrefix())
 	if err != nil {
 		return err
 	}
@@ -91,22 +83,22 @@ func (s *EtcdDiscovery) WatchService(ctx context.Context) error {
 
 		node, err := s.decode(val)
 		if err != nil {
-			log.Println("service:", s.config.ServiceName, " put key:", key, "val:", val, "err:", err.Error())
+			log.Println("service:", s.serviceName, " put key:", key, "val:", val, "err:", err.Error())
 			continue
 		}
 		s.SetServiceList(key, node)
 	}
 
 	//监视前缀，修改变更的服务节点
-	go s.watcher(ctx)
+	go s.watcher()
 
 	return nil
 }
 
 // watcher
-func (s *EtcdDiscovery) watcher(ctx context.Context) {
-	rch := s.cli.Watch(ctx, s.config.ServiceName, clientv3.WithPrefix())
-	log.Printf("watching prefix:%s now...", s.config.ServiceName)
+func (s *EtcdDiscovery) watcher() {
+	rch := s.cli.Watch(s.ctx, s.serviceName, clientv3.WithPrefix())
+	log.Printf("watching prefix:%s now...", s.serviceName)
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
 			key := string(ev.Kv.Key)
@@ -116,21 +108,21 @@ func (s *EtcdDiscovery) watcher(ctx context.Context) {
 			case mvccpb.PUT:
 				node, err := s.decode(val)
 				if err != nil {
-					log.Println("service:", s.config.ServiceName, " put key:", key, "val:", val, "err:", err.Error())
+					log.Println("service:", s.serviceName, " put key:", key, "val:", val, "err:", err.Error())
 					return
 				}
 				s.SetServiceList(key, node)
-				log.Println("service", s.config.ServiceName, " put key:", key, "val:", val)
+				log.Println("service", s.serviceName, " put key:", key, "val:", val)
 			case mvccpb.DELETE:
 				s.DelServiceList(key)
-				log.Println("service:", s.config.ServiceName, " del key:", key)
+				log.Println("service:", s.serviceName, " del key:", key)
 			}
 		}
 	}
 }
 
 // SetServiceList
-func (s *EtcdDiscovery) SetServiceList(key string, node *registry.ServiceNode) {
+func (s *EtcdDiscovery) SetServiceList(key string, node *registry.Node) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.nodeList[key] = node
@@ -143,21 +135,16 @@ func (s *EtcdDiscovery) DelServiceList(key string) {
 	delete(s.nodeList, key)
 }
 
-// GetServices
-func (s *EtcdDiscovery) GetServices() []*registry.ServiceNode {
+// GetNodes
+func (s *EtcdDiscovery) GetNodes() []*registry.Node {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	nodes := make([]*registry.ServiceNode, 0)
+	nodes := make([]*registry.Node, 0)
 
 	for _, node := range s.nodeList {
 		nodes = append(nodes, node)
 	}
 	return nodes
-}
-
-// GetLoadBalance
-func (s *EtcdDiscovery) GetLoadBalance() string {
-	return s.config.LoadBalance
 }
 
 // Close
@@ -168,8 +155,8 @@ func (s *EtcdDiscovery) Close() error {
 	return s.cli.Close()
 }
 
-func JSONDecode(val string) (*registry.ServiceNode, error) {
-	node := &registry.ServiceNode{}
+func JSONDecode(val string) (*registry.Node, error) {
+	node := &registry.Node{}
 	err := json.Unmarshal([]byte(val), node)
 	if err != nil {
 		return nil, errors.New("Unmarshal val " + err.Error())

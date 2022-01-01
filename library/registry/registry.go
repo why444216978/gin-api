@@ -4,18 +4,10 @@ import (
 	"context"
 )
 
-const (
-	TypeRegistry   uint8 = 1
-	TypeHostPort   uint8 = 2
-	TypeHostDomain uint8 = 3
-)
-
-type ServiceNode struct {
-	Host      string
-	Port      int
-	CaCrt     []byte
-	ClientPem []byte
-	ClientKey []byte
+type Node struct {
+	Host   string
+	Port   int
+	Weight int //TODO support service weight
 }
 
 type RegistryConfig struct {
@@ -28,31 +20,18 @@ type Registrar interface {
 	DeRegister(ctx context.Context) error
 }
 
-type DiscoveryConfig struct {
-	ServiceName string `validate:"required"`
-	Type        uint8  `validate:"required,oneof=1 2"`
-	Host        string `validate:"required"`
-	Port        int    `validate:"required"`
-	LoadBalance string `validate:"required,oneof=random round_robin"`
-	CaCrt       string
-	ClientPem   string
-	ClientKey   string
-}
-
 // Discovery is service discovery
 type Discovery interface {
-	WatchService(ctx context.Context) error
-	SetServiceList(key string, val *ServiceNode)
+	SetServiceList(key string, val *Node)
 	DelServiceList(key string)
-	GetServices() []*ServiceNode
-	GetLoadBalance() string
+	GetNodes() []*Node
 	Close() error
 }
 
 // Encode func is encode service node info
-type Encode func(node *ServiceNode) (string, error)
+type Encode func(node *Node) (string, error)
 
 // Decode func is decode service node info
-type Decode func(val string) (*ServiceNode, error)
+type Decode func(val string) (*Node, error)
 
 var Services = make(map[string]Discovery)

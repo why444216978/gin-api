@@ -63,7 +63,7 @@ func NewRegistry(opts ...RegistrarOption) (*EtcdRegistrar, error) {
 
 	r.key = fmt.Sprintf("%s.%s.%d", r.serviceName, r.host, r.port)
 
-	if r.val, err = r.encode(&registry.ServiceNode{
+	if r.val, err = r.encode(&registry.Node{
 		Host: r.host,
 		Port: r.port,
 	}); err != nil {
@@ -129,7 +129,7 @@ func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
 	return s.cli.Close()
 }
 
-func JSONEncode(node *registry.ServiceNode) (string, error) {
+func JSONEncode(node *registry.Node) (string, error) {
 	val, err := json.Marshal(node)
 	if err != nil {
 		return "", errors.New("marshal node " + err.Error())

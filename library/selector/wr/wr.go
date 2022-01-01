@@ -2,6 +2,7 @@
 package wr
 
 import (
+	"errors"
 	"math/rand"
 	"sort"
 	"sync"
@@ -18,10 +19,11 @@ type Node struct {
 }
 
 var _ selector.Node = (*Node)(nil)
+var _ selector.NewNodeFunc = NewNode
 
-func NewNode(address string, weight int, meta selector.Meta) *Node {
+func NewNode(host string, port, weight int, meta selector.Meta) selector.Node {
 	return &Node{
-		address:    address,
+		address:    selector.GenerateAddress(host, port),
 		weight:     weight,
 		meta:       meta,
 		statistics: selector.Statistics{},
@@ -103,20 +105,26 @@ func (s *Selector) ServiceName() string {
 }
 
 func (s *Selector) AddNode(node selector.Node) (err error) {
+	address := node.Address()
+	if _, ok := s.nodes[address]; ok {
+		return
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	var (
+		weight      = node.Weight()
 		offsetStart = 0
-		offsetEnd   = s.totalWeight + node.Weight()
+		offsetEnd   = s.totalWeight + weight
 	)
 	if s.nodeCount > 0 {
 		offsetStart = s.totalWeight + 1
 	}
 
 	offset := nodeOffset{
-		Address:     node.Address(),
-		Weight:      node.Weight(),
+		Address:     address,
+		Weight:      weight,
 		OffsetStart: offsetStart,
 		OffsetEnd:   offsetEnd,
 	}
@@ -135,16 +143,22 @@ func (s *Selector) AddNode(node selector.Node) (err error) {
 	return
 }
 
-func (s *Selector) DeleteNode(node selector.Node) (err error) {
+func (s *Selector) DeleteNode(host string, port int) (err error) {
+	address := selector.GenerateAddress(host, port)
+	node, ok := s.nodes[address]
+	if !ok {
+		return
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.nodeCount = s.nodeCount - 1
 
-	delete(s.nodes, node.Address())
+	delete(s.nodes, address)
 
 	for idx, n := range s.list {
-		if n.Address() != node.Address() {
+		if n.Address() != address {
 			continue
 		}
 		new := make([]*Node, len(s.list)-1)
@@ -153,7 +167,7 @@ func (s *Selector) DeleteNode(node selector.Node) (err error) {
 	}
 
 	for idx, n := range s.offsetList {
-		if n.Address != node.Address() {
+		if n.Address != address {
 			continue
 		}
 		s.totalWeight = s.totalWeight - node.Weight()
@@ -176,7 +190,19 @@ func (s *Selector) GetNodes() (nodes []selector.Node, err error) {
 	return
 }
 
+func (s *Selector) GetNode(host string, port int) (node selector.Node, ok bool) {
+	node, ok = s.nodes[selector.GenerateAddress(host, port)]
+	return
+}
+
 func (s *Selector) Select() (node selector.Node, err error) {
+	defer func() {
+		if node != nil {
+			return
+		}
+		err = errors.New("node is nil")
+	}()
+
 	if s.sameWeight {
 		idx := rand.Intn(s.nodeCount)
 		node = s.list[idx]
@@ -194,13 +220,13 @@ func (s *Selector) Select() (node selector.Node, err error) {
 	return
 }
 
-func (s *Selector) AfterHandle(info selector.HandleInfo) (err error) {
+func (s *Selector) AfterHandle(address string, err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	node := s.nodes[info.Node.Address()]
+	node := s.nodes[address]
 
-	if info.Err != nil {
+	if err != nil {
 		node.incrFail()
 		return
 	}
