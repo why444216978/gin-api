@@ -37,6 +37,8 @@
 <br>
 ✅ &nbsp;服务发现
 <br>
+✅ &nbsp;负载均衡
+<br>
 ✅ &nbsp;HTTP-RPC 超时传递
 <br><br>
 
