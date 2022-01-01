@@ -15,9 +15,9 @@ import (
 	"github.com/valyala/bytebufferpool"
 
 	loggingRPC "github.com/why444216978/gin-api/library/logging/rpc"
+	timeoutLib "github.com/why444216978/gin-api/library/middleware/timeout"
 	"github.com/why444216978/gin-api/library/rpc/codec"
 	"github.com/why444216978/gin-api/library/servicer"
-	timeoutLib "github.com/why444216978/gin-api/library/timeout"
 )
 
 type Response struct {

@@ -70,7 +70,7 @@ gRPC
     - qa
   - config //启动加载配置目录
     - app.go //应用配置
-  - library //基础组件库
+  - library //基础组件库，不建议修改
     - apollo //阿波罗
     - cache //分布式缓存
     - config //配置加载
@@ -82,6 +82,7 @@ gRPC
     - job //离线任务
     - lock //分布式锁
     - logging //日志
+    - middleware //中间件
     - orm //db orm
     - rabbitmq //rabbitmq
     - redis //redis
@@ -89,16 +90,20 @@ gRPC
     - rpc //rpc调用封装
       - grpc //grpc
       - http //http
+    - selector //负载均衡器
+    - servicer //下游服务
     - xhop //rpc xhop
-    - resource
-      - resource.go //全局资源
-    - response
-      - response.go //http响应
-    - rpc //三方rpc调用封装
-      - gin-api //gin-api服务
-    - services //模块核心实现
-      - goods //商品模块
-      - test //测试模块
+  - resource
+    - resource.go //全局资源
+  - response
+    - response.go //http响应
+  - router
+    router.go //路由定义和中间件注册
+  - rpc //三方rpc调用封装
+    - gin-api //gin-api服务
+  - services //模块核心实现
+    - goods //商品模块
+    - test //测试模块
     .gitignore
     Dockerfile
     LICENSE
