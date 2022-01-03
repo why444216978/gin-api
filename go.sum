@@ -356,8 +356,6 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/why444216978/go-util v1.0.12 h1:aMMY4lBSfXyPMmzdLK9adBhiHb7xLHMamtZAqsa1tRA=
 github.com/why444216978/go-util v1.0.12/go.mod h1:Ig1wkItwcPRQGjpAzv5+i3NRIUBadmyKCdV/Nl1OKLc=
-github.com/why444216978/load-balance v1.0.3 h1:05pxsDcRMaqbOVPc8D4j8MtkCWNd39A8j3NwnJo8Ad8=
-github.com/why444216978/load-balance v1.0.3/go.mod h1:fmqe1ZpADXld6g9tVKzTDz917oflsNqfWrNA6a0wrYA=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
