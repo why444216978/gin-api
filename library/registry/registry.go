@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"time"
 )
 
 type Node struct {
@@ -23,6 +24,7 @@ type Registrar interface {
 // Discovery is service discovery
 type Discovery interface {
 	GetNodes() []*Node
+	GetUpdateTime() time.Time
 	Close() error
 }
 

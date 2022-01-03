@@ -183,6 +183,9 @@ func (s *Selector) DeleteNode(host string, port int) (err error) {
 }
 
 func (s *Selector) GetNodes() (nodes []selector.Node, err error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	nodes = make([]selector.Node, 0)
 	for _, n := range s.list {
 		nodes = append(nodes, n)
@@ -191,11 +194,17 @@ func (s *Selector) GetNodes() (nodes []selector.Node, err error) {
 }
 
 func (s *Selector) GetNode(host string, port int) (node selector.Node, ok bool) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	node, ok = s.nodes[selector.GenerateAddress(host, port)]
 	return
 }
 
 func (s *Selector) Select() (node selector.Node, err error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	defer func() {
 		if node != nil {
 			return
@@ -221,10 +230,13 @@ func (s *Selector) Select() (node selector.Node, err error) {
 }
 
 func (s *Selector) AfterHandle(address string, err error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 
 	node := s.nodes[address]
+	if node == nil {
+		return
+	}
 
 	if err != nil {
 		node.incrFail()

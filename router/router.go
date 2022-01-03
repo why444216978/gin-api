@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/why444216978/gin-api/api/conn"
@@ -14,11 +15,14 @@ import (
 	"github.com/why444216978/gin-api/library/middleware/timeout"
 	"github.com/why444216978/gin-api/response"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() *gin.Engine {
 	server := gin.New()
+
+	Pprof(server)
 
 	server.Use(timeout.TimeoutMiddleware(time.Duration(config.App.ContextTimeout) * time.Millisecond))
 
@@ -50,4 +54,13 @@ func InitRouter() *gin.Engine {
 	}
 
 	return server
+}
+
+func Pprof(server *gin.Engine) {
+	if !config.App.Pprof {
+		return
+	}
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+	pprof.Register(server)
 }

@@ -22,6 +22,7 @@ type EtcdDiscovery struct {
 	cli             *clientv3.Client
 	nodeList        map[string]*registry.Node
 	lock            sync.RWMutex
+	updateTime      time.Time
 	decode          registry.Decode
 	ticker          *time.Ticker
 	refreshDuration time.Duration
@@ -90,6 +91,11 @@ func (s *EtcdDiscovery) GetNodes() []*registry.Node {
 	return nodes
 }
 
+// GetUpdateTime
+func (s *EtcdDiscovery) GetUpdateTime() time.Time {
+	return s.updateTime
+}
+
 // Close
 func (s *EtcdDiscovery) Close() error {
 	if s.ticker != nil {
@@ -145,7 +151,7 @@ func (s *EtcdDiscovery) watcher() {
 				s.setNode(key, node)
 				s.log("mvccpb.PUT", key)
 			case mvccpb.DELETE:
-				s.delServiceList(key)
+				s.delNode(key)
 				s.log("mvccpb.DELETE", key)
 			}
 		}
@@ -154,6 +160,10 @@ func (s *EtcdDiscovery) watcher() {
 
 //refresh
 func (s *EtcdDiscovery) refresh() {
+	if s.refreshDuration == -1 {
+		return
+	}
+
 	if s.refreshDuration == 0 {
 		s.refreshDuration = defaultRefreshDuration
 	}
@@ -184,6 +194,7 @@ func (s *EtcdDiscovery) setNodes() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.nodeList = nodeList
+	s.updateTime = time.Now()
 }
 
 // setNode
@@ -191,13 +202,15 @@ func (s *EtcdDiscovery) setNode(key string, node *registry.Node) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.nodeList[key] = node
+	s.updateTime = time.Now()
 }
 
-// delServiceList
-func (s *EtcdDiscovery) delServiceList(key string) {
+// delNode
+func (s *EtcdDiscovery) delNode(key string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.nodeList, key)
+	s.updateTime = time.Now()
 }
 
 func (s *EtcdDiscovery) logErr(action, key, val string, err error) {

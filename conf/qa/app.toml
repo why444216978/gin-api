@@ -1,5 +1,6 @@
 AppName = "gin-api-qa"
 AppPort = 999
+Pprof = true
 ContextTimeout = 100000
 ReadTimeout =  100000
 WriteTimeout =  100000

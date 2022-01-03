@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"net"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/why444216978/go-util/validate"
 
@@ -51,8 +54,11 @@ type Config struct {
 }
 
 type Service struct {
+	lock            sync.RWMutex
 	selector        selector.Selector
 	selectorNewNode selector.NewNodeFunc
+	adjusting       int32
+	updateTime      time.Time
 	discovery       registry.Discovery
 	caCrt           []byte
 	clientPem       []byte
@@ -68,6 +74,7 @@ func WithDiscovery(discovery registry.Discovery) Option {
 
 func LoadService(config *Config, opts ...Option) error {
 	s := &Service{
+		adjusting: 0,
 		config:    config,
 		caCrt:     []byte(config.CaCrt),
 		clientPem: []byte(config.ClientPem),
@@ -138,6 +145,17 @@ func (s *Service) initSelector() (err error) {
 }
 
 func (s *Service) adjustSelectorNode() {
+	if s.discovery.GetUpdateTime().Before(s.updateTime) {
+		return
+	}
+
+	if !atomic.CompareAndSwapInt32(&s.adjusting, 0, 1) {
+		return
+	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	var (
 		address     string
 		host        string
@@ -147,6 +165,7 @@ func (s *Service) adjustSelectorNode() {
 		selectorMap = make(map[string]selector.Node)
 	)
 
+	//selector add new nodes
 	for _, n := range nowNodes {
 		host = n.Host
 		port = n.Port
@@ -156,13 +175,10 @@ func (s *Service) adjustSelectorNode() {
 		nowMap[address] = struct{}{}
 		selectorMap[address] = node
 
-		_, ok := s.selector.GetNode(host, port)
-		if ok {
-			continue
-		}
 		_ = s.selector.AddNode(node)
 	}
 
+	//selector delete non-existent nodes
 	selectorNodes, _ := s.selector.GetNodes()
 	for _, n := range selectorNodes {
 		if _, ok := nowMap[n.Address()]; ok {
@@ -171,6 +187,9 @@ func (s *Service) adjustSelectorNode() {
 		host, port = selector.ExtractAddress(n.Address())
 		_ = s.selector.DeleteNode(host, port)
 	}
+
+	s.updateTime = time.Now()
+	atomic.StoreInt32(&s.adjusting, 0)
 }
 
 func (s *Service) Done(ctx context.Context, node *Node, err error) error {
