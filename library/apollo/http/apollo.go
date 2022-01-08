@@ -11,7 +11,7 @@
 //echo CONFIG_CENTER_TOKEN
 //echo CONFIG_CENTER_APPID
 
-package apollo
+package http
 
 import (
 	"encoding/json"

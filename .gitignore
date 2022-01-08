@@ -15,3 +15,4 @@ development
 __debug_bin
 cover.out
 cover.html
+.apollo_config

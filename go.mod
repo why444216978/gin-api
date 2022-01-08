@@ -6,10 +6,13 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/agiledragon/gomonkey/v2 v2.3.1 // indirect
 	github.com/antihax/optional v1.0.0 // indirect
+	github.com/apolloconfig/agollo/v4 v4.0.11 // indirect
+	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403 // indirect
 	github.com/cncf/xds/go v0.0.0-20210312221358-fbca930ec8ed // indirect
 	github.com/coreos/bbolt v1.3.2 // indirect
+	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
@@ -44,7 +47,7 @@ require (
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.3.2
+	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
@@ -52,6 +55,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/why444216978/go-util v1.0.16
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
+	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.opencensus.io v0.22.4 // indirect
