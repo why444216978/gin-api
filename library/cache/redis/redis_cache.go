@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dino-ma/snowflake"
 	"github.com/go-redis/redis/v8"
 	util_ctx "github.com/why444216978/go-util/context"
+	"github.com/why444216978/go-util/snowflake"
 
 	"github.com/why444216978/gin-api/library/cache"
 	"github.com/why444216978/gin-api/library/lock"
@@ -65,8 +65,7 @@ func (rc *RedisCache) GetData(ctx context.Context, key string, ttl time.Duration
 
 func (rc *RedisCache) FlushCache(ctx context.Context, key string, ttl time.Duration, virtualTTL time.Duration, f cache.LoadFunc, data interface{}) (err error) {
 	lockKey := "LOCK::" + key
-	node, _ := snowflake.NewNode(1)
-	random := node.Generate().String()
+	random := snowflake.Generate().String()
 
 	//获取锁，自旋三次
 	//TODO 这里可优化为客户端传入控制

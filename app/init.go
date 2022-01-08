@@ -8,22 +8,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	app_config "github.com/why444216978/gin-api/config"
-	redis_cache "github.com/why444216978/gin-api/library/cache/redis"
+	appConfig "github.com/why444216978/gin-api/config"
+	redisCache "github.com/why444216978/gin-api/library/cache/redis"
 	"github.com/why444216978/gin-api/library/config"
 	"github.com/why444216978/gin-api/library/etcd"
 	"github.com/why444216978/gin-api/library/jaeger"
-	jaeger_gorm "github.com/why444216978/gin-api/library/jaeger/gorm"
-	jaeger_redis "github.com/why444216978/gin-api/library/jaeger/redis"
-	redis_lock "github.com/why444216978/gin-api/library/lock/redis"
+	jaegerGorm "github.com/why444216978/gin-api/library/jaeger/gorm"
+	jaegerRedis "github.com/why444216978/gin-api/library/jaeger/redis"
+	redisLock "github.com/why444216978/gin-api/library/lock/redis"
 	"github.com/why444216978/gin-api/library/logging"
-	logging_gorm "github.com/why444216978/gin-api/library/logging/gorm"
-	logging_redis "github.com/why444216978/gin-api/library/logging/redis"
-	logging_rpc "github.com/why444216978/gin-api/library/logging/rpc"
+	loggingGorm "github.com/why444216978/gin-api/library/logging/gorm"
+	loggingRedis "github.com/why444216978/gin-api/library/logging/redis"
+	loggingRPC "github.com/why444216978/gin-api/library/logging/rpc"
 	"github.com/why444216978/gin-api/library/orm"
 	"github.com/why444216978/gin-api/library/redis"
 	"github.com/why444216978/gin-api/library/registry"
-	registry_etcd "github.com/why444216978/gin-api/library/registry/etcd"
+	registryEtcd "github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/library/rpc/codec"
 	"github.com/why444216978/gin-api/library/rpc/http"
 	"github.com/why444216978/gin-api/library/servicer"
@@ -80,7 +80,7 @@ func initConfig() {
 }
 
 func initApp() {
-	if err := resource.Config.ReadConfig("app", "toml", &app_config.App); err != nil {
+	if err := resource.Config.ReadConfig("app", "toml", &appConfig.App); err != nil {
 		panic(err)
 	}
 }
@@ -95,7 +95,7 @@ func initLogger() {
 
 	resource.ServiceLogger, err = logging.NewLogger(cfg,
 		logging.WithModule(logging.ModuleHTTP),
-		logging.WithServiceName(app_config.App.AppName),
+		logging.WithServiceName(appConfig.App.AppName),
 	)
 	if err != nil {
 		panic(err)
@@ -107,7 +107,7 @@ func initLogger() {
 func initMysql(db string) {
 	var err error
 	cfg := &orm.Config{}
-	logCfg := &logging_gorm.GormConfig{}
+	logCfg := &loggingGorm.GormConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
@@ -118,13 +118,13 @@ func initMysql(db string) {
 	}
 
 	logCfg.ServiceName = cfg.ServiceName
-	gormLogger, err := logging_gorm.NewGorm(logCfg)
+	gormLogger, err := loggingGorm.NewGorm(logCfg)
 	if err != nil {
 		panic(err)
 	}
 
 	resource.TestDB, err = orm.NewOrm(cfg,
-		orm.WithTrace(jaeger_gorm.GormTrace),
+		orm.WithTrace(jaegerGorm.GormTrace),
 		orm.WithLogger(gormLogger),
 	)
 	if err != nil {
@@ -135,7 +135,7 @@ func initMysql(db string) {
 func initRedis(db string) {
 	var err error
 	cfg := &redis.Config{}
-	logCfg := &logging_redis.RedisConfig{}
+	logCfg := &loggingRedis.RedisConfig{}
 
 	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
 		panic(err)
@@ -148,20 +148,20 @@ func initRedis(db string) {
 	logCfg.Host = cfg.Host
 	logCfg.Port = cfg.Port
 
-	logger, err := logging_redis.NewRedisLogger(logCfg)
+	logger, err := loggingRedis.NewRedisLogger(logCfg)
 	if err != nil {
 		panic(err)
 	}
 
 	rc := redis.NewClient(cfg)
-	rc.AddHook(jaeger_redis.NewJaegerHook())
+	rc.AddHook(jaegerRedis.NewJaegerHook())
 	rc.AddHook(logger)
 	resource.RedisDefault = rc
 }
 
 func initLock() {
 	var err error
-	resource.RedisLock, err = redis_lock.New(resource.RedisDefault)
+	resource.RedisLock, err = redisLock.New(resource.RedisDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -170,7 +170,7 @@ func initLock() {
 func initCache() {
 	var err error
 
-	resource.RedisCache, err = redis_cache.New(resource.RedisDefault, resource.RedisLock)
+	resource.RedisCache, err = redisCache.New(resource.RedisDefault, resource.RedisLock)
 	if err != nil {
 		panic(err)
 	}
@@ -184,7 +184,7 @@ func initJaeger() {
 		panic(err)
 	}
 
-	_, _, err = jaeger.NewJaegerTracer(cfg, app_config.App.AppName)
+	_, _, err = jaeger.NewJaegerTracer(cfg, appConfig.App.AppName)
 	if err != nil {
 		panic(err)
 	}
@@ -236,13 +236,13 @@ func initServices(ctx context.Context) {
 			if resource.Etcd == nil {
 				panic("initServices resource.Etcd nil")
 			}
-			opts := []registry_etcd.DiscoverOption{
-				registry_etcd.WithContext(ctx),
-				registry_etcd.WithServierName(cfg.ServiceName),
-				registry_etcd.WithRefreshDuration(cfg.RefreshSecond),
-				registry_etcd.WithDiscoverClient(resource.Etcd.Client),
+			opts := []registryEtcd.DiscoverOption{
+				registryEtcd.WithContext(ctx),
+				registryEtcd.WithServierName(cfg.ServiceName),
+				registryEtcd.WithRefreshDuration(cfg.RefreshSecond),
+				registryEtcd.WithDiscoverClient(resource.Etcd.Client),
 			}
-			if discover, err = registry_etcd.NewDiscovery(opts...); err != nil {
+			if discover, err = registryEtcd.NewDiscovery(opts...); err != nil {
 				panic(err)
 			}
 		}
@@ -257,13 +257,13 @@ func initServices(ctx context.Context) {
 
 func initHTTPRPC() {
 	var err error
-	cfg := &logging_rpc.RPCConfig{}
+	cfg := &loggingRPC.RPCConfig{}
 
 	if err = resource.Config.ReadConfig("log/rpc", "toml", cfg); err != nil {
 		panic(err)
 	}
 
-	rpcLogger, err := logging_rpc.NewRPCLogger(cfg)
+	rpcLogger, err := loggingRPC.NewRPCLogger(cfg)
 	if err != nil {
 		panic(err)
 	}

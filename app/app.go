@@ -12,16 +12,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/why444216978/gin-api/config"
-	job_service "github.com/why444216978/gin-api/library/job"
-	"github.com/why444216978/gin-api/library/registry"
-	"github.com/why444216978/gin-api/library/registry/etcd"
-	"github.com/why444216978/gin-api/resource"
-	"github.com/why444216978/gin-api/router"
-	"github.com/why444216978/gin-api/services/test/job/grpc"
-
 	"github.com/why444216978/go-util/sys"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/why444216978/gin-api/config"
+	jobLib "github.com/why444216978/gin-api/library/job"
+	"github.com/why444216978/gin-api/library/registry"
+	"github.com/why444216978/gin-api/library/registry/etcd"
+	"github.com/why444216978/gin-api/module/test/job/grpc"
+	"github.com/why444216978/gin-api/resource"
+	"github.com/why444216978/gin-api/router"
 )
 
 var (
@@ -36,10 +36,10 @@ type App struct {
 
 func Start() {
 	if *job != "" {
-		job_service.Handlers = map[string]job_service.HandleFunc{
+		jobLib.Handlers = map[string]jobLib.HandleFunc{
 			"grpc-cmux": grpc.GrpcCmux,
 		}
-		job_service.Handle(*job)
+		jobLib.Handle(*job)
 		return
 	}
 

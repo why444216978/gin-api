@@ -5,24 +5,24 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/why444216978/gin-api/api/conn"
-	"github.com/why444216978/gin-api/api/ping"
-	"github.com/why444216978/gin-api/api/test"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+
 	"github.com/why444216978/gin-api/config"
 	"github.com/why444216978/gin-api/library/middleware/limiter"
 	"github.com/why444216978/gin-api/library/middleware/log"
 	"github.com/why444216978/gin-api/library/middleware/panic"
 	"github.com/why444216978/gin-api/library/middleware/timeout"
+	conn "github.com/why444216978/gin-api/module/goods/api"
+	ping "github.com/why444216978/gin-api/module/ping/api"
+	test "github.com/why444216978/gin-api/module/test/api"
 	"github.com/why444216978/gin-api/response"
-
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() *gin.Engine {
 	server := gin.New()
 
-	Pprof(server)
+	startPprof(server)
 
 	server.Use(timeout.TimeoutMiddleware(time.Duration(config.App.ContextTimeout) * time.Millisecond))
 
@@ -56,7 +56,7 @@ func InitRouter() *gin.Engine {
 	return server
 }
 
-func Pprof(server *gin.Engine) {
+func startPprof(server *gin.Engine) {
 	if !config.App.Pprof {
 		return
 	}

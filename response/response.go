@@ -3,9 +3,9 @@ package response
 import (
 	"net/http"
 
-	"github.com/why444216978/gin-api/library/logging"
-
 	"github.com/gin-gonic/gin"
+
+	"github.com/why444216978/gin-api/library/logging"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/why444216978/gin-api/services/test/job/grpc/helloworld"
+	pb "github.com/why444216978/gin-api/module/test/job/grpc/helloworld"
 
 	server "github.com/why444216978/gin-api/library/grpc"
 
