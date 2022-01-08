@@ -67,9 +67,6 @@ gRPC
 # 目录结构
 ```
 - gin-api 
-  - api //对外暴露api
-    - module1 //模块1
-    - module2 //模块2
   - app //应用启动
     - app.go //app启动和优雅关闭
     - init.go //资源初始化
@@ -111,17 +108,25 @@ gRPC
     router.go //路由定义和中间件注册
   - rpc //三方rpc调用封装
     - gin-api //gin-api服务
-  - services //模块核心实现
-    - goods //商品模块
-    - test //测试模块
-    .gitignore
-    Dockerfile
-    LICENSE
-    Makefile
-    README.md
-    go.mod
-    go.sum
-    main.go
+  - module //各模块核心实现，按照业务边界划分目录
+    - module1 //模块1
+      - api //对外暴露api
+      - job //离线任务
+      - responsitory //存储层
+      - service //核心业务代码
+    - module1 //模块2
+      - api //对外暴露api
+      - job //离线任务
+      - responsitory //存储层
+      - service //核心业务代码
+  .gitignore
+  Dockerfile
+  LICENSE
+  Makefile
+  README.md
+  go.mod
+  go.sum
+  main.go
 ```
 
 # 配置相关
