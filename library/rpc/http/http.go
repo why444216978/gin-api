@@ -171,6 +171,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 
 	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
 	_, err = b.ReadFrom(resp.Body)
 	if err != nil {
 		return
