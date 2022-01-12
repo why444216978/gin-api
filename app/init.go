@@ -47,8 +47,6 @@ var (
 )
 
 func initResource(ctx context.Context) {
-	flag.Parse()
-
 	initConfig()
 	initApp()
 	initLogger()

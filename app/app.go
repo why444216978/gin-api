@@ -35,6 +35,7 @@ type App struct {
 }
 
 func Start() {
+	flag.Parse()
 	if *job != "" {
 		jobLib.Handlers = map[string]jobLib.HandleFunc{
 			"grpc-cmux": grpc.GrpcCmux,

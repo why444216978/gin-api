@@ -7,8 +7,6 @@ import (
 	"github.com/why444216978/gin-api/app"
 )
 
-type Test struct{}
-
 func main() {
 	log.Printf("Actual pid is %d", syscall.Getpid())
 
