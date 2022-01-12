@@ -45,6 +45,7 @@ func WithLogger(logger *loggingRPC.RPCLogger) Option {
 func WithBeforePlugins(plugins ...BeforeRequestPlugin) Option {
 	return func(r *RPC) { r.beforePlugins = plugins }
 }
+
 func WithAfterPlugins(plugins ...AfterRequestPlugin) Option {
 	return func(r *RPC) { r.afterPlugins = plugins }
 }

@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
+	"net/http"
 	"time"
 
-	pb "github.com/why444216978/gin-api/module/test/job/grpc/helloworld"
-
-	server "github.com/why444216978/gin-api/library/grpc"
-
 	"google.golang.org/grpc"
+
+	"github.com/why444216978/gin-api/library/rpc/grpc/client"
+	"github.com/why444216978/gin-api/library/rpc/grpc/server"
+	pb "github.com/why444216978/gin-api/module/test/job/grpc/helloworld"
 )
 
 const (
@@ -19,7 +19,6 @@ const (
 )
 
 type Server struct {
-	*server.Server
 	pb.UnimplementedGreeterServer
 }
 
@@ -27,65 +26,50 @@ func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloReply{Message: in.Name + " world"}, nil
 }
 
-func registerHTTP(ctx context.Context, s *server.Server) {
-	if err := pb.RegisterGreeterHandler(ctx, s.ServerMux, s.GRPClientConn); err != nil {
+func RegisterServer(s *grpc.Server) {
+	pb.RegisterGreeterServer(s, &Server{})
+}
+
+func StartServer() {
+	httpServer := &http.Server{
+		ReadTimeout:  time.Second,
+		WriteTimeout: time.Second,
+		IdleTimeout:  time.Second,
+	}
+	err := server.New(
+		server.WithEndpoint(endpoint),
+		server.WithRegisterGRPCFunc(RegisterServer),
+		server.WithHTTP(httpServer, pb.RegisterGreeterHandler),
+	).Start()
+	if err != nil {
 		panic(err)
 	}
-}
-
-func registerGRPC(ctx context.Context, s *server.Server) {
-	grpcServer := grpc.NewServer()
-	pb.RegisterGreeterServer(grpcServer, new(Server))
-	if err := grpcServer.Serve(s.GRPCListener); err != nil {
-		panic(err)
-	}
-}
-
-func send(cc *grpc.ClientConn) {
-	client := pb.NewGreeterClient(cc)
-
-	reply, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: "why"})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(reply)
-}
-
-func newClientConn(target string) (*grpc.ClientConn, error) {
-	cc, err := grpc.Dial(
-		target,
-		grpc.WithInsecure(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return cc, nil
 }
 
 func GrpcCmux(ctx context.Context) (err error) {
-	s := server.New(
-		server.WithEndpoint(endpoint),
-		server.WithGRPCregisterFunc(registerGRPC),
-		server.WithHTTPregisterFunc(registerHTTP))
+	go StartServer()
+	call()
+	return
+}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		panic(s.Start())
-		wg.Done()
-	}()
-
-	cc, err := newClientConn(endpoint)
+func call() {
+	cc, err := client.Conn(context.Background(), endpoint)
+	if err != nil {
+		return
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
+	client := pb.NewGreeterClient(cc)
 
 	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
-		send(cc)
+		reply, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: "why"})
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(reply)
 	}
-
-	wg.Wait()
 
 	return
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/why444216978/gin-api/library/lock"
 	"github.com/why444216978/gin-api/library/logging"
 	"github.com/why444216978/gin-api/library/orm"
-	"github.com/why444216978/gin-api/library/rpc/http"
+	httpClient "github.com/why444216978/gin-api/library/rpc/http/client"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 	ServiceLogger *logging.Logger
 	RedisDefault  *redis.Client
 	Etcd          *etcd.Etcd
-	HTTPRPC       *http.RPC
+	ClientHTTP    *httpClient.RPC
 	RedisLock     lock.Locker
 	RedisCache    cache.Cacher
 )

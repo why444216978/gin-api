@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,6 +18,8 @@ import (
 	jobLib "github.com/why444216978/gin-api/library/job"
 	"github.com/why444216978/gin-api/library/registry"
 	"github.com/why444216978/gin-api/library/registry/etcd"
+	"github.com/why444216978/gin-api/library/rpc"
+	"github.com/why444216978/gin-api/library/rpc/http/server"
 	"github.com/why444216978/gin-api/module/test/job/grpc"
 	"github.com/why444216978/gin-api/resource"
 	"github.com/why444216978/gin-api/router"
@@ -30,7 +31,7 @@ var (
 
 type App struct {
 	ctx    context.Context
-	server *http.Server
+	server rpc.RPCServer
 	cancel func()
 }
 
@@ -75,24 +76,20 @@ func newApp() *App {
 
 	initResource(ctx)
 
-	return &App{
+	app := &App{
 		ctx:    ctx,
 		cancel: cancel,
-		server: &http.Server{
-			Addr:         fmt.Sprintf(":%d", config.App.AppPort),
-			Handler:      router.InitRouter(),
-			ReadTimeout:  time.Duration(config.App.ReadTimeout) * time.Millisecond,
-			WriteTimeout: time.Duration(config.App.WriteTimeout) * time.Millisecond,
-		},
 	}
+	app.server = server.New(app.ctx, fmt.Sprintf(":%d", config.App.AppPort), router.InitRouter(),
+		server.WithReadTimeout(time.Duration(config.App.ReadTimeout)*time.Millisecond),
+		server.WithWriteTimeout(time.Duration(config.App.WriteTimeout)*time.Millisecond),
+	)
+
+	return app
 }
 
 func (a *App) start() error {
-	err := a.server.ListenAndServe()
-	if err == http.ErrServerClosed {
-		return nil
-	}
-	return err
+	return a.server.Start()
 }
 
 func (a *App) registerSignal() {
@@ -153,7 +150,7 @@ func (a *App) shutdown() {
 	}
 
 	//server shutdown
-	err := a.server.Shutdown(ctx)
+	err := a.server.Close()
 	if err != nil {
 		log.Println(err)
 	}

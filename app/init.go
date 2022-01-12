@@ -25,7 +25,7 @@ import (
 	"github.com/why444216978/gin-api/library/registry"
 	registryEtcd "github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/library/rpc/codec"
-	"github.com/why444216978/gin-api/library/rpc/http"
+	httpClient "github.com/why444216978/gin-api/library/rpc/http/client"
 	"github.com/why444216978/gin-api/library/servicer"
 	"github.com/why444216978/gin-api/resource"
 )
@@ -55,7 +55,7 @@ func initResource(ctx context.Context) {
 	initJaeger()
 	initEtcd()
 	initServices(ctx)
-	initHTTPRPC()
+	initClientHTTP()
 	initLock()
 	initCache()
 }
@@ -253,7 +253,7 @@ func initServices(ctx context.Context) {
 	return
 }
 
-func initHTTPRPC() {
+func initClientHTTP() {
 	var err error
 	cfg := &loggingRPC.RPCConfig{}
 
@@ -266,10 +266,10 @@ func initHTTPRPC() {
 		panic(err)
 	}
 
-	resource.HTTPRPC = http.New(
-		http.WithCodec(codec.JSONCodec{}),
-		http.WithLogger(rpcLogger),
-		http.WithBeforePlugins(&http.JaegerBeforePlugin{}))
+	resource.ClientHTTP = httpClient.New(
+		httpClient.WithCodec(codec.JSONCodec{}),
+		httpClient.WithLogger(rpcLogger),
+		httpClient.WithBeforePlugins(&httpClient.JaegerBeforePlugin{}))
 	if err != nil {
 		panic(err)
 	}
