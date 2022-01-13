@@ -9,7 +9,7 @@ import (
 
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/app/response"
-	"github.com/why444216978/gin-api/library/logging"
+	"github.com/why444216978/gin-api/library/logger"
 )
 
 func Limiter(maxBurstSize int) gin.HandlerFunc {
@@ -22,7 +22,7 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 
-		fields := logging.ValueHTTPFields(c.Request.Context())
+		fields := logger.ValueHTTPFields(c.Request.Context())
 		fields.Response = map[string]interface{}{
 			"code":   http.StatusServiceUnavailable,
 			"toast":  "服务暂时不可用",
@@ -30,7 +30,7 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 			"errmsg": "服务暂时不可用",
 		}
 		fields.Code = http.StatusInternalServerError
-		ctx = logging.WithHTTPFields(ctx, fields)
+		ctx = logger.WithHTTPFields(ctx, fields)
 
 		c.Request = c.Request.WithContext(ctx)
 
