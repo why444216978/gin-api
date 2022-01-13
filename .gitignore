@@ -5,6 +5,8 @@
 *.swo
 *.tmp
 *.swm
+app/logs/*
+app/log/*
 logs/*
 log/*
 development

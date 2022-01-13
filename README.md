@@ -67,16 +67,44 @@ gRPC
 # 目录结构
 ```
 - gin-api 
-  - app //应用启动
-    - app.go //app启动和优雅关闭
-    - init.go //资源初始化
-  - conf //服务配置文件目录
-    - dev
-    - liantiao
-    - online
-    - qa
-  - config //启动加载配置目录
-    - app.go //应用配置
+  - app //用户应用目录
+    - bootstrap //应用启动
+      - app.go //app启动和优雅关闭
+      - init.go //资源初始化
+    - conf //服务配置文件目录
+      - dev
+      - liantiao
+      - online
+      - qa
+    - config //启动加载配置目录
+      - app.go //应用配置
+    - resource
+      - resource.go //全局资源
+    - response
+      - response.go //http响应
+    - router
+      router.go //路由定义和中间件注册
+    - rpc //三方rpc调用封装
+      - gin-api //gin-api服务
+    - module //各模块核心实现，按照业务边界划分目录
+      - module1 //模块1
+        - api //对外暴露api
+        - job //离线任务
+        - responsitory //存储层
+        - service //核心业务代码
+      - module1 //模块2
+        - api //对外暴露api
+        - job //离线任务
+        - responsitory //存储层
+        - service //核心业务代码
+    - main.go //app入口文件
+  - client
+    - codec //编码
+    - grpc //grpc客户端
+    - http //http客户端
+  - server
+    - grpc //grpc服务端
+    - http //http服务端
   - library //基础组件库，不建议修改
     - apollo //阿波罗
     - cache //分布式缓存
@@ -84,12 +112,10 @@ gRPC
     - endless //endless
     - etcd //etcd
     - grpc //grpc封装
-    - http //http常用工具函数
     - jaeger //jaeger分布式链路追踪
     - job //离线任务
     - lock //分布式锁
-    - logging //日志
-    - middleware //中间件
+    - logger //日志
     - orm //db orm
     - rabbitmq //rabbitmq
     - redis //redis
@@ -99,26 +125,6 @@ gRPC
       - http //http
     - selector //负载均衡器
     - servicer //下游服务
-    - xhop //rpc xhop
-  - resource
-    - resource.go //全局资源
-  - response
-    - response.go //http响应
-  - router
-    router.go //路由定义和中间件注册
-  - rpc //三方rpc调用封装
-    - gin-api //gin-api服务
-  - module //各模块核心实现，按照业务边界划分目录
-    - module1 //模块1
-      - api //对外暴露api
-      - job //离线任务
-      - responsitory //存储层
-      - service //核心业务代码
-    - module1 //模块2
-      - api //对外暴露api
-      - job //离线任务
-      - responsitory //存储层
-      - service //核心业务代码
   .gitignore
   Dockerfile
   LICENSE
@@ -126,7 +132,6 @@ gRPC
   README.md
   go.mod
   go.sum
-  main.go
 ```
 
 # 配置相关
