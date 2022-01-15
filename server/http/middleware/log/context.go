@@ -26,7 +26,6 @@ func InitContext() gin.HandlerFunc {
 			ServerIP:   serverIP,
 			ServerPort: appConfig.App.AppPort,
 			API:        c.Request.RequestURI,
-			Module:     logger.ModuleHTTP,
 		}
 
 		ctx := logger.WithLogID(c.Request.Context(), logID)

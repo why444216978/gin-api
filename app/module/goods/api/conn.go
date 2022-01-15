@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/why444216978/gin-api/app/module/goods/respository"
@@ -46,6 +47,15 @@ func Do(c *gin.Context) {
 	})
 	g.Go(func() (err error) {
 		err = resource.RedisCache.GetData(ctx, "cache_key", time.Hour, time.Hour, GetDataA, data)
+		return
+	})
+	g.Go(func() (err error) {
+		result := make([]*redis.StringCmd, 0)
+		pipe := resource.RedisDefault.Pipeline()
+		result = append(result, pipe.Get(ctx, "test"))
+		result = append(result, pipe.Get(ctx, "test"))
+		result = append(result, pipe.Get(ctx, "test"))
+		_, _ = pipe.Exec(ctx)
 		return
 	})
 	err = g.Wait()

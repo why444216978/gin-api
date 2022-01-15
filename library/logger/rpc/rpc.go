@@ -90,7 +90,7 @@ func (rl *RPCLogger) fields(ctx context.Context, fields RPCLogFields) (context.C
 	newCtx = logger.WithHTTPFields(newCtx, logFields)
 
 	return newCtx, []zap.Field{
-		zap.String("service_name", fields.ServiceName),
-		zap.Duration("timeout", fields.Timeout),
+		zap.String(logger.SericeName, fields.ServiceName),
+		zap.Duration(logger.Timeout, fields.Timeout),
 	}
 }

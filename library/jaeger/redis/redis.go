@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/why444216978/gin-api/library/jaeger"
 
@@ -12,12 +13,16 @@ import (
 )
 
 const (
-	componentRedis                        = "Redis"
-	ctxKey                         string = "redis_span"
-	redisCmdName                   string = "command"
-	redisCmdArgs                   string = "args"
-	redisCmdResult                 string = "result"
-	ErrNumberOfConnectionsExceeded string = "ERR max number of clients reached"
+	operationRedis = "Redis-"
+	logCmdName     = "command"
+	logCmdArgs     = "args"
+	logCmdResult   = "result"
+)
+
+type contextKey int
+
+const (
+	cmdStart contextKey = iota
 )
 
 // jaegerHook is go-redis jaeger hook
@@ -33,13 +38,11 @@ func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 	if jaeger.Tracer == nil {
 		return ctx, nil
 	}
-	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, componentRedis)
-	if span == nil {
-		return ctx, nil
-	}
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, operationRedis+cmd.Name())
+
 	jaeger.SetCommonTag(ctx, span)
 
-	ctx = context.WithValue(ctx, ctxKey, span)
+	ctx = context.WithValue(ctx, cmdStart, span)
 	return ctx, nil
 }
 
@@ -48,21 +51,20 @@ func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if jaeger.Tracer == nil {
 		return nil
 	}
-	_span := ctx.Value(ctxKey)
-	span, ok := _span.(opentracing.Span)
+	span, ok := ctx.Value(cmdStart).(opentracing.Span)
 	if !ok {
 		return nil
 	}
 	defer span.Finish()
 
+	span.LogFields(tracerLog.String(logCmdName, cmd.Name()))
+	span.LogFields(tracerLog.Object(logCmdArgs, cmd.Args()))
+	span.LogFields(tracerLog.Object(logCmdResult, cmd.String()))
+
 	if err := cmd.Err(); isRedisError(err) {
 		span.LogFields(tracerLog.Error(err))
 		span.SetTag(string(ext.Error), true)
 	}
-
-	span.LogFields(tracerLog.String(redisCmdName, cmd.Name()))
-	span.LogFields(tracerLog.Object(redisCmdArgs, cmd.Args()))
-	span.LogFields(tracerLog.Object(redisCmdResult, cmd.String()))
 
 	return nil
 }
@@ -72,11 +74,11 @@ func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cm
 	if jaeger.Tracer == nil {
 		return ctx, nil
 	}
-	for _, cmd := range cmds {
-		_ = cmd
-		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, componentRedis)
-		ctx = context.WithValue(ctx, ctxKey, span)
-	}
+
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, operationRedis+"pipeline")
+
+	ctx = context.WithValue(ctx, cmdStart, span)
+
 	return ctx, nil
 }
 
@@ -85,22 +87,32 @@ func (jh *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmd
 	if jaeger.Tracer == nil {
 		return nil
 	}
-	for _, cmd := range cmds {
-		_span := ctx.Value(ctxKey)
-		span, ok := _span.(opentracing.Span)
-		if !ok {
-			return nil
-		}
-		if err := cmd.Err(); isRedisError(err) {
-			span.LogFields(tracerLog.Error(err))
-			span.SetTag(string(ext.Error), true)
-		}
-		span.LogFields(tracerLog.String(redisCmdName, cmd.Name()))
-		span.LogFields(tracerLog.Object(redisCmdArgs, cmd.Args()))
-		span.LogFields(tracerLog.String(redisCmdResult, cmd.String()))
-		span.Finish()
+
+	span, ok := ctx.Value(cmdStart).(opentracing.Span)
+	if !ok {
+		return nil
 	}
+	defer span.Finish()
+
+	hasErr := false
+	for idx, cmd := range cmds {
+		if err := cmd.Err(); isRedisError(err) {
+			hasErr = true
+		}
+		span.LogFields(tracerLog.String(jh.getPipeLineLogKey(logCmdName, idx), cmd.Name()))
+		span.LogFields(tracerLog.Object(jh.getPipeLineLogKey(logCmdArgs, idx), cmd.Args()))
+		span.LogFields(tracerLog.String(jh.getPipeLineLogKey(logCmdResult, idx), cmd.String()))
+	}
+	if !hasErr {
+		return nil
+	}
+	span.SetTag(string(ext.Error), true)
+
 	return nil
+}
+
+func (jh *jaegerHook) getPipeLineLogKey(logField string, idx int) string {
+	return logField + "-" + strconv.Itoa(idx)
 }
 
 // redisError interface

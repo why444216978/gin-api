@@ -67,7 +67,7 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     zapLever,
-	}, logger.WithModule(logger.ModuleMySQL), logger.WithServiceName(logger.ModuleMySQL))
+	}, logger.WithModule(logger.ModuleMySQL), logger.WithServiceName(cfg.ServiceName))
 	if err != nil {
 		return
 	}
@@ -119,7 +119,6 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 		zap.String(logger.API, api),
 		zap.String(logger.ClientIP, logFields.ServerIP),
 		zap.Int(logger.ClientPort, logFields.ServerPort),
-		zap.String(logger.SericeName, l.Config.ServiceName),
 	}
 
 	switch {

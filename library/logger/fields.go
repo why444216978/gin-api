@@ -28,11 +28,11 @@ const (
 	ClientPort = "client_port"
 	ServerIP   = "server_ip"
 	ServerPort = "server_port"
-	Port       = "port"
 	API        = "api"
 	Cost       = "cost"
 	Module     = "module"
 	SericeName = "service_name"
+	Timeout    = "timeout"
 	Trace      = "trace"
 )
 
@@ -50,6 +50,4 @@ type Fields struct {
 	ServerPort int         `json:"server_port"`
 	API        string      `json:"api"`
 	Cost       int64       `json:"cost"`
-	Module     string      `json:"module"`
-	// Trace    interface{} `json:"trace"`
 }
