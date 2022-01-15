@@ -120,9 +120,6 @@ gRPC
     - rabbitmq //rabbitmq
     - redis //redis
     - registry //注册中心
-    - rpc //rpc调用封装
-      - grpc //grpc
-      - http //http
     - selector //负载均衡器
     - servicer //下游服务
   .gitignore
