@@ -1,4 +1,4 @@
-package jaeger
+package redis
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/why444216978/gin-api/library/jaeger"
 )
 

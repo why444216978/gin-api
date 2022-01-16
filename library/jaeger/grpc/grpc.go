@@ -1,17 +1,17 @@
-package jaeger
+package grpc
 
 import (
 	"context"
 	"errors"
 	"strings"
 
-	"github.com/why444216978/gin-api/library/jaeger"
-
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/why444216978/gin-api/library/jaeger"
 )
 
 type MDReaderWriter struct {

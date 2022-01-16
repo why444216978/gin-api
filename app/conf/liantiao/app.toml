@@ -1,6 +1,7 @@
 AppName = "gin-api-liantiao"
 AppPort = 888
 Pprof = true
+IsDebug = true
 ContextTimeout = 100000
 ReadTimeout =  100000
 WriteTimeout =  100000

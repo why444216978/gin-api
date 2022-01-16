@@ -69,9 +69,6 @@ func (rl *RPCLogger) Error(ctx context.Context, msg string, fields RPCLogFields)
 }
 
 func (rl *RPCLogger) fields(ctx context.Context, fields RPCLogFields) (context.Context, []zap.Field) {
-	//添加通用header
-	fields.Header.Add(logger.LogHeader, logger.ValueLogID(ctx))
-
 	logFields := logger.ValueHTTPFields(ctx)
 
 	logFields.Header = fields.Header

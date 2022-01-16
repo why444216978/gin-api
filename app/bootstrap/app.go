@@ -87,6 +87,7 @@ func newApp() *App {
 			logMiddleware.LoggerMiddleware(),
 		),
 		httpServer.WithPprof(config.App.Pprof),
+		httpServer.WithDebug(config.App.IsDebug),
 	)
 
 	return app

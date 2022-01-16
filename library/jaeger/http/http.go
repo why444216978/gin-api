@@ -1,19 +1,24 @@
-package jaeger
+package http
 
 import (
 	"context"
+	"errors"
 	"net/http"
-
-	"github.com/why444216978/gin-api/library/jaeger"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	opentracing_log "github.com/opentracing/opentracing-go/log"
+	opentracingLog "github.com/opentracing/opentracing-go/log"
+
+	"github.com/why444216978/gin-api/library/jaeger"
 )
 
 const (
 	httpClientComponentPrefix = "HTTP-Client-"
 	httpServerComponentPrefix = "HTTP-Server-"
+)
+
+var (
+	ErrTracerNil = errors.New("Tracer is nil")
 )
 
 // ExtractHTTP is used to extract span context by HTTP middleware
@@ -26,7 +31,7 @@ func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.
 
 	parentSpanContext, err := jaeger.Tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	if parentSpanContext == nil || err == opentracing.ErrSpanContextNotFound {
-		span, ctx = opentracing.StartSpanFromContext(ctx, httpServerComponentPrefix+req.URL.Path)
+		span, ctx = opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, httpServerComponentPrefix+req.URL.Path, ext.SpanKindRPCServer)
 	} else {
 		span = jaeger.Tracer.StartSpan(
 			httpServerComponentPrefix+req.URL.Path,
@@ -38,15 +43,15 @@ func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.
 	span.SetTag(jaeger.FieldLogID, logID)
 	jaeger.SetCommonTag(ctx, span)
 
-	ctx = context.WithValue(opentracing.ContextWithSpan(ctx, span), jaeger.ParentSpanContextKey, span.Context())
+	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return ctx, span, jaeger.GetSpanID(span)
 }
 
 // InjectHTTP is used to inject HTTP span
-func InjectHTTP(ctx context.Context, req *http.Request, logID string) {
+func InjectHTTP(ctx context.Context, req *http.Request, logID string) error {
 	if jaeger.Tracer == nil {
-		return
+		return ErrTracerNil
 	}
 
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, httpClientComponentPrefix+req.URL.Path, ext.SpanKindRPCClient)
@@ -55,15 +60,10 @@ func InjectHTTP(ctx context.Context, req *http.Request, logID string) {
 	span.SetTag(jaeger.FieldLogID, logID)
 	jaeger.SetCommonTag(ctx, span)
 
-	err := jaeger.Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	if err != nil {
-		span.LogFields(opentracing_log.String("inject-next-error", err.Error()))
-	}
-
-	return
+	return jaeger.Tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 }
 
 func SetHTTPLog(span opentracing.Span, req, resp string) {
-	span.LogFields(opentracing_log.Object(jaeger.LogFieldsRequest, string(req)))
-	span.LogFields(opentracing_log.Object(jaeger.LogFieldsResponse, string(resp)))
+	span.LogFields(opentracingLog.Object(jaeger.LogFieldsRequest, string(req)))
+	span.LogFields(opentracingLog.Object(jaeger.LogFieldsResponse, string(resp)))
 }

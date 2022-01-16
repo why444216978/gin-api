@@ -21,7 +21,7 @@ type JaegerBeforePlugin struct{}
 var _ BeforeRequestPlugin = (*JaegerBeforePlugin)(nil)
 
 func (*JaegerBeforePlugin) Handle(ctx context.Context, req *http.Request) error {
-	jaeger.InjectHTTP(ctx, req, req.Header.Get(logger.LogHeader))
-
-	return nil
+	logID := logger.ValueLogID(ctx)
+	req.Header.Add(logger.LogHeader, logID)
+	return jaeger.InjectHTTP(ctx, req, logID)
 }

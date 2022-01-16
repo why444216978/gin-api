@@ -1,12 +1,12 @@
-package jaeger
+package gorm
 
 import (
-	"github.com/why444216978/gin-api/library/jaeger"
-
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracing_log "github.com/opentracing/opentracing-go/log"
 	"gorm.io/gorm"
+
+	"github.com/why444216978/gin-api/library/jaeger"
 )
 
 //gorm hook
@@ -40,9 +40,10 @@ func after(db *gorm.DB) {
 	if !ok {
 		return
 	}
+	defer span.Finish()
+
 	jaeger.SetCommonTag(db.Statement.Context, span)
 
-	defer span.Finish()
 	if db.Error != nil {
 		span.LogFields(opentracing_log.Error(db.Error))
 		span.SetTag(string(ext.Error), true)
@@ -52,15 +53,15 @@ func after(db *gorm.DB) {
 	return
 }
 
-type OpentracingPlugin struct{}
+type opentracingPlugin struct{}
 
-var GormTrace gorm.Plugin = &OpentracingPlugin{}
+var GormTrace gorm.Plugin = &opentracingPlugin{}
 
-func (op *OpentracingPlugin) Name() string {
+func (op *opentracingPlugin) Name() string {
 	return "opentracingPlugin"
 }
 
-func (op *OpentracingPlugin) Initialize(db *gorm.DB) (err error) {
+func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 	//create
 	if err = db.Callback().Create().Before("gorm:before_create").Register(callBackBeforeName, before); err != nil {
 		return err

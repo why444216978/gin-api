@@ -1,6 +1,7 @@
 AppName = "gin-api-online"
 AppPort = 1000
 Pprof = false
+IsDebug = false
 ContextTimeout = 100000
 ReadTimeout =  100000
 WriteTimeout =  100000

@@ -18,6 +18,7 @@ type Server struct {
 	middlewares        []gin.HandlerFunc
 	registerRouterFunc RegisterRouter
 	pprofTurn          bool
+	isDebug            bool
 }
 
 var _ server.RPCServer = (*Server)(nil)
@@ -44,6 +45,10 @@ func WithRegisterRouter(f RegisterRouter) Option {
 
 func WithPprof(pprofTurn bool) Option {
 	return func(s *Server) { s.pprofTurn = pprofTurn }
+}
+
+func WithDebug(isDebug bool) Option {
+	return func(s *Server) { s.isDebug = isDebug }
 }
 
 func New(ctx context.Context, addr string, opts ...Option) *Server {
@@ -77,6 +82,10 @@ func (s *Server) Close() (err error) {
 
 func (s *Server) initHandler() *gin.Engine {
 	server := gin.New()
+
+	if !s.isDebug {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	s.startPprof(server)
 

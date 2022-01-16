@@ -1,4 +1,4 @@
-package jaeger
+package redis
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 
 	jaeger.SetCommonTag(ctx, span)
 
-	ctx = context.WithValue(ctx, cmdStart, span)
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	return ctx, nil
 }
 
@@ -51,8 +51,8 @@ func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if jaeger.Tracer == nil {
 		return nil
 	}
-	span, ok := ctx.Value(cmdStart).(opentracing.Span)
-	if !ok {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
 		return nil
 	}
 	defer span.Finish()
