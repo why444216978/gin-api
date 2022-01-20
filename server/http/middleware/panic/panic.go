@@ -1,7 +1,6 @@
 package panic
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 
@@ -12,16 +11,6 @@ import (
 	"github.com/why444216978/gin-api/app/response"
 	"github.com/why444216978/gin-api/library/logger"
 )
-
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
 
 func ThrowPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {

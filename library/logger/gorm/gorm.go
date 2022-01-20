@@ -111,8 +111,8 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	}
 
 	fields := []zapcore.Field{
-		zap.String(logger.LogID, logger.ValueTraceID(ctx)),
-		zap.String(logger.TraceID, logger.ValueLogID(ctx)),
+		zap.String(logger.LogID, logger.ValueLogID(ctx)),
+		zap.String(logger.TraceID, logger.ValueTraceID(ctx)),
 		zap.Int64(logger.Cost, elapsed.Milliseconds()),
 		zap.String(logger.Request, sql),
 		zap.Int64(logger.Response, rows),

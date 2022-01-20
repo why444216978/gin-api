@@ -83,7 +83,6 @@ func newApp() *App {
 		httpServer.WithMiddlewares(
 			panicMiddleware.ThrowPanic(),
 			timeoutMiddleware.TimeoutMiddleware(time.Duration(config.App.ContextTimeout)*time.Millisecond),
-			logMiddleware.InitContext(),
 			logMiddleware.LoggerMiddleware(),
 		),
 		httpServer.WithPprof(config.App.Pprof),

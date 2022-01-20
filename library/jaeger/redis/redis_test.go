@@ -170,7 +170,7 @@ func Test_jaegerHook_AfterProcessPipeline(t *testing.T) {
 func Test_jaegerHook_getPipeLineLogKey(t *testing.T) {
 	convey.Convey("Test_jaegerHook_getPipeLineLogKey", t, func() {
 		convey.Convey("success", func() {
-			assert.Equal(t, NewJaegerHook().getPipeLineLogKey("a", 1), "a-1")
+			assert.Equal(t, (&jaegerHook{}).getPipeLineLogKey("a", 1), "a-1")
 		})
 	})
 }

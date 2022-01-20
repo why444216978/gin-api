@@ -2,69 +2,97 @@ package log
 
 import (
 	"bytes"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/why444216978/go-util/conversion"
+	"github.com/why444216978/go-util/sys"
 
+	appConfig "github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/resource"
 	jaegerHTTP "github.com/why444216978/gin-api/library/jaeger/http"
 	"github.com/why444216978/gin-api/library/logger"
+	loggerHTTP "github.com/why444216978/gin-api/library/logger/http"
+	"github.com/why444216978/gin-api/server/http/util"
 )
-
-//定义新的struck，继承gin的ResponseWriter
-//添加body字段，用于将response暴露给日志
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-//gin的ResponseWriter继承的底层http server
-//实现http的Write方法，额外添加一个body字段，用于获取response body
-func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
 
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		defer func() {
+			c.Request = c.Request.WithContext(ctx)
+		}()
+
 		start := time.Now()
 
-		responseWriter := &bodyLogWriter{body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
-		c.Writer = responseWriter
+		serverIP, _ := sys.LocalIP()
 
-		ctx := c.Request.Context()
+		logID := loggerHTTP.ExtractLogID(c.Request)
+		ctx = logger.WithLogID(ctx, logID)
+
+		req := loggerHTTP.GetRequestBody(c.Request)
+
+		responseWriter := &util.BodyWriter{Body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
+		c.Writer = responseWriter
 
 		ctx, span, traceID := jaegerHTTP.ExtractHTTP(ctx, c.Request, logger.ValueLogID(ctx))
 		defer span.Finish()
-
 		ctx = logger.WithTraceID(ctx, traceID)
-		ctx = logger.AddTraceID(ctx, traceID)
 
-		//这里需要写入ctx，否则会断开
+		fields := logger.Fields{
+			LogID:      logID,
+			TraceID:    traceID,
+			Header:     c.Request.Header,
+			Method:     c.Request.Method,
+			Request:    req,
+			Response:   make(map[string]interface{}),
+			ClientIP:   c.ClientIP(),
+			ClientPort: 0,
+			ServerIP:   serverIP,
+			ServerPort: appConfig.App.AppPort,
+			API:        c.Request.RequestURI,
+		}
+		// Next之前这里需要写入ctx，否则会丢失log、断开trace
+		ctx = logger.WithHTTPFields(ctx, fields)
 		c.Request = c.Request.WithContext(ctx)
+
+		var doneFlag int32
+		done := make(chan struct{}, 1)
+		defer func() {
+			done <- struct{}{}
+			atomic.StoreInt32(&doneFlag, 1)
+
+			resp := responseWriter.Body.Bytes()
+			respString := string(resp)
+			if responseWriter.Body.Len() > 0 {
+				fields.Response, _ = conversion.JsonToMap(respString)
+			}
+
+			reqString, _ := conversion.JsonEncode(req)
+			jaegerHTTP.SetHTTPLog(span, reqString, respString)
+
+			fields.Code = c.Writer.Status()
+			fields.Cost = time.Since(start).Milliseconds()
+			ctx = logger.WithHTTPFields(ctx, fields)
+			resource.ServiceLogger.Info(ctx, "request info")
+		}()
+
+		go func() {
+			select {
+			case <-done:
+			case <-ctx.Done():
+				if atomic.LoadInt32(&doneFlag) == 1 {
+					return
+				}
+				fields.Code = 499
+				fields.Cost = time.Since(start).Milliseconds()
+				ctx = logger.WithHTTPFields(ctx, fields)
+				resource.ServiceLogger.Warn(ctx, "client canceled")
+			}
+		}()
 
 		c.Next()
-
-		fields := logger.ValueHTTPFields(ctx)
-
-		//resp处理
-		resp := responseWriter.body.String()
-		respMap, _ := conversion.JsonToMap(resp)
-
-		//span写入req和resp
-		req, _ := conversion.JsonEncode(fields.Request)
-		jaegerHTTP.SetHTTPLog(span, string(req), resp)
-
-		//追加fields
-		fields.Response = respMap
-		fields.Code = c.Writer.Status()
-		fields.Cost = time.Since(start).Milliseconds()
-
-		ctx = logger.WithHTTPFields(ctx, fields)
-
-		resource.ServiceLogger.Info(ctx, "request info")
-
-		c.Request = c.Request.WithContext(ctx)
 	}
 }
