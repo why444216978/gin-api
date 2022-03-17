@@ -34,8 +34,8 @@ func Limiter(maxBurstSize int) gin.HandlerFunc {
 
 		c.Request = c.Request.WithContext(ctx)
 
-		resource.ServiceLogger.Error(ctx, "panic") //这里不能打Fatal和Panic，否则程序会退出
-		response.Response(c, response.CodeUnavailable, nil, "")
+		resource.ServiceLogger.Error(ctx, "panic") // 这里不能打Fatal和Panic，否则程序会退出
+		response.ResponseJSON(c, response.CodeUnavailable, nil, "")
 		c.AbortWithStatus(http.StatusInternalServerError)
 
 		return

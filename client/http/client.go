@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/valyala/bytebufferpool"
+	"github.com/why444216978/go-util/assert"
 
 	"github.com/why444216978/gin-api/client/codec"
 	loggerRPC "github.com/why444216978/gin-api/library/logger/rpc"
@@ -56,7 +57,7 @@ func New(opts ...Option) *RPC {
 		o(r)
 	}
 
-	if r.codec == nil {
+	if assert.IsNil(r.codec) {
 		panic("codec is nil")
 	}
 
@@ -109,7 +110,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		req    *http.Request
 	)
 
-	service, ok := servicer.Servicers[serviceName]
+	service, ok := servicer.GetServicer(serviceName)
 	if !ok {
 		err = errors.New("service is nil")
 		return
@@ -120,41 +121,41 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		return
 	}
 
-	//构建req
+	// 构建req
 	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), bytes.NewReader(reqByte))
 	if err != nil {
 		return
 	}
 
-	//超时传递
+	// 超时传递
 	remain, err := timeoutLib.CalcRemainTimeout(ctx)
 	if err != nil {
 		return
 	}
 	header.Set(timeoutLib.TimeoutKey, strconv.FormatInt(remain, 10))
 
-	//设置请求header
+	// 设置请求header
 	req.Header = header
 
-	//请求结束前插件
+	// 请求结束前插件
 	for _, plugin := range r.beforePlugins {
 		_ = plugin.Handle(ctx, req)
 	}
 
-	//请求开始时间
+	// 请求开始时间
 	start := time.Now()
 
-	//判断是否cancel
+	// 判断是否cancel
 	if err = ctx.Err(); err != nil {
 		return
 	}
 
-	//发送请求
+	// 发送请求
 	resp, err := client.Do(req)
 
 	_ = service.Done(ctx, node, err)
 
-	//请求结束后插件
+	// 请求结束后插件
 	for _, plugin := range r.afterPlugins {
 		_ = plugin.Handle(ctx, req, resp)
 	}

@@ -7,9 +7,10 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/why444216978/gin-api/library/jaeger"
+	"github.com/why444216978/go-util/assert"
 )
 
-//gorm hook
+// gorm hook
 const (
 	componentGorm      = "Gorm"
 	gormSpanKey        = "gorm_span"
@@ -17,9 +18,9 @@ const (
 	callBackAfterName  = "opentracing:after"
 )
 
-//before gorm before execute action do something
+// before gorm before execute action do something
 func before(db *gorm.DB) {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return
 	}
 	span, _ := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, jaeger.Tracer, componentGorm)
@@ -27,9 +28,9 @@ func before(db *gorm.DB) {
 	return
 }
 
-//after gorm after execute action do something
+// after gorm after execute action do something
 func after(db *gorm.DB) {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return
 	}
 	_span, isExist := db.InstanceGet(gormSpanKey)
@@ -62,7 +63,7 @@ func (op *opentracingPlugin) Name() string {
 }
 
 func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
-	//create
+	// create
 	if err = db.Callback().Create().Before("gorm:before_create").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//query
+	// query
 	if err = db.Callback().Query().Before("gorm:query").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -78,7 +79,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//delete
+	// delete
 	if err = db.Callback().Delete().Before("gorm:before_delete").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//update
+	// update
 	if err = db.Callback().Update().Before("gorm:before_update").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -94,7 +95,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//row
+	// row
 	if err = db.Callback().Row().Before("gorm:row").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//raw
+	// raw
 	if err = db.Callback().Raw().Before("gorm:raw").Register(callBackBeforeName, before); err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func (op *opentracingPlugin) Initialize(db *gorm.DB) (err error) {
 		return err
 	}
 
-	//associations
+	// associations
 	if err = db.Callback().Raw().Before("gorm:save_before_associations").Register(callBackBeforeName, before); err != nil {
 		return err
 	}

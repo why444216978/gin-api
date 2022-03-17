@@ -23,17 +23,10 @@ func Do(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	defer func() {
-		if err != nil {
-			resource.ServiceLogger.Error(ctx, err.Error())
-			response.Response(c, response.CodeServer, goods, err.Error())
-			return
-		}
-		response.Response(c, response.CodeSuccess, goods, "")
-	}()
-
 	goods, err = goodsService.Instance.CrudGoods(ctx)
 	if err != nil {
+		resource.ServiceLogger.Error(ctx, err.Error())
+		response.ResponseJSON(c, response.CodeServer, goods, err.Error())
 		return
 	}
 
@@ -60,9 +53,12 @@ func Do(c *gin.Context) {
 	})
 	err = g.Wait()
 	if err != nil {
+		resource.ServiceLogger.Error(ctx, err.Error())
+		response.ResponseJSON(c, response.CodeServer, goods, err.Error())
 		return
 	}
 
+	response.ResponseJSON(c, response.CodeSuccess, goods, "")
 }
 
 type Data struct {

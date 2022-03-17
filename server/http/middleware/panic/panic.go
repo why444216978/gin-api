@@ -36,8 +36,8 @@ func ThrowPanic() gin.HandlerFunc {
 				ctx := logger.WithHTTPFields(c.Request.Context(), fields)
 				c.Request = c.Request.WithContext(ctx)
 
-				resource.ServiceLogger.Error(ctx, fmt.Sprintf("%s", err), zap.Reflect("data", fields)) //这里不能打Fatal和Panic，否则程序会退出
-				response.Response(c, response.CodeServer, nil, "")
+				resource.ServiceLogger.Error(ctx, fmt.Sprintf("%s", err), zap.Reflect("data", fields)) // 这里不能打Fatal和Panic，否则程序会退出
+				response.ResponseJSON(c, response.CodeServer, nil, "")
 				c.AbortWithStatus(http.StatusInternalServerError)
 
 				//subject := fmt.Sprintf("【重要错误】%s 项目出错了！", "go-gin")

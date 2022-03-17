@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/why444216978/go-util/assert"
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/sys"
 
@@ -38,7 +39,9 @@ func LoggerMiddleware() gin.HandlerFunc {
 		c.Writer = responseWriter
 
 		ctx, span, traceID := jaegerHTTP.ExtractHTTP(ctx, c.Request, logger.ValueLogID(ctx))
-		defer span.Finish()
+		if !assert.IsNil(span) {
+			defer span.Finish()
+		}
 		ctx = logger.WithTraceID(ctx, traceID)
 
 		fields := logger.Fields{

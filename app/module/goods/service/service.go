@@ -4,12 +4,13 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/why444216978/gin-api/app/module/goods/respository"
-	"github.com/why444216978/gin-api/app/resource"
-	"github.com/why444216978/go-util/orm"
-
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
+	"github.com/why444216978/go-util/assert"
+	"github.com/why444216978/go-util/orm"
+
+	"github.com/why444216978/gin-api/app/module/goods/respository"
+	"github.com/why444216978/gin-api/app/resource"
 )
 
 type GoodsInterface interface {
@@ -42,6 +43,10 @@ func (gs *GoodsService) GetGoodsName(ctx context.Context, id int) (string, error
 }
 
 func (gs *GoodsService) CrudGoods(ctx context.Context) (goods respository.Test, err error) {
+	if assert.IsNil(resource.TestDB) {
+		err = errors.New("db is nil")
+		return
+	}
 	db := resource.TestDB.DB.WithContext(ctx).Begin()
 
 	defer func() {

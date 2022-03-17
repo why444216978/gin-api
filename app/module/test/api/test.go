@@ -14,11 +14,11 @@ func Rpc(c *gin.Context) {
 	time.Sleep(time.Millisecond * 30)
 	ret, err := gin_api.RPC(c.Request.Context())
 	if err != nil {
-		response.Response(c, response.CodeServer, ret, err.Error())
+		response.ResponseJSON(c, response.CodeServer, ret, err.Error())
 		return
 	}
 
-	response.Response(c, response.CodeSuccess, ret, "")
+	response.ResponseJSON(c, response.CodeSuccess, ret, "")
 }
 
 type RPC1Request struct {
@@ -29,17 +29,17 @@ func Rpc1(c *gin.Context) {
 	time.Sleep(time.Millisecond * 99)
 	var req RPC1Request
 	if err := http.ParseAndValidateBody(c.Request, &req); err != nil {
-		response.Response(c, response.CodeParams, nil, err.Error())
+		response.ResponseJSON(c, response.CodeParams, nil, err.Error())
 		return
 	}
 
 	ret, err := gin_api.RPC1(c.Request.Context())
 	if err != nil {
-		response.Response(c, response.CodeServer, ret, err.Error())
+		response.ResponseJSON(c, response.CodeServer, ret, err.Error())
 		return
 	}
 
-	response.Response(c, response.CodeSuccess, ret, "")
+	response.ResponseJSON(c, response.CodeSuccess, ret, "")
 }
 
 func Panic(c *gin.Context) {

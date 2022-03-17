@@ -68,9 +68,6 @@ gRPC
 ```
 - gin-api 
   - app //用户应用目录
-    - bootstrap //应用启动
-      - app.go //app启动和优雅关闭
-      - init.go //资源初始化
     - conf //服务配置文件目录
       - dev
       - liantiao
@@ -78,6 +75,7 @@ gRPC
       - qa
     - config //启动加载配置目录
       - app.go //应用配置
+    - loader //资源加载
     - resource
       - resource.go //全局资源
     - response
@@ -98,6 +96,7 @@ gRPC
         - responsitory //存储层
         - service //核心业务代码
     - main.go //app入口文件
+  - bootstrap //应用启动
   - client
     - codec //编码
     - grpc //grpc客户端
@@ -180,7 +179,7 @@ CREATE TABLE `test` (
 ```
 
 ```
-[why@localhost] ~/Desktop/go/gin-api$go run main.go -env dev
+[why@localhost] ~/Desktop/go/gin-api/app$go run main.go -env dev
 Actual pid is 34592
 The environment is :dev
 [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.

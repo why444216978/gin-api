@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	util_ctx "github.com/why444216978/go-util/context"
+	"github.com/why444216978/go-util/assert"
+	utilCtx "github.com/why444216978/go-util/context"
 	"github.com/why444216978/go-util/snowflake"
 
 	"github.com/why444216978/gin-api/library/cache"
@@ -22,11 +23,11 @@ type RedisCache struct {
 var _ cache.Cacher = (*RedisCache)(nil)
 
 func New(c *redis.Client, locker lock.Locker) (*RedisCache, error) {
-	if c == nil {
+	if assert.IsNil(c) {
 		return nil, errors.New("redis is nil")
 	}
 
-	if locker == nil {
+	if assert.IsNil(locker) {
 		return nil, errors.New("locker is nil")
 	}
 
@@ -57,7 +58,7 @@ func (rc *RedisCache) GetData(ctx context.Context, key string, ttl time.Duration
 		return
 	}
 
-	ctxNew := util_ctx.RemoveCancel(ctx)
+	ctxNew := utilCtx.RemoveCancel(ctx)
 	go rc.FlushCache(ctxNew, key, ttl, virtualTTL, f, data)
 
 	return
@@ -67,8 +68,8 @@ func (rc *RedisCache) FlushCache(ctx context.Context, key string, ttl time.Durat
 	lockKey := "LOCK::" + key
 	random := snowflake.Generate().String()
 
-	//获取锁，自旋三次
-	//TODO 这里可优化为客户端传入控制
+	// 获取锁，自旋三次
+	// TODO 这里可优化为客户端传入控制
 	try := 0
 	for {
 		try = try + 1

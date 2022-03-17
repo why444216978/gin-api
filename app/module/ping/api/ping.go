@@ -8,13 +8,14 @@ import (
 )
 
 func Ping(c *gin.Context) {
-	response.Response(c, response.CodeSuccess, nil, "")
+	response.ResponseJSON(c, response.CodeSuccess, nil, "")
 }
+
 func RPC(c *gin.Context) {
 	ret, err := gin_api.Ping(c.Request.Context())
 	if err != nil {
-		response.Response(c, response.CodeServer, ret, err.Error())
+		response.ResponseJSON(c, response.CodeServer, ret, err.Error())
 		return
 	}
-	response.Response(c, response.CodeSuccess, nil, "")
+	response.ResponseJSON(c, response.CodeSuccess, nil, "")
 }

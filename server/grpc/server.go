@@ -8,6 +8,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/soheilhy/cmux"
+	"github.com/why444216978/go-util/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -28,7 +29,7 @@ var kasp = keepalive.ServerParameters{
 	Timeout:               1 * time.Second,  // Wait 1 second for the ping ack before assuming the connection is dead
 }
 
-var _ server.RPCServer = (*Server)(nil)
+var _ server.Server = (*Server)(nil)
 
 type Server struct {
 	ctx          context.Context
@@ -39,8 +40,10 @@ type Server struct {
 	tcpMux       cmux.CMux
 }
 
-type RegisterGRPC func(s *grpc.Server)
-type RegisterHTTP func(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error
+type (
+	RegisterGRPC func(s *grpc.Server)
+	RegisterHTTP func(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error
+)
 
 type Option func(*Server)
 
@@ -69,7 +72,7 @@ func New(opts ...Option) *Server {
 		o(s)
 	}
 
-	if s.registerGRPC == nil {
+	if assert.IsNil(s.registerGRPC) {
 		panic("registerGRPC is nil")
 	}
 
@@ -105,11 +108,11 @@ func (s *Server) startHTTP() (err error) {
 		}
 	}()
 
-	if s.registerHTTP == nil {
+	if assert.IsNil(s.registerHTTP) {
 		return
 	}
 
-	if s.httpServer == nil {
+	if assert.IsNil(s.httpServer) {
 		panic("httpServer is nil")
 	}
 

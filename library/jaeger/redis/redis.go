@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/why444216978/gin-api/library/jaeger"
+	"github.com/why444216978/go-util/assert"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
@@ -35,7 +36,7 @@ func NewJaegerHook() redis.Hook {
 
 // BeforeProcess redis before execute action do something
 func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return ctx, nil
 	}
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, operationRedis+cmd.Name())
@@ -48,11 +49,11 @@ func (jh *jaegerHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (conte
 
 // AfterProcess redis after execute action do something
 func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return nil
 	}
 	span := opentracing.SpanFromContext(ctx)
-	if span == nil {
+	if assert.IsNil(span) {
 		return nil
 	}
 	defer span.Finish()
@@ -71,7 +72,7 @@ func (jh *jaegerHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 
 // BeforeProcessPipeline before command process handle
 func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return ctx, nil
 	}
 
@@ -84,7 +85,7 @@ func (jh *jaegerHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cm
 
 // AfterProcessPipeline after command process handle
 func (jh *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return nil
 	}
 
