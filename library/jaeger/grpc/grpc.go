@@ -8,6 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/why444216978/go-util/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -40,7 +41,7 @@ func (c MDReaderWriter) Set(key, val string) {
 func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		if jaeger.Tracer == nil {
+		if assert.IsNil(jaeger.Tracer) {
 			return errors.New("jaeger client is nil")
 		}
 

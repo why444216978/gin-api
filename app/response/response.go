@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/why444216978/gin-api/library/logger"
+	"github.com/why444216978/gin-api/server/http/response"
 )
 
 const (
@@ -26,29 +26,11 @@ var codeText = map[uint64]string{
 	CodeServer:      "服务器错误",
 }
 
-type response struct {
-	Code    uint64      `json:"code"`
-	Toast   string      `json:"toast"`
-	Data    interface{} `json:"data"`
-	ErrMsg  string      `json:"errmsg"`
-	TraceID string      `json:"trace_id"`
-}
-
-func Response(c *gin.Context, code uint64, data interface{}, errmsg string) {
-	if data == nil || code != CodeSuccess {
-		data = make(map[string]interface{})
-	}
-
+func ResponseJSON(c *gin.Context, code uint64, data interface{}, errmsg string) {
 	toast, ok := codeText[code]
 	if !ok {
 		toast = ""
 	}
-	c.JSON(http.StatusOK, response{
-		Code:    code,
-		Toast:   toast,
-		Data:    data,
-		ErrMsg:  errmsg,
-		TraceID: logger.ValueTraceID(c.Request.Context()),
-	})
-	c.Abort()
+
+	response.ResponseJSON(c, code, data, errmsg, toast)
 }

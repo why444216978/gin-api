@@ -10,6 +10,7 @@ import (
 	"github.com/why444216978/gin-api/library/lock"
 	"github.com/why444216978/gin-api/library/logger"
 	"github.com/why444216978/gin-api/library/orm"
+	etcdRegistry "github.com/why444216978/gin-api/library/registry/etcd"
 )
 
 var (
@@ -21,4 +22,5 @@ var (
 	ClientHTTP    *httpClient.RPC
 	RedisLock     lock.Locker
 	RedisCache    cache.Cacher
+	Registrar     *etcdRegistry.EtcdRegistrar
 )

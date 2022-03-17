@@ -8,6 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracingLog "github.com/opentracing/opentracing-go/log"
+	"github.com/why444216978/go-util/assert"
 
 	"github.com/why444216978/gin-api/library/jaeger"
 )
@@ -17,20 +18,18 @@ const (
 	httpServerComponentPrefix = "HTTP-Server-"
 )
 
-var (
-	ErrTracerNil = errors.New("Tracer is nil")
-)
+var ErrTracerNil = errors.New("Tracer is nil")
 
 // ExtractHTTP is used to extract span context by HTTP middleware
 func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.Context, opentracing.Span, string) {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return ctx, nil, ""
 	}
 
 	var span opentracing.Span
 
 	parentSpanContext, err := jaeger.Tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	if parentSpanContext == nil || err == opentracing.ErrSpanContextNotFound {
+	if assert.IsNil(parentSpanContext) || err == opentracing.ErrSpanContextNotFound {
 		span, ctx = opentracing.StartSpanFromContextWithTracer(ctx, jaeger.Tracer, httpServerComponentPrefix+req.URL.Path, ext.SpanKindRPCServer)
 	} else {
 		span = jaeger.Tracer.StartSpan(
@@ -50,7 +49,7 @@ func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.
 
 // InjectHTTP is used to inject HTTP span
 func InjectHTTP(ctx context.Context, req *http.Request, logID string) error {
-	if jaeger.Tracer == nil {
+	if assert.IsNil(jaeger.Tracer) {
 		return ErrTracerNil
 	}
 
@@ -64,6 +63,9 @@ func InjectHTTP(ctx context.Context, req *http.Request, logID string) error {
 }
 
 func SetHTTPLog(span opentracing.Span, req, resp string) {
+	if assert.IsNil(span) {
+		return
+	}
 	span.LogFields(opentracingLog.Object(jaeger.LogFieldsRequest, string(req)))
 	span.LogFields(opentracingLog.Object(jaeger.LogFieldsResponse, string(resp)))
 }

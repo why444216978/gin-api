@@ -78,12 +78,12 @@ func (s *EtcdRegistrar) Register(ctx context.Context) error {
 		return errors.New("cli is nil")
 	}
 
-	//申请租约设置时间keepalive
+	// 申请租约设置时间keepalive
 	if err := s.putKeyWithRegistrarLease(ctx, s.lease); err != nil {
 		return err
 	}
 
-	//监听续租相应chan
+	// 监听续租相应chan
 	go s.listenLeaseRespChan()
 
 	return nil
@@ -91,19 +91,18 @@ func (s *EtcdRegistrar) Register(ctx context.Context) error {
 
 // putKeyWithRegistrarLease
 func (s *EtcdRegistrar) putKeyWithRegistrarLease(ctx context.Context, lease int64) error {
-	//设置租约时间
+	// 设置租约时间
 	resp, err := s.cli.Grant(ctx, lease)
 	if err != nil {
 		return err
 	}
-	//注册服务并绑定租约
+	// 注册服务并绑定租约
 	_, err = s.cli.Put(ctx, s.key, s.val, clientv3.WithLease(resp.ID))
 	if err != nil {
 		return err
 	}
-	//设置续租 定期发送需求请求
+	// 设置续租 定期发送需求请求
 	leaseRespChan, err := s.cli.KeepAlive(context.Background(), resp.ID)
-
 	if err != nil {
 		return err
 	}
@@ -122,7 +121,7 @@ func (s *EtcdRegistrar) listenLeaseRespChan() {
 
 // Close
 func (s *EtcdRegistrar) DeRegister(ctx context.Context) error {
-	//撤销租约
+	// 撤销租约
 	if _, err := s.cli.Revoke(ctx, s.leaseID); err != nil {
 		return err
 	}

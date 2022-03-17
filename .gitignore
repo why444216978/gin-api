@@ -18,3 +18,4 @@ __debug_bin
 cover.out
 cover.html
 .apollo_config
+go.work

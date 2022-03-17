@@ -19,9 +19,10 @@ type Server struct {
 	registerRouterFunc RegisterRouter
 	pprofTurn          bool
 	isDebug            bool
+	onShutdown         []func()
 }
 
-var _ server.RPCServer = (*Server)(nil)
+var _ server.Server = (*Server)(nil)
 
 type RegisterRouter func(server *gin.Engine)
 
@@ -51,16 +52,23 @@ func WithDebug(isDebug bool) Option {
 	return func(s *Server) { s.isDebug = isDebug }
 }
 
-func New(ctx context.Context, addr string, opts ...Option) *Server {
+func WithOnShutDown(onShutdown []func()) Option {
+	return func(s *Server) { s.onShutdown = onShutdown }
+}
+
+func New(addr string, opts ...Option) *Server {
 	s := &Server{
 		Server: &http.Server{
 			Addr: addr,
 		},
-		ctx: ctx,
 	}
 
 	for _, o := range opts {
 		o(s)
+	}
+
+	for _, f := range s.onShutdown {
+		s.Server.RegisterOnShutdown(f)
 	}
 
 	s.Handler = s.initHandler()
@@ -77,7 +85,8 @@ func (s *Server) Start() (err error) {
 }
 
 func (s *Server) Close() (err error) {
-	return s.Server.Shutdown(s.ctx)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
+	return s.Server.Shutdown(ctx)
 }
 
 func (s *Server) initHandler() *gin.Engine {
@@ -96,7 +105,7 @@ func (s *Server) initHandler() *gin.Engine {
 	}
 
 	server.NoRoute(func(c *gin.Context) {
-		response.Response(c, response.CodeUriNotFound, nil, "")
+		response.ResponseJSON(c, response.CodeUriNotFound, nil, "")
 		c.AbortWithStatus(http.StatusNotFound)
 	})
 
