@@ -104,7 +104,7 @@ func (jh *jaegerHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmd
 		span.LogFields(tracerLog.Object(jh.getPipeLineLogKey(logCmdArgs, idx), cmd.Args()))
 		span.LogFields(tracerLog.String(jh.getPipeLineLogKey(logCmdResult, idx), cmd.String()))
 	}
-	if !hasErr {
+	if hasErr {
 		span.SetTag(string(ext.Error), true)
 	}
 

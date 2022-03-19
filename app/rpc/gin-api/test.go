@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	jsonCodec "github.com/why444216978/codec/json"
+
 	"github.com/why444216978/gin-api/app/resource"
 	httpClient "github.com/why444216978/gin-api/client/http"
 	"github.com/why444216978/gin-api/library/logger"
@@ -15,23 +17,67 @@ const (
 	serviceName = "gin-api"
 )
 
-func RPC(ctx context.Context) (ret httpClient.Response, err error) {
-	uri := fmt.Sprintf("/test/rpc1?logid=%s", logger.ValueLogID(ctx))
+func RPC(ctx context.Context) (resp *httpClient.Response, err error) {
+	req := httpClient.Request{
+		URI:     fmt.Sprintf("/test/rpc1?logid=%s", logger.ValueLogID(ctx)),
+		Method:  http.MethodPost,
+		Header:  nil,
+		Timeout: time.Second,
+		Body:    map[string]interface{}{"rpc": "rpc"},
+		Codec:   jsonCodec.JSONCodec{},
+	}
+	resp = &httpClient.Response{
+		Body:  new(map[string]interface{}),
+		Codec: jsonCodec.JSONCodec{},
+	}
 
-	var resp map[string]interface{}
-	return resource.ClientHTTP.Send(ctx, "gin-api-dev", http.MethodPost, uri, nil, time.Second, map[string]interface{}{"rpc": "rpc"}, &resp)
+	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+		return
+	}
+
+	return
 }
 
-func RPC1(ctx context.Context) (ret httpClient.Response, err error) {
-	uri := fmt.Sprintf("/test/conn?logid=%s", logger.ValueLogID(ctx))
+func RPC1(ctx context.Context) (resp *httpClient.Response, err error) {
+	req := httpClient.Request{
+		URI:     fmt.Sprintf("/test/conn?logid=%s", logger.ValueLogID(ctx)),
+		Method:  http.MethodPost,
+		Header:  nil,
+		Timeout: time.Second,
+		Body:    map[string]interface{}{"rpc1": "rpc1"},
+		Codec:   jsonCodec.JSONCodec{},
+	}
 
-	var resp map[string]interface{}
-	return resource.ClientHTTP.Send(ctx, "gin-api-dev", http.MethodPost, uri, nil, time.Second, map[string]interface{}{"rpc1": "rpc1"}, &resp)
+	resp = &httpClient.Response{
+		Body:  new(map[string]interface{}),
+		Codec: jsonCodec.JSONCodec{},
+	}
+
+	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+		return
+	}
+
+	return
 }
 
-func Ping(ctx context.Context) (ret httpClient.Response, err error) {
-	uri := fmt.Sprintf("/ping?logid=%s", logger.ValueLogID(ctx))
+func Ping(ctx context.Context) (resp *httpClient.Response, err error) {
+	req := httpClient.Request{
+		URI:     fmt.Sprintf("/ping?logid=%s", logger.ValueLogID(ctx)),
+		Method:  http.MethodGet,
+		Header:  nil,
+		Timeout: time.Second,
+		Body:    map[string]interface{}{"rpc1": "rpc1"},
+		Codec:   jsonCodec.JSONCodec{},
+	}
 
-	var resp map[string]interface{}
-	return resource.ClientHTTP.Send(ctx, "gin-api-dev", http.MethodGet, uri, nil, time.Second, nil, &resp)
+	resp = &httpClient.Response{
+		Body:  new(map[string]interface{}),
+		Codec: jsonCodec.JSONCodec{},
+	}
+
+	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+		return
+	}
+
+	return
 }

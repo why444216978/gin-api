@@ -16,7 +16,6 @@ import (
 
 	appConfig "github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/resource"
-	"github.com/why444216978/gin-api/client/codec"
 	httpClient "github.com/why444216978/gin-api/client/http"
 	redisCache "github.com/why444216978/gin-api/library/cache/redis"
 	"github.com/why444216978/gin-api/library/config"
@@ -72,27 +71,27 @@ func Load() (err error) {
 		return
 	}
 	// TODO 避免用户第一次使用运行panic，留给用户自己打开需要的依赖
-	// if err = loadMysql("test_mysql"); err != nil {
-	// 	return
-	// }
-	// if err = loadRedis("default_redis"); err != nil {
-	// 	return
-	// }
-	// if err = loadJaeger(); err != nil {
-	// 	return
-	// }
-	// if err = loadLock(); err != nil {
-	// 	return
-	// }
-	// if err = loadCache(); err != nil {
-	// 	return
-	// }
-	// if err = loadEtcd(); err != nil {
-	// 	return
-	// }
-	// if err = loadRegistry(); err != nil {
-	// 	return
-	// }
+	if err = loadMysql("test_mysql"); err != nil {
+		return
+	}
+	if err = loadRedis("default_redis"); err != nil {
+		return
+	}
+	if err = loadJaeger(); err != nil {
+		return
+	}
+	if err = loadLock(); err != nil {
+		return
+	}
+	if err = loadCache(); err != nil {
+		return
+	}
+	if err = loadEtcd(); err != nil {
+		return
+	}
+	if err = loadRegistry(); err != nil {
+		return
+	}
 
 	return
 }
@@ -329,7 +328,6 @@ func loadClientHTTP() (err error) {
 	}
 
 	resource.ClientHTTP = httpClient.New(
-		httpClient.WithCodec(codec.JSONCodec{}),
 		httpClient.WithLogger(rpcLogger),
 		httpClient.WithBeforePlugins(&httpClient.JaegerBeforePlugin{}))
 	if err != nil {

@@ -17,5 +17,5 @@ func RPC(c *gin.Context) {
 		response.ResponseJSON(c, response.CodeServer, ret, err.Error())
 		return
 	}
-	response.ResponseJSON(c, response.CodeSuccess, nil, "")
+	response.ResponseJSON(c, response.CodeSuccess, ret, "")
 }
