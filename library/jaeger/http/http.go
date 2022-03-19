@@ -44,7 +44,7 @@ func ExtractHTTP(ctx context.Context, req *http.Request, logID string) (context.
 
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return ctx, span, jaeger.GetSpanID(span)
+	return ctx, span, jaeger.GetTraceID(span)
 }
 
 // InjectHTTP is used to inject HTTP span

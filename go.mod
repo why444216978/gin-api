@@ -53,6 +53,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/why444216978/codec v1.0.2 // indirect
 	github.com/why444216978/go-util v1.0.19
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
@@ -62,12 +63,9 @@ require (
 	go.uber.org/zap v1.17.0
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/net v0.0.0-20210924151903-3ad01bbaa167 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210902050250-f475640dd07b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
-	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
 	google.golang.org/grpc v1.40.0

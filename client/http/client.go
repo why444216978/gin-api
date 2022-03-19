@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -12,32 +11,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/valyala/bytebufferpool"
+	"github.com/why444216978/codec"
 	"github.com/why444216978/go-util/assert"
 
-	"github.com/why444216978/gin-api/client/codec"
 	loggerRPC "github.com/why444216978/gin-api/library/logger/rpc"
 	"github.com/why444216978/gin-api/library/servicer"
 	timeoutLib "github.com/why444216978/gin-api/server/http/middleware/timeout"
 )
 
-type Response struct {
-	HTTPCode int
-	Response []byte
-}
-
 type RPC struct {
-	codec         codec.Codec
 	logger        *loggerRPC.RPCLogger
 	beforePlugins []BeforeRequestPlugin
 	afterPlugins  []AfterRequestPlugin
 }
 
 type Option func(r *RPC)
-
-func WithCodec(c codec.Codec) Option {
-	return func(r *RPC) { r.codec = c }
-}
 
 func WithLogger(logger *loggerRPC.RPCLogger) Option {
 	return func(r *RPC) { r.logger = logger }
@@ -57,23 +45,45 @@ func New(opts ...Option) *RPC {
 		o(r)
 	}
 
-	if assert.IsNil(r.codec) {
-		panic("codec is nil")
-	}
-
 	return r
 }
 
+type Request struct {
+	URI     string
+	Method  string
+	Header  http.Header
+	Timeout time.Duration
+	Body    interface{}
+	Codec   codec.Codec
+}
+
+type Response struct {
+	HTTPCode int
+	Body     interface{}
+	Codec    codec.Codec
+}
+
 // Send is send HTTP request
-func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header http.Header, timeout time.Duration, reqData interface{}, respData interface{}) (ret Response, err error) {
+func (r *RPC) Send(ctx context.Context, serviceName string, request Request, response *Response) (err error) {
 	var (
-		reqByte []byte
-		cost    int64
-		node    = &servicer.Node{}
+		cost int64
+		node = &servicer.Node{}
 	)
 
-	if header == nil {
-		header = http.Header{}
+	if response == nil {
+		return errors.New("response is nil")
+	}
+
+	if assert.IsNil(request.Codec) {
+		return errors.New("request.Codec is nil")
+	}
+
+	if assert.IsNil(response.Codec) {
+		return errors.New("request.Codec is nil")
+	}
+
+	if request.Header == nil {
+		request.Header = http.Header{}
 	}
 
 	defer func() {
@@ -82,16 +92,16 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		}
 		fields := loggerRPC.RPCLogFields{
 			ServiceName: serviceName,
-			Header:      header,
-			Method:      method,
-			URI:         uri,
-			Request:     reqData,
-			Response:    respData,
+			Header:      request.Header,
+			Method:      request.Method,
+			URI:         request.URI,
+			Request:     request.Body,
+			Response:    response.Body,
 			ServerIP:    node.Host,
 			ServerPort:  node.Port,
-			HTTPCode:    ret.HTTPCode,
+			HTTPCode:    response.HTTPCode,
 			Cost:        cost,
-			Timeout:     timeout,
+			Timeout:     request.Timeout,
 		}
 		if err == nil {
 			r.logger.Info(ctx, "rpc success", fields)
@@ -100,7 +110,7 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 		r.logger.Error(ctx, err.Error(), fields)
 	}()
 
-	reqByte, err = r.codec.Encode(reqData)
+	reqReader, err := request.Codec.Encode(request.Body)
 	if err != nil {
 		return
 	}
@@ -122,7 +132,8 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 
 	// 构建req
-	req, err = http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, uri), bytes.NewReader(reqByte))
+	url := fmt.Sprintf("http://%s:%d%s", node.Host, node.Port, request.URI)
+	req, err = http.NewRequestWithContext(ctx, request.Method, url, reqReader)
 	if err != nil {
 		return
 	}
@@ -132,10 +143,10 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	if err != nil {
 		return
 	}
-	header.Set(timeoutLib.TimeoutKey, strconv.FormatInt(remain, 10))
+	request.Header.Set(timeoutLib.TimeoutKey, strconv.FormatInt(remain, 10))
 
 	// 设置请求header
-	req.Header = header
+	req.Header = request.Header
 
 	// 请求结束前插件
 	for _, plugin := range r.beforePlugins {
@@ -166,27 +177,13 @@ func (r *RPC) Send(ctx context.Context, serviceName, method, uri string, header 
 	}
 	defer resp.Body.Close()
 
-	ret.HTTPCode = resp.StatusCode
+	response.HTTPCode = resp.StatusCode
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("http code is %d", resp.StatusCode)
 		return
 	}
 
-	b := bytebufferpool.Get()
-	defer bytebufferpool.Put(b)
-	_, err = b.ReadFrom(resp.Body)
-	if err != nil {
-		return
-	}
-
-	l := b.Len()
-	if l < 0 {
-		return
-	}
-
-	ret.Response = b.Bytes()
-
-	err = r.codec.Decode(ret.Response, respData)
+	err = response.Codec.Decode(resp.Body, response.Body)
 
 	return
 }
