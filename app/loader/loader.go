@@ -5,13 +5,13 @@ import (
 	"flag"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/why444216978/go-util/assert"
+	utilDir "github.com/why444216978/go-util/dir"
 	"github.com/why444216978/go-util/sys"
 
 	appConfig "github.com/why444216978/gin-api/app/config"
@@ -284,12 +284,13 @@ func loadServices(ctx context.Context) (err error) {
 	}
 
 	var discover registry.Discovery
+	info := utilDir.FileInfo{}
 	cfg := &service.Config{}
 	for _, f := range files {
-		f = path.Base(filepath.ToSlash(f))
-		f = strings.TrimSuffix(f, path.Ext(f))
-
-		if err = resource.Config.ReadConfig("services/"+f, "toml", cfg); err != nil {
+		if info, err = utilDir.GetPathInfo(f); err != nil {
+			return
+		}
+		if err = resource.Config.ReadConfig("services/"+info.BaseNoExt, info.ExtNoSpot, cfg); err != nil {
 			return
 		}
 

@@ -54,7 +54,7 @@ require (
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/why444216978/codec v1.0.2 // indirect
-	github.com/why444216978/go-util v1.0.19
+	github.com/why444216978/go-util v1.0.20
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.0

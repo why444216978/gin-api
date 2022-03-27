@@ -465,6 +465,8 @@ github.com/why444216978/go-util v1.0.17 h1:9teRuYd6/LuMqrJkwQnCYJ9WZSchq/Rtkr24C
 github.com/why444216978/go-util v1.0.17/go.mod h1:YNkAVzpl2y7ZhTeDnn8TJT+d0OZEjswObwdEghwnlGo=
 github.com/why444216978/go-util v1.0.19 h1:Q3gMncwWSFwWEk0bL0YwBHKdge8A/Hyo+srKN+s+6wA=
 github.com/why444216978/go-util v1.0.19/go.mod h1:YgFaoou91kwsOQsV2IuWNYCadnlFWVr0dmloeI4fgGQ=
+github.com/why444216978/go-util v1.0.20 h1:SWHwT5HaVYRuVakkaZUijDDuaIxwpl9922KOIiLF1pQ=
+github.com/why444216978/go-util v1.0.20/go.mod h1:YgFaoou91kwsOQsV2IuWNYCadnlFWVr0dmloeI4fgGQ=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
