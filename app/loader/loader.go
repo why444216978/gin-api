@@ -286,7 +286,7 @@ func loadServices(ctx context.Context) (err error) {
 	var discover registry.Discovery
 	cfg := &service.Config{}
 	for _, f := range files {
-		f = path.Base(f)
+		f = path.Base(filepath.ToSlash(f))
 		f = strings.TrimSuffix(f, path.Ext(f))
 
 		if err = resource.Config.ReadConfig("services/"+f, "toml", cfg); err != nil {
