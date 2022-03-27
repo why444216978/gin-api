@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	serviceName = "gin-api"
+	serviceName = "gin-api-dev"
 )
 
 func RPC(ctx context.Context) (resp *httpClient.Response, err error) {
@@ -31,7 +31,7 @@ func RPC(ctx context.Context) (resp *httpClient.Response, err error) {
 		Codec: jsonCodec.JSONCodec{},
 	}
 
-	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+	if err = resource.ClientHTTP.Send(ctx, serviceName, req, resp); err != nil {
 		return
 	}
 
@@ -53,7 +53,7 @@ func RPC1(ctx context.Context) (resp *httpClient.Response, err error) {
 		Codec: jsonCodec.JSONCodec{},
 	}
 
-	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+	if err = resource.ClientHTTP.Send(ctx, serviceName, req, resp); err != nil {
 		return
 	}
 
@@ -75,7 +75,7 @@ func Ping(ctx context.Context) (resp *httpClient.Response, err error) {
 		Codec: jsonCodec.JSONCodec{},
 	}
 
-	if err = resource.ClientHTTP.Send(ctx, "gin-api-dev", req, resp); err != nil {
+	if err = resource.ClientHTTP.Send(ctx, serviceName, req, resp); err != nil {
 		return
 	}
 
