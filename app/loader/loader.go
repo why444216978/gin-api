@@ -41,10 +41,10 @@ import (
 var envFlag = flag.String("env", "dev", "config path")
 
 var envMap = map[string]struct{}{
-	"dev":      struct{}{},
-	"liantiao": struct{}{},
-	"qa":       struct{}{},
-	"online":   struct{}{},
+	"dev":      {},
+	"liantiao": {},
+	"qa":       {},
+	"online":   {},
 }
 
 var (
