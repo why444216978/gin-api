@@ -1,17 +1,15 @@
 package loader
 
 import (
-	"context"
 	"flag"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/why444216978/go-util/assert"
+	utilDir "github.com/why444216978/go-util/dir"
 	"github.com/why444216978/go-util/sys"
 
 	appConfig "github.com/why444216978/gin-api/app/config"
@@ -41,10 +39,10 @@ import (
 var envFlag = flag.String("env", "dev", "config path")
 
 var envMap = map[string]struct{}{
-	"dev":      struct{}{},
-	"liantiao": struct{}{},
-	"qa":       struct{}{},
-	"online":   struct{}{},
+	"dev":      {},
+	"liantiao": {},
+	"qa":       {},
+	"online":   {},
 }
 
 var (
@@ -53,7 +51,9 @@ var (
 )
 
 func Load() (err error) {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	// TODO
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	// defer cancel()
 
 	if err = loadConfig(); err != nil {
 		return
@@ -64,34 +64,34 @@ func Load() (err error) {
 	if err = loadLogger(); err != nil {
 		return
 	}
-	if err = loadServices(ctx); err != nil {
+	if err = loadServices(); err != nil {
 		return
 	}
 	if err = loadClientHTTP(); err != nil {
 		return
 	}
 	// TODO 避免用户第一次使用运行panic，留给用户自己打开需要的依赖
-	if err = loadMysql("test_mysql"); err != nil {
-		return
-	}
-	if err = loadRedis("default_redis"); err != nil {
-		return
-	}
-	if err = loadJaeger(); err != nil {
-		return
-	}
-	if err = loadLock(); err != nil {
-		return
-	}
-	if err = loadCache(); err != nil {
-		return
-	}
-	if err = loadEtcd(); err != nil {
-		return
-	}
-	if err = loadRegistry(); err != nil {
-		return
-	}
+	// if err = loadMysql("test_mysql"); err != nil {
+	// 	return
+	// }
+	// if err = loadRedis("default_redis"); err != nil {
+	// 	return
+	// }
+	// if err = loadJaeger(); err != nil {
+	// 	return
+	// }
+	// if err = loadLock(); err != nil {
+	// 	return
+	// }
+	// if err = loadCache(); err != nil {
+	// 	return
+	// }
+	// if err = loadEtcd(); err != nil {
+	// 	return
+	// }
+	// if err = loadRegistry(); err != nil {
+	// 	return
+	// }
 
 	return
 }
@@ -125,9 +125,16 @@ func loadLogger() (err error) {
 		return
 	}
 
+	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	if err != nil {
+		return
+	}
+
 	if resource.ServiceLogger, err = logger.NewLogger(cfg,
 		logger.WithModule(logger.ModuleHTTP),
 		logger.WithServiceName(appConfig.App.AppName),
+		logger.WithInfoWriter(infoWriter),
+		logger.WithErrorWriter(errWriter),
 	); err != nil {
 		return
 	}
@@ -269,7 +276,7 @@ func loadRegistry() (err error) {
 	return
 }
 
-func loadServices(ctx context.Context) (err error) {
+func loadServices() (err error) {
 	var (
 		dir   string
 		files []string
@@ -284,12 +291,13 @@ func loadServices(ctx context.Context) (err error) {
 	}
 
 	var discover registry.Discovery
+	info := utilDir.FileInfo{}
 	cfg := &service.Config{}
 	for _, f := range files {
-		f = path.Base(filepath.ToSlash(f))
-		f = strings.TrimSuffix(f, path.Ext(f))
-
-		if err = resource.Config.ReadConfig("services/"+f, "toml", cfg); err != nil {
+		if info, err = utilDir.GetPathInfo(f); err != nil {
+			return
+		}
+		if err = resource.Config.ReadConfig("services/"+info.BaseNoExt, info.ExtNoSpot, cfg); err != nil {
 			return
 		}
 
@@ -298,7 +306,6 @@ func loadServices(ctx context.Context) (err error) {
 				return errors.New("loadServices resource.Etcd nil")
 			}
 			opts := []registryEtcd.DiscoverOption{
-				registryEtcd.WithContext(ctx),
 				registryEtcd.WithServierName(cfg.ServiceName),
 				registryEtcd.WithRefreshDuration(cfg.RefreshSecond),
 				registryEtcd.WithDiscoverClient(resource.Etcd.Client),

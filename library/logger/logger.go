@@ -4,55 +4,88 @@ import (
 	"context"
 	"errors"
 	"io"
-	"strings"
+	"os"
 	"time"
 
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type Logger struct {
-	*zap.Logger
-	level       zapcore.Level
-	callSkip    int
-	module      string
-	serviceName string
-}
-
+// Config is used to parse configuration file
+// logger should be controlled with Options
 type Config struct {
 	InfoFile  string
 	ErrorFile string
 	Level     string
 }
 
-type Option func(l *Logger)
+type Logger struct {
+	*zap.Logger
+	opts  *Options
+	level zapcore.Level
+}
+
+type Options struct {
+	level       string
+	callSkip    int
+	module      string
+	serviceName string
+	infoWriter  io.Writer
+	errorWriter io.Writer
+}
+
+type Option func(l *Options)
+
+func defaultOptions() *Options {
+	return &Options{
+		level:       "info",
+		callSkip:    1,
+		module:      "default",
+		serviceName: "default",
+		infoWriter:  os.Stdout,
+		errorWriter: os.Stdout,
+	}
+}
 
 func WithCallerSkip(skip int) Option {
-	return func(l *Logger) { l.callSkip = skip }
+	return func(o *Options) { o.callSkip = skip }
 }
 
 func WithModule(module string) Option {
-	return func(l *Logger) { l.module = module }
+	return func(o *Options) { o.module = module }
 }
 
 func WithServiceName(serviceName string) Option {
-	return func(l *Logger) { l.serviceName = serviceName }
+	return func(o *Options) { o.serviceName = serviceName }
 }
 
-func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
-	level, err := zapLevel(cfg.Level)
+func WithInfoWriter(w io.Writer) Option {
+	return func(o *Options) { o.infoWriter = w }
+}
+
+func WithErrorWriter(w io.Writer) Option {
+	return func(o *Options) { o.errorWriter = w }
+}
+
+func WithLevel(l string) Option {
+	return func(o *Options) { o.level = l }
+}
+
+func NewLogger(cfg *Config, options ...Option) (l *Logger, err error) {
+	opts := defaultOptions()
+	for _, o := range options {
+		o(opts)
+	}
+
+	level, err := zapLevel(opts.level)
 	if err != nil {
 		return
 	}
 
 	l = &Logger{
 		level: level,
-	}
-
-	for _, o := range opts {
-		o(l)
+		opts:  opts,
 	}
 
 	encoder := l.formatEncoder()
@@ -60,38 +93,20 @@ func NewLogger(cfg *Config, opts ...Option) (l *Logger, err error) {
 	infoEnabler := l.infoEnabler()
 	errorEnabler := l.errorEnabler()
 
-	infoWriter, err := l.getWriter(cfg.InfoFile)
-	if err != nil {
-		return
-	}
-	errorWriter, err := l.getWriter(cfg.ErrorFile)
-	if err != nil {
-		return
-	}
-
 	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoEnabler),
-		zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorEnabler),
+		zapcore.NewCore(encoder, zapcore.AddSync(opts.infoWriter), infoEnabler),
+		zapcore.NewCore(encoder, zapcore.AddSync(opts.errorWriter), errorEnabler),
 	)
 
-	if l.callSkip == 0 {
-		l.callSkip = 1
-	}
-
-	fields := make([]zapcore.Field, 0)
-
-	if l.module != "" {
-		fields = append(fields, zap.String(Module, l.module))
-	}
-
-	if l.serviceName != "" {
-		fields = append(fields, zap.String(SericeName, l.serviceName))
+	fields := []zapcore.Field{
+		zap.String(Module, l.opts.module),
+		zap.String(SericeName, l.opts.serviceName),
 	}
 
 	l.Logger = zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(errorEnabler),
-		zap.AddCallerSkip(l.callSkip),
+		zap.AddCallerSkip(l.opts.callSkip),
 		zap.Fields(fields...),
 	)
 
@@ -135,23 +150,6 @@ func (l *Logger) formatEncoder() zapcore.Encoder {
 	})
 }
 
-func (l *Logger) getWriter(filename string) (io.Writer, error) {
-	// 生成rotatelogs的Logger 实际生成的文件名 demo.log.YYmmddHH
-	// demo.log是指向最新日志的链接
-	// 保存7天内的日志，每1小时(整点)分割一次日志
-	hook, err := rotatelogs.New(
-		strings.Replace(filename, ".log", "", -1)+"-%Y%m%d%H.log", // 没有使用go风格反人类的format格式
-		rotatelogs.WithLinkName(filename),
-		rotatelogs.WithMaxAge(time.Hour*24*7),
-		rotatelogs.WithRotationTime(time.Hour),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return hook, nil
-}
-
 func (l *Logger) GetLevel() zapcore.Level {
 	return l.level
 }
@@ -178,35 +176,40 @@ func zapLevel(level string) (zapcore.Level, error) {
 }
 
 func (l *Logger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
-	l.Logger.Debug(msg, append(fields, l.extractFields(ctx)...)...)
+	l.Logger.Debug(msg, l.extractFields(ctx, fields...)...)
 }
 
 func (l *Logger) Info(ctx context.Context, msg string, fields ...zap.Field) {
-	l.Logger.Info(msg, append(fields, l.extractFields(ctx)...)...)
+	l.Logger.Info(msg, l.extractFields(ctx, fields...)...)
 }
 
 func (l *Logger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
-	l.Logger.Warn(msg, append(fields, l.extractFields(ctx)...)...)
+	l.Logger.Warn(msg, l.extractFields(ctx, fields...)...)
 }
 
 func (l *Logger) Error(ctx context.Context, msg string, fields ...zap.Field) {
-	l.Logger.Error(msg, append(fields, l.extractFields(ctx)...)...)
+	l.Logger.Error(msg, l.extractFields(ctx, fields...)...)
 }
 
 func (l *Logger) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
-	l.Logger.Fatal(msg, append(fields, l.extractFields(ctx)...)...)
+	l.Logger.Fatal(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *Logger) extractFields(ctx context.Context) []zap.Field {
+func (l *Logger) extractFields(ctx context.Context, fields ...zap.Field) []zap.Field {
 	fieldsMap, _ := conversion.StructToMap(ValueHTTPFields(ctx))
-
-	fields := make([]zap.Field, len(fieldsMap))
-
-	i := 0
+	target := make(map[string]zap.Field, len(fieldsMap))
 	for k, v := range fieldsMap {
-		fields[i] = zap.Reflect(k, v)
-		i = i + 1
+		target[k] = zap.Reflect(k, v)
 	}
 
-	return fields
+	for _, f := range fields {
+		target[f.Key] = f
+	}
+
+	new := make([]zap.Field, 0)
+	for _, f := range target {
+		new = append(new, f)
+	}
+
+	return new
 }
