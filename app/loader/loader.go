@@ -125,9 +125,16 @@ func loadLogger() (err error) {
 		return
 	}
 
+	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	if err != nil {
+		return
+	}
+
 	if resource.ServiceLogger, err = logger.NewLogger(cfg,
 		logger.WithModule(logger.ModuleHTTP),
 		logger.WithServiceName(appConfig.App.AppName),
+		logger.WithInfoWriter(infoWriter),
+		logger.WithErrorWriter(errWriter),
 	); err != nil {
 		return
 	}

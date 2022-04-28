@@ -15,6 +15,8 @@ import (
 	"github.com/why444216978/gin-api/library/logger"
 )
 
+// GormConfig is used to parse configuration file
+// logger should be controlled with Options
 type GormConfig struct {
 	ServiceName               string
 	SlowThreshold             int
@@ -47,6 +49,10 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 		IgnoreRecordNotFoundError: cfg.IgnoreRecordNotFoundError,
 	}
 
+	for _, o := range opts {
+		o(gl)
+	}
+
 	zapLever := zap.InfoLevel.String()
 	switch gl.LogLevel {
 	case gormLogger.Silent:
@@ -59,15 +65,21 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 		zapLever = zapcore.InfoLevel.String()
 	}
 
-	for _, o := range opts {
-		o(gl)
+	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	if err != nil {
+		return
 	}
 
 	l, err := logger.NewLogger(&logger.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     zapLever,
-	}, logger.WithModule(logger.ModuleMySQL), logger.WithServiceName(cfg.ServiceName))
+	},
+		logger.WithModule(logger.ModuleMySQL),
+		logger.WithServiceName(cfg.ServiceName),
+		logger.WithInfoWriter(infoWriter),
+		logger.WithErrorWriter(errWriter),
+	)
 	if err != nil {
 		return
 	}
