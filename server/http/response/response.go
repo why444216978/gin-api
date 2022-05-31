@@ -9,24 +9,31 @@ import (
 	"github.com/why444216978/gin-api/library/logger"
 )
 
+type Code int
+
 type response struct {
-	Code    uint64      `json:"code"`
+	Code    Code        `json:"code"`
 	Toast   string      `json:"toast"`
 	Data    interface{} `json:"data"`
 	ErrMsg  string      `json:"errmsg"`
 	TraceID string      `json:"trace_id"`
 }
 
-func ResponseJSON(c *gin.Context, code uint64, data interface{}, errmsg, toast string) {
+func ResponseJSON(c *gin.Context, code Code, data interface{}, err *ResponseError) {
 	if assert.IsNil(data) {
 		data = make(map[string]interface{})
 	}
 
+	// prevent panic
+	if err == nil {
+		err = WrapToast(nil, "toast")
+	}
+
 	c.JSON(http.StatusOK, response{
 		Code:    code,
-		Toast:   toast,
+		Toast:   err.Toast(),
 		Data:    data,
-		ErrMsg:  errmsg,
+		ErrMsg:  err.Error(),
 		TraceID: logger.ValueTraceID(c.Request.Context()),
 	})
 	c.Abort()
