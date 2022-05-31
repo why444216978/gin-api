@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	CodeSuccess     = 0
-	CodeParams      = 1
-	CodeUriNotFound = http.StatusNotFound
-	CodeServer      = http.StatusInternalServerError
-	CodeUnavailable = http.StatusServiceUnavailable
-	CodeTimeout     = http.StatusGatewayTimeout
+	CodeSuccess     response.Code = 0
+	CodeParams      response.Code = 1
+	CodeUriNotFound response.Code = http.StatusNotFound
+	CodeServer      response.Code = http.StatusInternalServerError
+	CodeUnavailable response.Code = http.StatusServiceUnavailable
+	CodeTimeout     response.Code = http.StatusGatewayTimeout
 )
 
-var codeText = map[uint64]string{
+var codeToast = map[response.Code]string{
 	CodeSuccess:     "success",
 	CodeParams:      "参数错误",
 	CodeUriNotFound: "资源不存在",
@@ -26,11 +26,10 @@ var codeText = map[uint64]string{
 	CodeServer:      "服务器错误",
 }
 
-func ResponseJSON(c *gin.Context, code uint64, data interface{}, errmsg string) {
-	toast, ok := codeText[code]
-	if !ok {
-		toast = ""
+func ResponseJSON(c *gin.Context, code response.Code, data interface{}, err *response.ResponseError) {
+	if err == nil {
+		err = response.WrapToast(nil, codeToast[code])
 	}
 
-	response.ResponseJSON(c, code, data, errmsg, toast)
+	response.ResponseJSON(c, code, data, err)
 }

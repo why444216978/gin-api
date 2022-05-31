@@ -13,6 +13,7 @@ import (
 	goodsService "github.com/why444216978/gin-api/app/module/goods/service"
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/app/response"
+	httpResponse "github.com/why444216978/gin-api/server/http/response"
 )
 
 func Do(c *gin.Context) {
@@ -26,7 +27,7 @@ func Do(c *gin.Context) {
 	goods, err = goodsService.Instance.CrudGoods(ctx)
 	if err != nil {
 		resource.ServiceLogger.Error(ctx, err.Error())
-		response.ResponseJSON(c, response.CodeServer, goods, err.Error())
+		response.ResponseJSON(c, response.CodeServer, goods, httpResponse.WrapToast(err, err.Error()))
 		return
 	}
 
@@ -54,11 +55,11 @@ func Do(c *gin.Context) {
 	err = g.Wait()
 	if err != nil {
 		resource.ServiceLogger.Error(ctx, err.Error())
-		response.ResponseJSON(c, response.CodeServer, goods, err.Error())
+		response.ResponseJSON(c, response.CodeServer, goods, httpResponse.WrapToast(err, err.Error()))
 		return
 	}
 
-	response.ResponseJSON(c, response.CodeSuccess, goods, "")
+	response.ResponseJSON(c, response.CodeSuccess, goods, nil)
 }
 
 type Data struct {
