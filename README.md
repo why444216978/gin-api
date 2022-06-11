@@ -48,13 +48,13 @@ QQ群：909211071
 ✅ &nbsp;负载均衡
 <br>
 ✅ &nbsp;HTTP-RPC 超时传递
+<br>
+✅ &nbsp;端口多路复用
+<br>
+✅ &nbsp;gRPC
 <br><br>
 
 ## 后续逐渐支持
-gRPC
-<br>
-端口多路复用
-<br>
 日志收集
 <br>
 监控告警
