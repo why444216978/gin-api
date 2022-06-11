@@ -108,6 +108,7 @@ gRPC
     - apollo //阿波罗
     - cache //分布式缓存
     - config //配置加载
+    - cron //任务调度
     - endless //endless
     - etcd //etcd
     - grpc //grpc封装
@@ -178,23 +179,40 @@ CREATE TABLE `test` (
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin 
 ```
 
+## 运行HTTP服务
 ```
-[why@localhost] ~/Desktop/go/gin-api/app$go run main.go -env dev
-Actual pid is 34592
-The environment is :dev
+[why@bogon] ~/Desktop/go/gin-api/app$go run main.go -env dev -server http
+2022/06/12 04:45:13 Actual pid is 5227
+2022/06/12 04:45:13 The environment is :dev
+2022/06/12 04:45:14 start http, port 8777
 [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
  - using env:   export GIN_MODE=release
  - using code:  gin.SetMode(gin.ReleaseMode)
 
-[GIN-debug] GET    /ping                     --> github.com/why444216978/gin-api/api/ping.Ping (5 handlers)
-[GIN-debug] POST   /test/rpc                 --> github.com/why444216978/gin-api/api/test.Rpc (5 handlers)
-[GIN-debug] POST   /test/rpc1                --> github.com/why444216978/gin-api/api/test.Rpc1 (5 handlers)
-[GIN-debug] POST   /test/panic               --> github.com/why444216978/gin-api/api/test.Panic (5 handlers)
-[GIN-debug] POST   /test/conn                --> github.com/why444216978/gin-api/api/conn.Do (5 handlers)
-start by server
-Start with :777
+[GIN-debug] GET    /ping                     --> github.com/why444216978/gin-api/app/module/ping/api.Ping (4 handlers)
+[GIN-debug] GET    /ping/rpc                 --> github.com/why444216978/gin-api/app/module/ping/api.RPC (4 handlers)
+[GIN-debug] POST   /test/rpc                 --> github.com/why444216978/gin-api/app/module/test/api.Rpc (4 handlers)
+[GIN-debug] POST   /test/rpc1                --> github.com/why444216978/gin-api/app/module/test/api.Rpc1 (4 handlers)
+[GIN-debug] POST   /test/panic               --> github.com/why444216978/gin-api/app/module/test/api.Panic (4 handlers)
+[GIN-debug] POST   /test/conn                --> github.com/why444216978/gin-api/app/module/goods/api.Do (4 handlers)
 watching prefix:gin-api now...
 service gin-api  put key: gin-api.192.168.1.104.777 val: {"Host":"192.168.1.104","Port":777}
+
+
+[why@bogon] ~/Desktop$curl http://localhost:8777/ping
+{"code":0,"toast":"success","data":{},"errmsg":"success","trace_id":""}
 ```
+
+## 运行grpc服务
+```
+[why@bogon] ~/Desktop/go/gin-api/app$go run main.go -env dev -server grpc
+2022/06/12 04:41:32 Actual pid is 3001
+2022/06/12 04:41:32 The environment is :dev
+2022/06/12 04:41:32 start grpc, port 8777
+
+[why@bogon] ~/Desktop$curl http://localhost:8888/v1/example/echo
+{"message":" world"}
+```
+
 
 
