@@ -1,4 +1,4 @@
-package grpc
+package cmux
 
 import (
 	"context"
@@ -11,7 +11,8 @@ import (
 
 	pb "github.com/why444216978/gin-api/app/module/test/job/grpc/helloworld"
 	client "github.com/why444216978/gin-api/client/grpc"
-	server "github.com/why444216978/gin-api/server/grpc"
+	serverGRPC "github.com/why444216978/gin-api/server/grpc"
+	"github.com/why444216978/gin-api/server/grpc/cmux"
 )
 
 const (
@@ -36,17 +37,16 @@ func StartServer() {
 		WriteTimeout: time.Second,
 		IdleTimeout:  time.Second,
 	}
-	err := server.New(
-		server.WithEndpoint(endpoint),
-		server.WithRegisterGRPCFunc(RegisterServer),
-		server.WithHTTP(httpServer, pb.RegisterGreeterHandler),
-	).Start()
-	if err != nil {
+	if err := cmux.NewCMUX(
+		endpoint,
+		[]serverGRPC.Register{serverGRPC.NewRegister(RegisterServer, pb.RegisterGreeterHandlerFromEndpoint)},
+		cmux.WithHTTP(httpServer, pb.RegisterGreeterHandler),
+	).Start(); err != nil {
 		panic(err)
 	}
 }
 
-func GrpcCmux(ctx context.Context) (err error) {
+func Start(ctx context.Context) (err error) {
 	go StartServer()
 	call()
 	return

@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
@@ -37,12 +36,34 @@ func (c MDReaderWriter) Set(key, val string) {
 	c.MD[key] = append(c.MD[key], val)
 }
 
+// UnaryServerInterceptor grpc client
+func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		resp, err = handler(ctx, req)
+		tracer := opentracing.GlobalTracer()
+		if tracer == nil {
+			return
+		}
+		md := metadata.MD{}
+		carrier := opentracing.HTTPHeadersCarrier(md)
+		span := opentracing.SpanFromContext(ctx)
+		if span == nil {
+			return
+		}
+		tracer.Inject(span.Context(), opentracing.HTTPHeaders, carrier)
+		grpc.SetTrailer(ctx, md)
+		return
+	}
+}
+
 // ClientInterceptor grpc client
 func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		// TODO no test
+		return nil
 		if assert.IsNil(jaeger.Tracer) {
-			return errors.New("jaeger client is nil")
+			return nil
 		}
 
 		span := opentracing.StartSpan(
@@ -63,13 +84,13 @@ func ClientInterceptor(spanContext opentracing.SpanContext) grpc.UnaryClientInte
 
 		err := jaeger.Tracer.Inject(span.Context(), opentracing.TextMap, MDReaderWriter{md})
 		if err != nil {
-			span.LogFields(log.String("inject-error", err.Error()))
+			span.LogFields(log.String("inject grpc error", err.Error()))
 		}
 
 		newCtx := metadata.NewOutgoingContext(ctx, md)
 		err = invoker(newCtx, method, req, reply, cc, opts...)
 		if err != nil {
-			span.LogFields(log.String("call-error", err.Error()))
+			span.LogFields(log.String("call grpc error", err.Error()))
 		}
 		return err
 	}
