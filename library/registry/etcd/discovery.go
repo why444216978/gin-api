@@ -16,12 +16,12 @@ import (
 
 const defaultRefreshDuration = time.Second * 10
 
-//EtcdDiscovery 服务发现
+// EtcdDiscovery 服务发现
 type EtcdDiscovery struct {
-	ctx             context.Context
 	cli             *clientv3.Client
 	nodeList        map[string]*registry.Node
 	lock            sync.RWMutex
+	cmdTimeout      time.Duration
 	updateTime      time.Time
 	decode          registry.Decode
 	ticker          *time.Ticker
@@ -33,10 +33,6 @@ var _ registry.Discovery = (*EtcdDiscovery)(nil)
 
 type DiscoverOption func(*EtcdDiscovery)
 
-func WithContext(ctx context.Context) DiscoverOption {
-	return func(ed *EtcdDiscovery) { ed.ctx = ctx }
-}
-
 func WithServierName(serviceName string) DiscoverOption {
 	return func(ed *EtcdDiscovery) { ed.serviceName = serviceName }
 }
@@ -47,6 +43,10 @@ func WithDiscoverClient(cli *clientv3.Client) DiscoverOption {
 
 func WithRefreshDuration(d int) DiscoverOption {
 	return func(ed *EtcdDiscovery) { ed.refreshDuration = time.Duration(d) * time.Second }
+}
+
+func WithCmdTimeOut(t time.Duration) DiscoverOption {
+	return func(ed *EtcdDiscovery) { ed.cmdTimeout = t }
 }
 
 // NewDiscovery
@@ -68,8 +68,8 @@ func NewDiscovery(opts ...DiscoverOption) (registry.Discovery, error) {
 		return nil, errors.New("cli is nil")
 	}
 
-	if ed.ctx == nil {
-		ed.ctx = context.Background()
+	if ed.cmdTimeout == 0 {
+		ed.cmdTimeout = time.Second * 3
 	}
 
 	if err := ed.init(); err != nil {
@@ -109,13 +109,13 @@ func (s *EtcdDiscovery) Close() error {
 
 // WatchService
 func (s *EtcdDiscovery) init() error {
-	//set all nodes
+	// set all nodes
 	s.setNodes()
 
-	//start etcd watcher
+	// start etcd watcher
 	go s.watcher()
 
-	//start refresh ticker
+	// start refresh ticker
 	go s.refresh()
 
 	return nil
@@ -123,7 +123,10 @@ func (s *EtcdDiscovery) init() error {
 
 // loadKVs
 func (s *EtcdDiscovery) loadKVs() (kvs []*mvccpb.KeyValue) {
-	resp, err := s.cli.Get(s.ctx, s.serviceName, clientv3.WithPrefix())
+	ctx, cancel := s.context()
+	defer cancel()
+
+	resp, err := s.cli.Get(ctx, s.serviceName, clientv3.WithPrefix())
 	if err != nil {
 		s.logErr("get by prefix", s.serviceName, "", err)
 		return
@@ -134,7 +137,10 @@ func (s *EtcdDiscovery) loadKVs() (kvs []*mvccpb.KeyValue) {
 
 // watcher
 func (s *EtcdDiscovery) watcher() {
-	rch := s.cli.Watch(s.ctx, s.serviceName, clientv3.WithPrefix())
+	ctx, cancel := s.context()
+	defer cancel()
+
+	rch := s.cli.Watch(ctx, s.serviceName, clientv3.WithPrefix())
 	s.log("Watch", "")
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
@@ -158,7 +164,7 @@ func (s *EtcdDiscovery) watcher() {
 	}
 }
 
-//refresh
+// refresh
 func (s *EtcdDiscovery) refresh() {
 	if s.refreshDuration == -1 {
 		return
@@ -219,6 +225,10 @@ func (s *EtcdDiscovery) logErr(action, key, val string, err error) {
 
 func (s *EtcdDiscovery) log(action, key string) {
 	log.Printf("[%s]: [action:%s, service:%s, key:%s]\n", time.Now().Format("2006-01-02 15:04:05"), action, s.serviceName, key)
+}
+
+func (s *EtcdDiscovery) context() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), s.cmdTimeout)
 }
 
 func JSONDecode(val string) (*registry.Node, error) {

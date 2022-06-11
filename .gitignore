@@ -19,3 +19,4 @@ cover.out
 cover.html
 .apollo_config
 go.work
+*.log

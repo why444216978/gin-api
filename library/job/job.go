@@ -15,7 +15,7 @@ var Handlers = map[string]HandleFunc{}
 func Handle(job string) {
 	ctx := context.Background()
 
-	log.Println("start by " + job)
+	log.Println("start job by " + job)
 
 	handle, ok := Handlers[job]
 	if !ok {

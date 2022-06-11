@@ -32,8 +32,8 @@ type Config struct {
 func NewJaegerTracer(connCfg *Config, serviceName string) (opentracing.Tracer, io.Closer, error) {
 	cfg := &config.Configuration{
 		Sampler: &config.SamplerConfig{
-			Type:  "const", //固定采样
-			Param: 1,       //1=全采样、0=不采样
+			Type:  "const", // 固定采样
+			Param: 1,       // 1=全采样、0=不采样
 		},
 
 		Reporter: &config.ReporterConfig{
@@ -55,6 +55,10 @@ func NewJaegerTracer(connCfg *Config, serviceName string) (opentracing.Tracer, i
 
 func SetError(span opentracing.Span, err error) {
 	span.LogFields(opentracingLog.Error(err))
+}
+
+func SetRequest(span opentracing.Span, request string) {
+	span.LogFields(opentracingLog.String(LogFieldsRequest, request))
 }
 
 func SetResponse(span opentracing.Span, resp string) {

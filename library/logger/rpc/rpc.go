@@ -10,6 +10,8 @@ import (
 	"github.com/why444216978/gin-api/library/logger"
 )
 
+// RPCConfig is used to parse configuration file
+// logger should be controlled with Options
 type RPCConfig struct {
 	InfoFile  string
 	ErrorFile string
@@ -31,11 +33,21 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 		o(rl)
 	}
 
+	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	if err != nil {
+		return
+	}
+
 	l, err := logger.NewLogger(&logger.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	}, logger.WithCallerSkip(5), logger.WithModule(logger.ModuleRPC))
+	},
+		logger.WithCallerSkip(5),
+		logger.WithModule(logger.ModuleRPC),
+		logger.WithInfoWriter(infoWriter),
+		logger.WithErrorWriter(errWriter),
+	)
 	if err != nil {
 		return
 	}

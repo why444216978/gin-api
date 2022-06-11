@@ -7,7 +7,6 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	opentracingLog "github.com/opentracing/opentracing-go/log"
 	"github.com/why444216978/go-util/assert"
 
 	"github.com/why444216978/gin-api/library/jaeger"
@@ -66,6 +65,6 @@ func SetHTTPLog(span opentracing.Span, req, resp string) {
 	if assert.IsNil(span) {
 		return
 	}
-	span.LogFields(opentracingLog.Object(jaeger.LogFieldsRequest, string(req)))
-	span.LogFields(opentracingLog.Object(jaeger.LogFieldsResponse, string(resp)))
+	jaeger.SetRequest(span, req)
+	jaeger.SetResponse(span, resp)
 }

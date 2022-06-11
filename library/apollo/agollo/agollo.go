@@ -13,6 +13,8 @@ import (
 	"github.com/apolloconfig/agollo/v4/env/config"
 	"github.com/apolloconfig/agollo/v4/env/file"
 	"github.com/apolloconfig/agollo/v4/protocol/auth"
+
+	"github.com/why444216978/gin-api/library/apollo/agollo/listener"
 )
 
 const (
@@ -41,7 +43,7 @@ func WithSyncServerTimeout(syncServerTimeout int) Option {
 	return func(a *ApolloClient) { a.appConfig.SyncServerTimeout = syncServerTimeout }
 }
 
-func WithCustomListeners(listeners []CustomListener) Option {
+func WithCustomListeners(listeners []listener.CustomListener) Option {
 	return func(a *ApolloClient) { a.listeners = listeners }
 }
 
@@ -72,7 +74,7 @@ type ApolloClient struct {
 	auth           auth.HTTPAuth
 	loadBalance    cluster.LoadBalance
 	fileHandler    file.FileHandler
-	listeners      []CustomListener
+	listeners      []listener.CustomListener
 	appConfig      *config.AppConfig
 	backupFileMode fs.FileMode
 }
@@ -93,6 +95,8 @@ func New(ctx context.Context, appID string, namespaces []string, opts ...Option)
 	ac := &ApolloClient{
 		appConfig: defaultAppConfig(appID, namespaces),
 	}
+	ac.appConfig.IP = "http://10.169.32.38:80"
+	ac.appConfig.Cluster = "default"
 
 	for _, o := range opts {
 		o(ac)

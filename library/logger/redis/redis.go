@@ -19,6 +19,8 @@ const (
 	cmdStart contextKey = iota
 )
 
+// RedisConfig is used to parse configuration file
+// logger should be controlled with Options
 type RedisConfig struct {
 	InfoFile    string
 	ErrorFile   string
@@ -46,11 +48,22 @@ func NewRedisLogger(cfg *RedisConfig, opts ...RedisOption) (rl *RedisLogger, err
 		o(rl)
 	}
 
+	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	if err != nil {
+		return
+	}
+
 	l, err := logger.NewLogger(&logger.Config{
 		InfoFile:  cfg.InfoFile,
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
-	}, logger.WithModule(logger.ModuleRedis), logger.WithServiceName(cfg.ServiceName), logger.WithCallerSkip(5))
+	},
+		logger.WithModule(logger.ModuleRedis),
+		logger.WithServiceName(cfg.ServiceName),
+		logger.WithCallerSkip(5),
+		logger.WithInfoWriter(infoWriter),
+		logger.WithErrorWriter(errWriter),
+	)
 	if err != nil {
 		return
 	}
@@ -59,13 +72,13 @@ func NewRedisLogger(cfg *RedisConfig, opts ...RedisOption) (rl *RedisLogger, err
 	return
 }
 
-//BeforeProcess redis before execute action do something
+// BeforeProcess redis before execute action do something
 func (rl *RedisLogger) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	ctx = rl.setCmdStart(ctx)
 	return ctx, nil
 }
 
-//AfterProcess redis after execute action do something
+// AfterProcess redis after execute action do something
 func (rl *RedisLogger) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if rl.Logger == nil {
 		return nil

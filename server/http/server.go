@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+
 	"github.com/why444216978/gin-api/app/response"
 	"github.com/why444216978/gin-api/server"
 )
@@ -105,7 +106,7 @@ func (s *Server) initHandler() *gin.Engine {
 	}
 
 	server.NoRoute(func(c *gin.Context) {
-		response.ResponseJSON(c, response.CodeUriNotFound, nil, "")
+		response.ResponseJSON(c, response.CodeUriNotFound, nil, nil)
 		c.AbortWithStatus(http.StatusNotFound)
 	})
 

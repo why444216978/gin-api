@@ -14,6 +14,7 @@ const (
 	ModuleMySQL    = "MySQL"
 	ModuleRedis    = "Redis"
 	ModuleRabbitMQ = "RabbitMQ"
+	ModuleCron     = "Cron"
 )
 
 const (
