@@ -2,6 +2,8 @@ package log
 
 import (
 	"bytes"
+	"encoding/base64"
+	"net/http/httputil"
 	"sync/atomic"
 	"time"
 
@@ -33,7 +35,8 @@ func LoggerMiddleware() gin.HandlerFunc {
 		logID := loggerHTTP.ExtractLogID(c.Request)
 		ctx = logger.WithLogID(ctx, logID)
 
-		req := loggerHTTP.GetRequestBody(c.Request)
+		// req := loggerHTTP.GetRequestBody(c.Request)
+		req, _ := httputil.DumpRequest(c.Request, true)
 
 		responseWriter := &util.BodyWriter{Body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
 		c.Writer = responseWriter
@@ -49,7 +52,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			TraceID:    traceID,
 			Header:     c.Request.Header,
 			Method:     c.Request.Method,
-			Request:    req,
+			Request:    base64.StdEncoding.EncodeToString(req),
 			Response:   make(map[string]interface{}),
 			ClientIP:   c.ClientIP(),
 			ClientPort: 0,
