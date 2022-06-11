@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/why444216978/gin-api/app/module/test/job/grpc/helloworld"
+	pb "github.com/why444216978/gin-api/app/module/test/service/grpc/helloworld"
 	serverGRPC "github.com/why444216978/gin-api/server/grpc"
 )
 

@@ -9,8 +9,7 @@ import (
 
 	"github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/loader"
-	"github.com/why444216978/gin-api/app/module/test/job/grpc/cmux"
-	"github.com/why444216978/gin-api/app/module/test/job/grpc/h2c"
+	jobGRPC "github.com/why444216978/gin-api/app/module/test/job/grpc"
 	serviceGRPC "github.com/why444216978/gin-api/app/module/test/service/grpc"
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/app/router"
@@ -33,17 +32,17 @@ func main() {
 	log.Printf("Actual pid is %d", syscall.Getpid())
 
 	flag.Parse()
-	if *job != "" {
-		jobLib.Handlers = map[string]jobLib.HandleFunc{
-			"grpc-cmux": cmux.Start,
-			"grpc-h2c":  h2c.Start,
-		}
-		jobLib.Handle(*job)
-		return
-	}
 
 	if err := loader.Load(); err != nil {
 		panic(err)
+	}
+
+	if *job != "" {
+		jobLib.Handlers = map[string]jobLib.HandleFunc{
+			"grpc-test": jobGRPC.Start,
+		}
+		jobLib.Handle(*job)
+		return
 	}
 
 	port := config.App.AppPort

@@ -212,6 +212,13 @@ service gin-api  put key: gin-api.192.168.1.104.777 val: {"Host":"192.168.1.104"
 
 [why@bogon] ~/Desktop$curl http://localhost:8888/v1/example/echo
 {"message":" world"}
+
+[why@bogon] ~/Desktop/go/gin-api/app$go run main.go -job grpc-test
+2022/06/12 04:59:04 Actual pid is 12538
+2022/06/12 04:59:04 start job by grpc-test
+message:"why world"
+message:"why world"
+message:"why world"
 ```
 
 
