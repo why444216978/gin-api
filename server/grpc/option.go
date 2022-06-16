@@ -19,7 +19,6 @@ import (
 
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/library/jaeger"
-	jaegerGRPC "github.com/why444216978/gin-api/library/jaeger/grpc"
 	"github.com/why444216978/gin-api/server/grpc/middleware/log"
 )
 
@@ -91,7 +90,6 @@ func NewServerOption(opts ...ServerOptionFunc) []grpc.ServerOption {
 						span.LogFields(opentracingLog.Error(err))
 					}
 				})),
-			jaegerGRPC.UnaryServerInterceptor(),
 			grpc_recovery.UnaryServerInterceptor(
 				grpc_recovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
 					err = errors.WithStack(fmt.Errorf("%v", p))
