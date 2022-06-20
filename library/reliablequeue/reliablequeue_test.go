@@ -22,6 +22,8 @@ func (*Queue) Produce(ctx context.Context, msg interface{}, opts ...queue.Produc
 
 func (*Queue) Consume(consumer queue.Consumer) {}
 
+func (*Queue) Shutdown() error { return nil }
+
 func createTable() (db *gorm.DB, err error) {
 	db = orm.NewMemoryDB()
 	if err = db.Migrator().CreateTable(&ReliableMqMessage{}); err != nil {
