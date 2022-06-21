@@ -19,24 +19,24 @@ const (
 )
 
 const (
-	AppName    = "app_name"
-	Module     = "module"
-	SericeName = "service_name"
-	LogID      = "log_id"
-	TraceID    = "trace_id"
-	Header     = "header"
-	Method     = "method"
-	Request    = "request"
-	Response   = "response"
-	Code       = "code"
-	ClientIP   = "client_ip"
-	ClientPort = "client_port"
-	ServerIP   = "server_ip"
-	ServerPort = "server_port"
-	API        = "api"
-	Cost       = "cost"
-	Timeout    = "timeout"
-	Trace      = "trace"
+	AppName     = "app_name"
+	Module      = "module"
+	ServiceName = "service_name"
+	LogID       = "log_id"
+	TraceID     = "trace_id"
+	Header      = "header"
+	Method      = "method"
+	Request     = "request"
+	Response    = "response"
+	Code        = "code"
+	ClientIP    = "client_ip"
+	ClientPort  = "client_port"
+	ServerIP    = "server_ip"
+	ServerPort  = "server_port"
+	API         = "api"
+	Cost        = "cost"
+	Timeout     = "timeout"
+	Trace       = "trace"
 )
 
 type Fields struct {
@@ -60,4 +60,28 @@ type Fields struct {
 	Trace       string        `json:"trace"`
 }
 
-type Field interface{}
+type Field interface {
+	Key() string
+	Value() interface{}
+}
+
+type field struct {
+	key   string
+	value interface{}
+}
+
+func (f *field) Key() string {
+	return f.key
+}
+
+func (f *field) Value() interface{} {
+	return f.value
+}
+
+func Reflect(key string, value interface{}) Field {
+	return &field{key: key, value: value}
+}
+
+func Error(err error) Field {
+	return &field{key: "error", value: err}
+}

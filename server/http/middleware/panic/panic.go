@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 
 	"github.com/why444216978/gin-api/app/response"
 	"github.com/why444216978/gin-api/library/logger"
@@ -35,7 +34,7 @@ func ThrowPanic(l logger.Logger) gin.HandlerFunc {
 				ctx := logger.WithHTTPFields(c.Request.Context(), fields)
 				c.Request = c.Request.WithContext(ctx)
 
-				l.Error(ctx, fmt.Sprintf("%s", err), zap.Reflect("data", fields)) // 这里不能打Fatal和Panic，否则程序会退出
+				l.Error(ctx, fmt.Sprintf("%s", err), logger.Reflect("data", fields)) // 这里不能打Fatal和Panic，否则程序会退出
 				response.ResponseJSON(c, response.CodeServer, nil, nil)
 				c.AbortWithStatus(http.StatusInternalServerError)
 

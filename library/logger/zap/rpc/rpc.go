@@ -3,8 +3,6 @@ package rpc
 import (
 	"context"
 
-	"go.uber.org/zap"
-
 	"github.com/why444216978/gin-api/library/logger"
 	zapLogger "github.com/why444216978/gin-api/library/logger/zap"
 )
@@ -63,7 +61,7 @@ func (rl *RPCLogger) Error(ctx context.Context, msg string, fields logger.Fields
 	rl.logger().Error(newCtx, msg, logFields...)
 }
 
-func (rl *RPCLogger) fields(ctx context.Context, fields logger.Fields) (context.Context, []zap.Field) {
+func (rl *RPCLogger) fields(ctx context.Context, fields logger.Fields) (context.Context, []logger.Field) {
 	logFields := logger.ValueHTTPFields(ctx)
 
 	logFields.Header = fields.Header
@@ -81,9 +79,9 @@ func (rl *RPCLogger) fields(ctx context.Context, fields logger.Fields) (context.
 	newCtx := context.WithValue(ctx, "rpc", "rpc")
 	newCtx = logger.WithHTTPFields(newCtx, logFields)
 
-	return newCtx, []zap.Field{
-		zap.String(logger.SericeName, fields.ServiceName),
-		zap.Duration(logger.Timeout, fields.Timeout),
+	return newCtx, []logger.Field{
+		logger.Reflect(logger.ServiceName, fields.ServiceName),
+		logger.Reflect(logger.Timeout, fields.Timeout),
 	}
 }
 

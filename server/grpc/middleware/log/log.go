@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/why444216978/go-util/snowflake"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -62,7 +61,7 @@ func UnaryServerInterceptor(l logger.Logger) grpc.UnaryServerInterceptor {
 
 		ctx = logger.WithHTTPFields(ctx, fields)
 		if err != nil {
-			l.Error(ctx, "grpc err", zap.Error(err))
+			l.Error(ctx, "grpc err", logger.Error(err))
 		} else {
 			l.Info(ctx, "grpc info")
 		}

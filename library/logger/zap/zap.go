@@ -96,7 +96,7 @@ func NewLogger(options ...Option) (l *ZapLogger, err error) {
 	fields := []zapcore.Field{
 		zap.String(logger.AppName, app.Name()),
 		zap.String(logger.Module, l.opts.module),
-		zap.String(logger.SericeName, l.opts.serviceName),
+		zap.String(logger.ServiceName, l.opts.serviceName),
 	}
 
 	l.Logger = zap.New(core,
@@ -171,27 +171,27 @@ func zapLevel(level string) (zapcore.Level, error) {
 	}
 }
 
-func (l *ZapLogger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *ZapLogger) Debug(ctx context.Context, msg string, fields ...logger.Field) {
 	l.Logger.Debug(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *ZapLogger) Info(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *ZapLogger) Info(ctx context.Context, msg string, fields ...logger.Field) {
 	l.Logger.Info(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *ZapLogger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *ZapLogger) Warn(ctx context.Context, msg string, fields ...logger.Field) {
 	l.Logger.Warn(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *ZapLogger) Error(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *ZapLogger) Error(ctx context.Context, msg string, fields ...logger.Field) {
 	l.Logger.Error(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *ZapLogger) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *ZapLogger) Fatal(ctx context.Context, msg string, fields ...logger.Field) {
 	l.Logger.Fatal(msg, l.extractFields(ctx, fields...)...)
 }
 
-func (l *ZapLogger) extractFields(ctx context.Context, fields ...zap.Field) []zap.Field {
+func (l *ZapLogger) extractFields(ctx context.Context, fields ...logger.Field) []zap.Field {
 	fieldsMap, _ := conversion.StructToMap(logger.ValueHTTPFields(ctx))
 	target := make(map[string]zap.Field, len(fieldsMap))
 	for k, v := range fieldsMap {
@@ -199,7 +199,7 @@ func (l *ZapLogger) extractFields(ctx context.Context, fields ...zap.Field) []za
 	}
 
 	for _, f := range fields {
-		target[f.Key] = f
+		target[f.Key()] = zap.Reflect(f.Key(), f.Value())
 	}
 
 	new := make([]zap.Field, 0)
