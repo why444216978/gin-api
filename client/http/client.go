@@ -14,7 +14,8 @@ import (
 	"github.com/why444216978/codec"
 	"github.com/why444216978/go-util/assert"
 
-	loggerRPC "github.com/why444216978/gin-api/library/logger/rpc"
+	"github.com/why444216978/gin-api/library/logger"
+	loggerRPC "github.com/why444216978/gin-api/library/logger/zap/rpc"
 	"github.com/why444216978/gin-api/library/servicer"
 	timeoutLib "github.com/why444216978/gin-api/server/http/middleware/timeout"
 )
@@ -90,16 +91,16 @@ func (r *RPC) Send(ctx context.Context, serviceName string, request Request, res
 		if r.logger == nil {
 			return
 		}
-		fields := loggerRPC.RPCLogFields{
+		fields := logger.Fields{
 			ServiceName: serviceName,
 			Header:      request.Header,
 			Method:      request.Method,
-			URI:         request.URI,
+			API:         request.URI,
 			Request:     request.Body,
 			Response:    response.Body,
 			ServerIP:    node.Host,
 			ServerPort:  node.Port,
-			HTTPCode:    response.HTTPCode,
+			Code:        response.HTTPCode,
 			Cost:        cost,
 			Timeout:     request.Timeout,
 		}

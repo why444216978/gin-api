@@ -41,8 +41,8 @@ func WithMiddlewares(middlewares ...gin.HandlerFunc) Option {
 	return func(s *Server) { s.middlewares = middlewares }
 }
 
-func WithRegisterRouter(f RegisterRouter) Option {
-	return func(s *Server) { s.registerRouterFunc = f }
+func WithRegisterRouter(r RegisterRouter) Option {
+	return func(s *Server) { s.registerRouterFunc = r }
 }
 
 func WithPprof(pprofTurn bool) Option {

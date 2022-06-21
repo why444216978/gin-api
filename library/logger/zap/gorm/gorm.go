@@ -13,6 +13,7 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 
 	"github.com/why444216978/gin-api/library/logger"
+	zapLogger "github.com/why444216978/gin-api/library/logger/zap"
 )
 
 // GormConfig is used to parse configuration file
@@ -28,8 +29,8 @@ type GormConfig struct {
 }
 
 type GormLogger struct {
-	Config                    *GormConfig
-	ZapLogger                 *zap.Logger
+	*zap.Logger
+	config                    *GormConfig
 	LogLevel                  gormLogger.LogLevel
 	SlowThreshold             time.Duration
 	SkipCallerLookup          bool
@@ -40,50 +41,47 @@ type GormOption func(gl *GormLogger)
 
 var _ gormLogger.Interface = (*GormLogger)(nil)
 
-func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
+func NewGorm(config *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 	gl = &GormLogger{
-		Config:                    cfg,
-		LogLevel:                  gormLogger.LogLevel(cfg.Level),
-		SlowThreshold:             time.Duration(cfg.SlowThreshold) * time.Millisecond,
-		SkipCallerLookup:          cfg.SkipCallerLookup,
-		IgnoreRecordNotFoundError: cfg.IgnoreRecordNotFoundError,
+		config:                    config,
+		LogLevel:                  gormLogger.LogLevel(config.Level),
+		SlowThreshold:             time.Duration(config.SlowThreshold) * time.Millisecond,
+		SkipCallerLookup:          config.SkipCallerLookup,
+		IgnoreRecordNotFoundError: config.IgnoreRecordNotFoundError,
 	}
 
 	for _, o := range opts {
 		o(gl)
 	}
 
-	zapLever := zap.InfoLevel.String()
+	level := zap.InfoLevel.String()
 	switch gl.LogLevel {
 	case gormLogger.Silent:
-		zapLever = zapcore.FatalLevel.String()
+		level = zapcore.FatalLevel.String()
 	case gormLogger.Error:
-		zapLever = zapcore.ErrorLevel.String()
+		level = zapcore.ErrorLevel.String()
 	case gormLogger.Warn:
-		zapLever = zapcore.WarnLevel.String()
+		level = zapcore.WarnLevel.String()
 	case gormLogger.Info:
-		zapLever = zapcore.InfoLevel.String()
+		level = zapcore.InfoLevel.String()
 	}
 
-	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	infoWriter, errWriter, err := logger.RotateWriter(config.InfoFile, config.ErrorFile)
 	if err != nil {
 		return
 	}
 
-	l, err := logger.NewLogger(&logger.Config{
-		InfoFile:  cfg.InfoFile,
-		ErrorFile: cfg.ErrorFile,
-		Level:     zapLever,
-	},
-		logger.WithModule(logger.ModuleMySQL),
-		logger.WithServiceName(cfg.ServiceName),
-		logger.WithInfoWriter(infoWriter),
-		logger.WithErrorWriter(errWriter),
+	l, err := zapLogger.NewLogger(
+		zapLogger.WithModule(logger.ModuleMySQL),
+		zapLogger.WithServiceName(config.ServiceName),
+		zapLogger.WithInfoWriter(infoWriter),
+		zapLogger.WithErrorWriter(errWriter),
+		zapLogger.WithLevel(level),
 	)
 	if err != nil {
 		return
 	}
-	gl.ZapLogger = l.Logger
+	gl.Logger = l.Logger
 
 	gormLogger.Default = gl
 
@@ -92,7 +90,7 @@ func NewGorm(cfg *GormConfig, opts ...GormOption) (gl *GormLogger, err error) {
 
 func (l *GormLogger) LogMode(level gormLogger.LogLevel) gormLogger.Interface {
 	return &GormLogger{
-		ZapLogger:                 l.ZapLogger,
+		Logger:                    l.Logger,
 		SlowThreshold:             l.SlowThreshold,
 		LogLevel:                  level,
 		SkipCallerLookup:          l.SkipCallerLookup,
@@ -151,8 +149,12 @@ func (l *GormLogger) logger() *zap.Logger {
 		case strings.Contains(file, "gorm.io"):
 		case strings.Contains(file, "go-util/orm/orm.go"):
 		default:
-			return l.ZapLogger.WithOptions(zap.AddCallerSkip(i - 2))
+			return l.Logger.WithOptions(zap.AddCallerSkip(i - 2))
 		}
 	}
-	return l.ZapLogger
+	return l.Logger
+}
+
+func (l *GormLogger) Close() error {
+	return l.Logger.Sync()
 }

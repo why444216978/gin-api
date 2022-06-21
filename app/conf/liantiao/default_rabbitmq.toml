@@ -1,0 +1,10 @@
+ServiceName = "default_rabbitmq"
+Host = "127.0.0.1"
+Port = 5672
+Virtual = "why"
+User = "why"
+Pass = "why"
+ExchangeType = "direct"
+ExchangeName = "why_exchange"
+QueueName = "why_queue"
+RouteName = "why_route"

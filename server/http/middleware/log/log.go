@@ -12,15 +12,13 @@ import (
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/sys"
 
-	appConfig "github.com/why444216978/gin-api/app/config"
-	"github.com/why444216978/gin-api/app/resource"
+	"github.com/why444216978/gin-api/library/app"
 	jaegerHTTP "github.com/why444216978/gin-api/library/jaeger/http"
 	"github.com/why444216978/gin-api/library/logger"
-	loggerHTTP "github.com/why444216978/gin-api/library/logger/http"
 	"github.com/why444216978/gin-api/server/http/util"
 )
 
-func LoggerMiddleware() gin.HandlerFunc {
+func LoggerMiddleware(l logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -32,10 +30,10 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 		serverIP, _ := sys.LocalIP()
 
-		logID := loggerHTTP.ExtractLogID(c.Request)
+		logID := logger.ExtractLogID(c.Request)
 		ctx = logger.WithLogID(ctx, logID)
 
-		// req := loggerHTTP.GetRequestBody(c.Request)
+		// req := logger.GetRequestBody(c.Request)
 		req, _ := httputil.DumpRequest(c.Request, true)
 
 		responseWriter := &util.BodyWriter{Body: bytes.NewBuffer(nil), ResponseWriter: c.Writer}
@@ -57,7 +55,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			ClientIP:   c.ClientIP(),
 			ClientPort: 0,
 			ServerIP:   serverIP,
-			ServerPort: appConfig.App.AppPort,
+			ServerPort: app.Port(),
 			API:        c.Request.RequestURI,
 		}
 		// Next之前这里需要写入ctx，否则会丢失log、断开trace
@@ -82,7 +80,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			fields.Code = c.Writer.Status()
 			fields.Cost = time.Since(start).Milliseconds()
 			ctx = logger.WithHTTPFields(ctx, fields)
-			resource.ServiceLogger.Info(ctx, "request info")
+			l.Info(ctx, "request info")
 		}()
 
 		go func() {
@@ -95,7 +93,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 				fields.Code = 499
 				fields.Cost = time.Since(start).Milliseconds()
 				ctx = logger.WithHTTPFields(ctx, fields)
-				resource.ServiceLogger.Warn(ctx, "client canceled")
+				l.Warn(ctx, "client canceled")
 			}
 		}()
 

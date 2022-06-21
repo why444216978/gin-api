@@ -33,13 +33,13 @@ const (
 
 func (gs *GoodsService) GetGoodsName(ctx context.Context, id int) (string, error) {
 	data, err := resource.RedisDefault.Get(ctx, GOODS_NAME_KEY+strconv.Itoa(id)).Result()
-	if err == redis.Nil {
-		err = nil
+	if errors.Is(err, redis.Nil) {
+		return "", nil
 	}
 	if err != nil {
-		err = errors.Wrap(err, "redis get goods price error：")
+		return "", errors.Wrap(err, "redis get goods price error：")
 	}
-	return data, err
+	return data, nil
 }
 
 func (gs *GoodsService) CrudGoods(ctx context.Context) (goods respository.Test, err error) {

@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -17,10 +18,24 @@ const (
 	ExchangeTypeHeaders = "headers"
 )
 
+type Config struct {
+	ServiceName  string
+	Host         string
+	Port         int
+	Virtual      string
+	User         string
+	Pass         string
+	ExchangeType string
+	ExchangeName string
+	QueueName    string
+	RouteName    string
+}
+
 type Option struct {
 	declareExchange bool
 	declareQueue    bool
 	bindQueue       bool
+	qos             int
 }
 
 type OptionFunc func(*Option)
@@ -30,6 +45,7 @@ func defaultOption() *Option {
 		declareExchange: false,
 		declareQueue:    false,
 		bindQueue:       false,
+		qos:             10,
 	}
 }
 
@@ -45,6 +61,10 @@ func WithBindQueue(turn bool) OptionFunc {
 	return func(o *Option) { o.bindQueue = turn }
 }
 
+func WithQos(qos int) OptionFunc {
+	return func(o *Option) { o.qos = qos }
+}
+
 type RabbitMQ struct {
 	opts         *Option
 	connection   *amqp.Connection
@@ -57,20 +77,25 @@ type RabbitMQ struct {
 	routeName    string
 }
 
-func New(name, url, exchangeName, exchangeType, queueName, routeName string, opts ...OptionFunc) *RabbitMQ {
+func New(cfg *Config, opts ...OptionFunc) (*RabbitMQ, error) {
+	if cfg == nil {
+		return nil, errors.New("cfg is nil")
+	}
+
 	opt := defaultOption()
 	for _, o := range opts {
 		o(opt)
 	}
 
 	return &RabbitMQ{
-		name:         name,
-		url:          url,
-		exchangeName: exchangeName,
-		exchangeType: exchangeType,
-		queueName:    queueName,
-		routeName:    routeName,
-	}
+		opts:         opt,
+		name:         cfg.ServiceName,
+		url:          fmt.Sprintf("amqp://%s:%s@%s:%d/%s", cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.Virtual),
+		exchangeName: cfg.ExchangeName,
+		exchangeType: cfg.ExchangeType,
+		queueName:    cfg.QueueName,
+		routeName:    cfg.RouteName,
+	}, nil
 }
 
 func (q *RabbitMQ) Produce(ctx context.Context, msg interface{}, opts ...queue.ProduceOptionFunc) (err error) {
@@ -86,8 +111,8 @@ func (q *RabbitMQ) Produce(ctx context.Context, msg interface{}, opts ...queue.P
 	err = q.channel.Publish(
 		q.exchangeName, // exchange
 		q.routeName,    // routing key
-		false,          // mandatory
-		false,          // immediate
+		true,           // set true, when no queue match Basic.Return
+		false,          // set false, not dependent consumers
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
@@ -165,13 +190,37 @@ func (q *RabbitMQ) connect() (err error) {
 	if err != nil {
 		return errors.Wrap(err, "amqp.Dial fail")
 	}
-	go func() {
-		fmt.Printf("closing: %s", <-q.connection.NotifyClose(make(chan *amqp.Error)))
-	}()
+
+	select {
+	case r := <-q.connection.NotifyClose(make(chan *amqp.Error)):
+		b, _ := json.Marshal(r)
+		// TODO log
+		log.Println("q.connection.NotifyClose:" + string(b))
+	default:
+	}
 
 	q.channel, err = q.connection.Channel()
 	if err != nil {
 		return errors.Wrap(err, "connection.Channel fail")
+	}
+
+	if err = q.channel.Qos(q.opts.qos, 0, false); err != nil {
+		return errors.Wrap(err, "channel.Qos fail")
+	}
+
+	select {
+	case r := <-q.channel.NotifyClose(make(chan *amqp.Error)):
+		b, _ := json.Marshal(r)
+		// TODO log
+		log.Println("q.channel.NotifyClose:" + string(b))
+	case r := <-q.channel.NotifyCancel(make(chan string)):
+		// TODO log
+		log.Println("q.channel.NotifyCancel:" + r)
+	case r := <-q.channel.NotifyReturn(make(chan amqp.Return)):
+		b, _ := json.Marshal(r)
+		// TODO log
+		log.Println("q.channel.NotifyReturn:" + string(b))
+	default:
 	}
 
 	if q.opts.declareExchange {

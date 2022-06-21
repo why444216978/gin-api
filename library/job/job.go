@@ -2,32 +2,36 @@ package job
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
-	"time"
+
+	"github.com/pkg/errors"
+	"github.com/why444216978/go-util/assert"
+	"github.com/why444216978/go-util/snowflake"
+
+	"github.com/why444216978/gin-api/library/logger"
 )
 
 type HandleFunc func(ctx context.Context) error
 
 var Handlers = map[string]HandleFunc{}
 
-func Handle(job string) {
-	ctx := context.Background()
+func Handle(job string, l logger.Logger) {
+	ctx := logger.WithLogID(context.Background(), snowflake.Generate().String())
 
 	log.Println("start job by " + job)
 
 	handle, ok := Handlers[job]
 	if !ok {
-		fmt.Println("job " + job + " not found")
+		log.Println("job " + job + " not found")
 		return
 	}
 
 	err := handle(ctx)
-
-	time.Sleep(1 * time.Second)
-
 	if err != nil {
+		if !assert.IsNil(l) {
+			l.Error(ctx, errors.Wrap(err, "handle job "+job).Error())
+		}
 		os.Exit(1)
 	}
 }

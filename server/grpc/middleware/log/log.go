@@ -35,7 +35,7 @@ func GetPeerAddr(ctx context.Context) string {
 	return addr
 }
 
-func UnaryServerInterceptor(l *logger.Logger) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor(l logger.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		start := time.Now()
 		resp, err = handler(ctx, req)

@@ -30,7 +30,7 @@ var secondParser = cron.NewParser(
 
 type Cron struct {
 	*cron.Cron
-	logger     *logger.Logger
+	logger     logger.Logger
 	lock       lock.Locker
 	opts       *Options
 	name       string
@@ -39,7 +39,6 @@ type Cron struct {
 }
 
 type Options struct {
-	logger        *logger.Logger
 	locker        lock.Locker
 	errorCallback func(error)
 	miniLockTTL   time.Duration
@@ -59,10 +58,6 @@ func WithLocker(l lock.Locker) Option {
 	return func(o *Options) { o.locker = l }
 }
 
-func WithLogger(l *logger.Logger) Option {
-	return func(o *Options) { o.logger = l }
-}
-
 func WithErrCallback(f func(error)) Option {
 	return func(o *Options) { o.errorCallback = f }
 }
@@ -75,20 +70,15 @@ func WithLockFormat(lockFormat string) Option {
 	return func(o *Options) { o.lockFormat = lockFormat }
 }
 
-func NewCron(name string, options ...Option) (c *Cron, err error) {
+func NewCron(name string, l logger.Logger, options ...Option) (c *Cron, err error) {
 	opts := defaultOptions()
 
 	for _, o := range options {
 		o(opts)
 	}
 
-	if opts.logger == nil {
+	if assert.IsNil(l == nil) {
 		err = errors.New("logger is nil")
-		return
-	}
-
-	if assert.IsNil(opts.locker) {
-		err = errors.New("locker is nil")
 		return
 	}
 
@@ -97,7 +87,7 @@ func NewCron(name string, options ...Option) (c *Cron, err error) {
 	}
 
 	c = &Cron{
-		logger:     opts.logger,
+		logger:     l,
 		lock:       opts.locker,
 		Cron:       cron.New(cron.WithSeconds()),
 		opts:       opts,

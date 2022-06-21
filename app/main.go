@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"syscall"
-	"time"
 
-	"github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/loader"
 	jobGRPC "github.com/why444216978/gin-api/app/module/test/job/grpc"
 	serviceGRPC "github.com/why444216978/gin-api/app/module/test/service/grpc"
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/app/router"
 	"github.com/why444216978/gin-api/bootstrap"
+	"github.com/why444216978/gin-api/library/app"
 	jobLib "github.com/why444216978/gin-api/library/job"
 	serverGRPC "github.com/why444216978/gin-api/server/grpc"
 	serverH2C "github.com/why444216978/gin-api/server/grpc/h2c"
@@ -31,21 +30,24 @@ var (
 func main() {
 	log.Printf("Actual pid is %d", syscall.Getpid())
 
+	var err error
+
 	flag.Parse()
 
-	if err := loader.Load(); err != nil {
-		panic(err)
+	if err = bootstrap.Init(loader.Load); err != nil {
+		log.Printf("bootstrap.Init err %s", err.Error())
+		return
 	}
 
 	if *job != "" {
 		jobLib.Handlers = map[string]jobLib.HandleFunc{
 			"grpc-test": jobGRPC.Start,
 		}
-		jobLib.Handle(*job)
+		jobLib.Handle(*job, resource.ServiceLogger)
 		return
 	}
 
-	port := config.App.AppPort
+	port := app.Port()
 	if *server == "http" {
 		log.Printf("start http, port %d", port)
 		startHTTP(port)
@@ -57,19 +59,19 @@ func main() {
 
 func startHTTP(port int) {
 	srv := httpServer.New(fmt.Sprintf(":%d", port),
-		httpServer.WithReadTimeout(time.Duration(config.App.ReadTimeout)*time.Millisecond),
-		httpServer.WithWriteTimeout(time.Duration(config.App.WriteTimeout)*time.Millisecond),
+		httpServer.WithReadTimeout(app.ReadTimeout()),
+		httpServer.WithWriteTimeout(app.WriteTimeout()),
 		httpServer.WithRegisterRouter(router.RegisterRouter),
 		httpServer.WithMiddlewares(
-			panicMiddleware.ThrowPanic(),
-			timeoutMiddleware.TimeoutMiddleware(time.Duration(config.App.ContextTimeout)*time.Millisecond),
-			logMiddleware.LoggerMiddleware(),
+			panicMiddleware.ThrowPanic(resource.ServiceLogger),
+			timeoutMiddleware.TimeoutMiddleware(app.ContextTimeout()),
+			logMiddleware.LoggerMiddleware(resource.ServiceLogger),
 		),
-		httpServer.WithPprof(config.App.Pprof),
-		httpServer.WithDebug(config.App.IsDebug),
+		httpServer.WithPprof(app.Pprof()),
+		httpServer.WithDebug(app.Debug()),
 	)
 
-	if err := bootstrap.NewApp(srv, bootstrap.WithRegistry(resource.Registrar)).Start(); err != nil {
+	if err := bootstrap.NewApp(srv, resource.Registrar).Start(); err != nil {
 		log.Println(err)
 	}
 }
@@ -79,7 +81,7 @@ func startGRPC(port int) {
 		[]serverGRPC.Register{serviceGRPC.NewService()},
 	)
 
-	if err := bootstrap.NewApp(srv, bootstrap.WithRegistry(resource.Registrar)).Start(); err != nil {
+	if err := bootstrap.NewApp(srv, resource.Registrar).Start(); err != nil {
 		log.Println(err)
 	}
 }
