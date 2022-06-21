@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"go.uber.org/zap"
 
 	"github.com/why444216978/gin-api/library/logger"
 	zapLogger "github.com/why444216978/gin-api/library/logger/zap"
@@ -138,7 +137,7 @@ func (rl *RedisLogger) Error(ctx context.Context, isPipeline bool, cmds []redis.
 	rl.logger().Error(newCtx, strings.Join(errs, ","), logFields...)
 }
 
-func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis.Cmder, cost int64) (context.Context, []zap.Field) {
+func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis.Cmder, cost int64) (context.Context, []logger.Field) {
 	l := len(cmds)
 	names := make([]string, l)
 	args := make([]interface{}, l)
@@ -169,7 +168,7 @@ func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis
 
 	newCtx := context.WithValue(ctx, "rpc", "rpc")
 	newCtx = logger.WithHTTPFields(newCtx, logFields)
-	return newCtx, []zap.Field{}
+	return newCtx, []logger.Field{}
 }
 
 func (rl *RedisLogger) logger() *zapLogger.ZapLogger {
