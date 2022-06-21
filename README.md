@@ -117,9 +117,10 @@ QQ群：909211071
     - lock //分布式锁
     - logger //日志
     - orm //db orm
-    - rabbitmq //rabbitmq
+    - queue //消息队列
     - redis //redis
     - registry //注册中心
+    - reliablequeue //可靠消息队列
     - selector //负载均衡器
     - servicer //下游服务
   .gitignore

@@ -9,12 +9,12 @@ const (
 )
 
 const (
-	ModuleHTTP     = "HTTP"
-	ModuleRPC      = "RPC"
-	ModuleMySQL    = "MySQL"
-	ModuleRedis    = "Redis"
-	ModuleRabbitMQ = "RabbitMQ"
-	ModuleCron     = "Cron"
+	ModuleHTTP  = "HTTP"
+	ModuleRPC   = "RPC"
+	ModuleMySQL = "MySQL"
+	ModuleRedis = "Redis"
+	ModuleQueue = "Queue"
+	ModuleCron  = "Cron"
 )
 
 const (

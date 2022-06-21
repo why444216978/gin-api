@@ -10,24 +10,24 @@ import (
 	"github.com/why444216978/gin-api/library/logger"
 )
 
-// RPCConfig is used to parse configuration file
+// QueueConfig is used to parse configuration file
 // logger should be controlled with Options
-type RPCConfig struct {
+type QueueConfig struct {
 	InfoFile  string
 	ErrorFile string
 	Level     string
 }
 
-// RPCLogger is go-redis logger Hook
-type RPCLogger struct {
+// QueueLogger is go-redis logger Hook
+type QueueLogger struct {
 	*logger.Logger
 }
 
-type RPCOption func(rl *RPCLogger)
+type QueueOption func(rl *QueueLogger)
 
-// NewRPCLogger
-func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) {
-	rl = &RPCLogger{}
+// NewQueueLogger
+func NewQueueLogger(cfg *QueueConfig, opts ...QueueOption) (rl *QueueLogger, err error) {
+	rl = &QueueLogger{}
 
 	for _, o := range opts {
 		o(rl)
@@ -43,8 +43,7 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 		ErrorFile: cfg.ErrorFile,
 		Level:     cfg.Level,
 	},
-		logger.WithCallerSkip(4),
-		logger.WithModule(logger.ModuleRPC),
+		logger.WithModule(logger.ModuleQueue),
 		logger.WithInfoWriter(infoWriter),
 		logger.WithErrorWriter(errWriter),
 	)
@@ -56,7 +55,7 @@ func NewRPCLogger(cfg *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err error) 
 	return
 }
 
-type RPCLogFields struct {
+type QueueLogFields struct {
 	ServiceName string
 	Header      http.Header
 	Method      string
@@ -70,17 +69,17 @@ type RPCLogFields struct {
 	Timeout     time.Duration
 }
 
-func (rl *RPCLogger) Info(ctx context.Context, msg string, fields RPCLogFields) {
+func (rl *QueueLogger) Info(ctx context.Context, msg string, fields QueueLogFields) {
 	newCtx, logFields := rl.fields(ctx, fields)
 	rl.Logger.Info(newCtx, msg, logFields...)
 }
 
-func (rl *RPCLogger) Error(ctx context.Context, msg string, fields RPCLogFields) {
+func (rl *QueueLogger) Error(ctx context.Context, msg string, fields QueueLogFields) {
 	newCtx, logFields := rl.fields(ctx, fields)
 	rl.Logger.Error(newCtx, msg, logFields...)
 }
 
-func (rl *RPCLogger) fields(ctx context.Context, fields RPCLogFields) (context.Context, []zap.Field) {
+func (rl *QueueLogger) fields(ctx context.Context, fields QueueLogFields) (context.Context, []zap.Field) {
 	logFields := logger.ValueHTTPFields(ctx)
 
 	logFields.Header = fields.Header

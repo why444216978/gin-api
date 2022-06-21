@@ -27,6 +27,7 @@ import (
 	loggerRedis "github.com/why444216978/gin-api/library/logger/redis"
 	loggerRPC "github.com/why444216978/gin-api/library/logger/rpc"
 	"github.com/why444216978/gin-api/library/orm"
+	"github.com/why444216978/gin-api/library/queue/rabbitmq"
 	"github.com/why444216978/gin-api/library/redis"
 	"github.com/why444216978/gin-api/library/registry"
 	etcdRegistry "github.com/why444216978/gin-api/library/registry/etcd"
@@ -196,6 +197,19 @@ func loadRedis(db string) (err error) {
 	rc.AddHook(jaegerRedis.NewJaegerHook())
 	rc.AddHook(logger)
 	resource.RedisDefault = rc
+
+	return
+}
+
+func loadRabbitMQ(service string) (err error) {
+	cfg := &rabbitmq.Config{}
+	if err = resource.Config.ReadConfig(service, "toml", cfg); err != nil {
+		return
+	}
+
+	if resource.RabbitMQ, err = rabbitmq.New(cfg); err != nil {
+		return
+	}
 
 	return
 }
