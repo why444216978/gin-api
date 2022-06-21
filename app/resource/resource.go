@@ -17,7 +17,7 @@ import (
 var (
 	Config        *config.Viper
 	TestDB        *orm.Orm
-	ServiceLogger *logger.Logger
+	ServiceLogger logger.Logger
 	RedisDefault  *redis.Client
 	Etcd          *etcd.Etcd
 	ClientHTTP    *httpClient.RPC

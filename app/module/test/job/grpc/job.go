@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/why444216978/gin-api/app/config"
+	"github.com/why444216978/gin-api/library/app"
 	pb "github.com/why444216978/gin-api/app/module/test/service/grpc/helloworld"
 	client "github.com/why444216978/gin-api/client/grpc"
 )
@@ -17,7 +17,7 @@ func Start(ctx context.Context) (err error) {
 }
 
 func call() {
-	cc, err := client.Conn(context.Background(), fmt.Sprintf(":%d", config.App.AppPort))
+	cc, err := client.Conn(context.Background(), fmt.Sprintf(":%d", app.App.AppPort))
 	if err != nil {
 		return
 	}

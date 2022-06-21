@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/why444216978/gin-api/library/logger"
-
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
+
+	"github.com/why444216978/gin-api/library/logger"
+	zapLogger "github.com/why444216978/gin-api/library/logger/zap"
 )
 
 type contextKey int
@@ -32,42 +33,37 @@ type RedisConfig struct {
 
 // RedisLogger is go-redis logger Hook
 type RedisLogger struct {
-	*logger.Logger
-	Config RedisConfig
+	*zapLogger.ZapLogger
+	config *RedisConfig
 }
 
 type RedisOption func(rl *RedisLogger)
 
 // NewRedisLogger
-func NewRedisLogger(cfg *RedisConfig, opts ...RedisOption) (rl *RedisLogger, err error) {
-	rl = &RedisLogger{
-		Config: *cfg,
-	}
+func NewRedisLogger(config *RedisConfig, opts ...RedisOption) (rl *RedisLogger, err error) {
+	rl = &RedisLogger{config: config}
 
 	for _, o := range opts {
 		o(rl)
 	}
 
-	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
+	infoWriter, errWriter, err := logger.RotateWriter(config.InfoFile, config.ErrorFile)
 	if err != nil {
 		return
 	}
 
-	l, err := logger.NewLogger(&logger.Config{
-		InfoFile:  cfg.InfoFile,
-		ErrorFile: cfg.ErrorFile,
-		Level:     cfg.Level,
-	},
-		logger.WithModule(logger.ModuleRedis),
-		logger.WithServiceName(cfg.ServiceName),
-		logger.WithCallerSkip(5),
-		logger.WithInfoWriter(infoWriter),
-		logger.WithErrorWriter(errWriter),
+	l, err := zapLogger.NewLogger(
+		zapLogger.WithModule(logger.ModuleRedis),
+		zapLogger.WithServiceName(config.ServiceName),
+		zapLogger.WithCallerSkip(5),
+		zapLogger.WithInfoWriter(infoWriter),
+		zapLogger.WithErrorWriter(errWriter),
+		zapLogger.WithLevel(config.Level),
 	)
 	if err != nil {
 		return
 	}
-	rl.Logger = l
+	rl.ZapLogger = l
 
 	return
 }
@@ -126,7 +122,7 @@ func (rl *RedisLogger) AfterProcessPipeline(ctx context.Context, cmds []redis.Cm
 
 func (rl *RedisLogger) Info(ctx context.Context, isPipeline bool, cmds []redis.Cmder, cost int64) {
 	newCtx, logFields := rl.fields(ctx, isPipeline, cmds, cost)
-	rl.Logger.Info(newCtx, "info", logFields...)
+	rl.logger().Info(newCtx, "info", logFields...)
 }
 
 func (rl *RedisLogger) Error(ctx context.Context, isPipeline bool, cmds []redis.Cmder, cost int64) {
@@ -139,7 +135,7 @@ func (rl *RedisLogger) Error(ctx context.Context, isPipeline bool, cmds []redis.
 		errs = append(errs, strconv.Itoa(idx)+"-"+err.Error())
 	}
 	newCtx, logFields := rl.fields(ctx, isPipeline, cmds, cost)
-	rl.Logger.Error(newCtx, strings.Join(errs, ","), logFields...)
+	rl.logger().Error(newCtx, strings.Join(errs, ","), logFields...)
 }
 
 func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis.Cmder, cost int64) (context.Context, []zap.Field) {
@@ -166,14 +162,18 @@ func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis
 	logFields.Code = 0
 	logFields.ClientIP = logFields.ServerIP
 	logFields.ClientPort = logFields.ServerPort
-	logFields.ServerIP = rl.Config.Host
-	logFields.ServerPort = rl.Config.Port
+	logFields.ServerIP = rl.config.Host
+	logFields.ServerPort = rl.config.Port
 	logFields.API = method
 	logFields.Cost = cost
 
 	newCtx := context.WithValue(ctx, "rpc", "rpc")
 	newCtx = logger.WithHTTPFields(newCtx, logFields)
 	return newCtx, []zap.Field{}
+}
+
+func (rl *RedisLogger) logger() *zapLogger.ZapLogger {
+	return rl.ZapLogger
 }
 
 func (rl *RedisLogger) setCmdStart(ctx context.Context) context.Context {

@@ -7,19 +7,17 @@ import (
 
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/snowflake"
-
-	"github.com/why444216978/gin-api/library/logger"
 )
 
 // ExtractLogID init log id
 func ExtractLogID(req *http.Request) string {
-	logID := req.Header.Get(logger.LogHeader)
+	logID := req.Header.Get(LogHeader)
 
 	if logID == "" {
 		logID = snowflake.Generate().String()
 	}
 
-	req.Header.Add(logger.LogHeader, logID)
+	req.Header.Add(LogHeader, logID)
 
 	return logID
 }

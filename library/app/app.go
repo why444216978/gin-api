@@ -1,4 +1,4 @@
-package config
+package app
 
 var App struct {
 	AppName        string
@@ -6,6 +6,7 @@ var App struct {
 	Pprof          bool
 	IsDebug        bool
 	ContextTimeout int
-	ReadTimeout    int
+	ConnectTimeout int
 	WriteTimeout   int
+	ReadTimeout    int
 }

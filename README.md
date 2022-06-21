@@ -73,8 +73,6 @@ QQ群：909211071
       - liantiao
       - online
       - qa
-    - config //启动加载配置目录
-      - app.go //应用配置
     - loader //资源加载
     - resource
       - resource.go //全局资源
@@ -105,6 +103,7 @@ QQ群：909211071
     - grpc //grpc服务端
     - http //http服务端
   - library //基础组件库，不建议修改
+    - app //app
     - apollo //阿波罗
     - cache //分布式缓存
     - config //配置加载

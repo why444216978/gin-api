@@ -7,13 +7,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/loader"
 	jobGRPC "github.com/why444216978/gin-api/app/module/test/job/grpc"
 	serviceGRPC "github.com/why444216978/gin-api/app/module/test/service/grpc"
 	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/app/router"
 	"github.com/why444216978/gin-api/bootstrap"
+	"github.com/why444216978/gin-api/library/app"
 	jobLib "github.com/why444216978/gin-api/library/job"
 	serverGRPC "github.com/why444216978/gin-api/server/grpc"
 	serverH2C "github.com/why444216978/gin-api/server/grpc/h2c"
@@ -45,7 +45,7 @@ func main() {
 		return
 	}
 
-	port := config.App.AppPort
+	port := app.App.AppPort
 	if *server == "http" {
 		log.Printf("start http, port %d", port)
 		startHTTP(port)
@@ -57,16 +57,16 @@ func main() {
 
 func startHTTP(port int) {
 	srv := httpServer.New(fmt.Sprintf(":%d", port),
-		httpServer.WithReadTimeout(time.Duration(config.App.ReadTimeout)*time.Millisecond),
-		httpServer.WithWriteTimeout(time.Duration(config.App.WriteTimeout)*time.Millisecond),
+		httpServer.WithReadTimeout(time.Duration(app.App.ReadTimeout)*time.Millisecond),
+		httpServer.WithWriteTimeout(time.Duration(app.App.WriteTimeout)*time.Millisecond),
 		httpServer.WithRegisterRouter(router.RegisterRouter),
 		httpServer.WithMiddlewares(
 			panicMiddleware.ThrowPanic(),
-			timeoutMiddleware.TimeoutMiddleware(time.Duration(config.App.ContextTimeout)*time.Millisecond),
+			timeoutMiddleware.TimeoutMiddleware(time.Duration(app.App.ContextTimeout)*time.Millisecond),
 			logMiddleware.LoggerMiddleware(),
 		),
-		httpServer.WithPprof(config.App.Pprof),
-		httpServer.WithDebug(config.App.IsDebug),
+		httpServer.WithPprof(app.App.Pprof),
+		httpServer.WithDebug(app.App.IsDebug),
 	)
 
 	if err := bootstrap.NewApp(srv, bootstrap.WithRegistry(resource.Registrar)).Start(); err != nil {

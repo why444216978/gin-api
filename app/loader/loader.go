@@ -12,9 +12,9 @@ import (
 	utilDir "github.com/why444216978/go-util/dir"
 	"github.com/why444216978/go-util/sys"
 
-	appConfig "github.com/why444216978/gin-api/app/config"
 	"github.com/why444216978/gin-api/app/resource"
 	httpClient "github.com/why444216978/gin-api/client/http"
+	"github.com/why444216978/gin-api/library/app"
 	redisCache "github.com/why444216978/gin-api/library/cache/redis"
 	"github.com/why444216978/gin-api/library/config"
 	"github.com/why444216978/gin-api/library/etcd"
@@ -22,10 +22,10 @@ import (
 	jaegerGorm "github.com/why444216978/gin-api/library/jaeger/gorm"
 	jaegerRedis "github.com/why444216978/gin-api/library/jaeger/redis"
 	redisLock "github.com/why444216978/gin-api/library/lock/redis"
-	"github.com/why444216978/gin-api/library/logger"
-	loggerGorm "github.com/why444216978/gin-api/library/logger/gorm"
-	loggerRedis "github.com/why444216978/gin-api/library/logger/redis"
-	loggerRPC "github.com/why444216978/gin-api/library/logger/rpc"
+	loggerGorm "github.com/why444216978/gin-api/library/logger/zap/gorm"
+	loggerRedis "github.com/why444216978/gin-api/library/logger/zap/redis"
+	loggerRPC "github.com/why444216978/gin-api/library/logger/zap/rpc"
+	serviceLogger "github.com/why444216978/gin-api/library/logger/zap/service"
 	"github.com/why444216978/gin-api/library/orm"
 	"github.com/why444216978/gin-api/library/queue/rabbitmq"
 	"github.com/why444216978/gin-api/library/redis"
@@ -116,31 +116,21 @@ func loadConfig() (err error) {
 }
 
 func loadApp() (err error) {
-	return resource.Config.ReadConfig("app", "toml", &appConfig.App)
+	return resource.Config.ReadConfig("app", "toml", &app.App)
 }
 
 func loadLogger() (err error) {
-	cfg := &logger.Config{}
+	cfg := &serviceLogger.Config{}
 
 	if err = resource.Config.ReadConfig("log/service", "toml", &cfg); err != nil {
 		return
 	}
 
-	infoWriter, errWriter, err := logger.RotateWriter(cfg.InfoFile, cfg.ErrorFile)
-	if err != nil {
+	if resource.ServiceLogger, err = serviceLogger.NewServiceLogger(app.App.AppName, cfg); err != nil {
 		return
 	}
 
-	if resource.ServiceLogger, err = logger.NewLogger(cfg,
-		logger.WithModule(logger.ModuleHTTP),
-		logger.WithServiceName(appConfig.App.AppName),
-		logger.WithInfoWriter(infoWriter),
-		logger.WithErrorWriter(errWriter),
-	); err != nil {
-		return
-	}
-
-	server.RegisterCloseFunc(resource.ServiceLogger.Sync())
+	server.RegisterCloseFunc(resource.ServiceLogger.Close())
 
 	return
 }
@@ -158,14 +148,15 @@ func loadMysql(db string) (err error) {
 	}
 
 	logCfg.ServiceName = cfg.ServiceName
-	gormLogger, err := loggerGorm.NewGorm(logCfg)
+	logger, err := loggerGorm.NewGorm(logCfg)
 	if err != nil {
 		return
 	}
+	server.RegisterCloseFunc(logger.Close())
 
 	if resource.TestDB, err = orm.NewOrm(cfg,
 		orm.WithTrace(jaegerGorm.GormTrace),
-		orm.WithLogger(gormLogger),
+		orm.WithLogger(logger),
 	); err != nil {
 		return
 	}
@@ -192,6 +183,7 @@ func loadRedis(db string) (err error) {
 	if err != nil {
 		return
 	}
+	server.RegisterCloseFunc(logger.Close())
 
 	rc := redis.NewClient(cfg)
 	rc.AddHook(jaegerRedis.NewJaegerHook())
@@ -231,7 +223,7 @@ func loadJaeger() (err error) {
 		return
 	}
 
-	if _, _, err = jaeger.NewJaegerTracer(cfg, appConfig.App.AppName); err != nil {
+	if _, _, err = jaeger.NewJaegerTracer(cfg, app.App.AppName); err != nil {
 		return
 	}
 
@@ -276,9 +268,9 @@ func loadRegistry() (err error) {
 
 	if resource.Registrar, err = etcdRegistry.NewRegistry(
 		etcdRegistry.WithRegistrarClient(resource.Etcd.Client),
-		etcdRegistry.WithRegistrarServiceName(appConfig.App.AppName),
+		etcdRegistry.WithRegistrarServiceName(app.App.AppName),
 		etcdRegistry.WithRegistarHost(localIP),
-		etcdRegistry.WithRegistarPort(appConfig.App.AppPort),
+		etcdRegistry.WithRegistarPort(app.App.AppPort),
 		etcdRegistry.WithRegistrarLease(cfg.Lease)); err != nil {
 		return
 	}
@@ -343,13 +335,14 @@ func loadClientHTTP() (err error) {
 		return
 	}
 
-	rpcLogger, err := loggerRPC.NewRPCLogger(cfg)
+	logger, err := loggerRPC.NewRPCLogger(cfg)
 	if err != nil {
 		return
 	}
+	server.RegisterCloseFunc(logger.Close())
 
 	resource.ClientHTTP = httpClient.New(
-		httpClient.WithLogger(rpcLogger),
+		httpClient.WithLogger(logger),
 		httpClient.WithBeforePlugins(&httpClient.JaegerBeforePlugin{}))
 	if err != nil {
 		return
