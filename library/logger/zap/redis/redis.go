@@ -55,7 +55,7 @@ func NewRedisLogger(config *RedisConfig, opts ...RedisOption) (rl *RedisLogger, 
 	l, err := zapLogger.NewLogger(
 		zapLogger.WithModule(logger.ModuleRedis),
 		zapLogger.WithServiceName(config.ServiceName),
-		zapLogger.WithCallerSkip(5),
+		zapLogger.WithCallerSkip(6),
 		zapLogger.WithInfoWriter(infoWriter),
 		zapLogger.WithErrorWriter(errWriter),
 		zapLogger.WithLevel(config.Level),
