@@ -15,9 +15,7 @@ import (
 	"github.com/why444216978/gin-api/server"
 )
 
-type Option struct {
-	registrar registry.Registrar
-}
+type Option struct{}
 
 func defaultOption() *Option {
 	return &Option{}
@@ -25,18 +23,15 @@ func defaultOption() *Option {
 
 type OptionFunc func(*Option)
 
-func WithRegistry(registrar registry.Registrar) OptionFunc {
-	return func(o *Option) { o.registrar = registrar }
-}
-
 type App struct {
-	opt    *Option
-	ctx    context.Context
-	server server.Server
-	cancel func()
+	opt       *Option
+	ctx       context.Context
+	server    server.Server
+	registrar registry.Registrar
+	cancel    func()
 }
 
-func NewApp(srv server.Server, opts ...OptionFunc) *App {
+func NewApp(srv server.Server, registrar registry.Registrar, opts ...OptionFunc) *App {
 	opt := defaultOption()
 	for _, o := range opts {
 		o(opt)
@@ -88,11 +83,11 @@ func (a *App) registerSignal() (err error) {
 }
 
 func (a *App) registerService() (err error) {
-	if assert.IsNil(a.opt.registrar) {
+	if assert.IsNil(a.registrar) {
 		return
 	}
 
-	return a.opt.registrar.Register(a.ctx)
+	return a.registrar.Register(a.ctx)
 }
 
 func (a *App) shutdown() (err error) {

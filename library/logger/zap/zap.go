@@ -94,7 +94,7 @@ func NewLogger(options ...Option) (l *ZapLogger, err error) {
 	)
 
 	fields := []zapcore.Field{
-		zap.String(logger.AppName, app.App.AppName),
+		zap.String(logger.AppName, app.Name()),
 		zap.String(logger.Module, l.opts.module),
 		zap.String(logger.SericeName, l.opts.serviceName),
 	}

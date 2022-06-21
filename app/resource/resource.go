@@ -11,7 +11,7 @@ import (
 	"github.com/why444216978/gin-api/library/logger"
 	"github.com/why444216978/gin-api/library/orm"
 	"github.com/why444216978/gin-api/library/queue/rabbitmq"
-	etcdRegistry "github.com/why444216978/gin-api/library/registry/etcd"
+	"github.com/why444216978/gin-api/library/registry"
 )
 
 var (
@@ -23,6 +23,6 @@ var (
 	ClientHTTP    *httpClient.RPC
 	RedisLock     lock.Locker
 	RedisCache    cache.Cacher
-	Registrar     *etcdRegistry.EtcdRegistrar
+	Registrar     registry.Registrar
 	RabbitMQ      *rabbitmq.RabbitMQ
 )

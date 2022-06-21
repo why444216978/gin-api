@@ -1,9 +1,6 @@
 package loader
 
 import (
-	"flag"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -37,31 +34,11 @@ import (
 	"github.com/why444216978/gin-api/server"
 )
 
-var envFlag = flag.String("env", "dev", "config path")
-
-var envMap = map[string]struct{}{
-	"dev":      {},
-	"liantiao": {},
-	"qa":       {},
-	"online":   {},
-}
-
-var (
-	env      string
-	confPath string
-)
-
 func Load() (err error) {
 	// TODO
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	// defer cancel()
 
-	if err = loadConfig(); err != nil {
-		return
-	}
-	if err = loadApp(); err != nil {
-		return
-	}
 	if err = loadLogger(); err != nil {
 		return
 	}
@@ -97,36 +74,14 @@ func Load() (err error) {
 	return
 }
 
-func loadConfig() (err error) {
-	env = *envFlag
-	log.Println("The environment is :" + env)
-
-	if _, ok := envMap[env]; !ok {
-		panic(env + " error")
-	}
-
-	confPath = "conf/" + env
-	if _, err = os.Stat(confPath); err != nil {
-		return
-	}
-
-	resource.Config = config.InitConfig(confPath, "toml")
-
-	return
-}
-
-func loadApp() (err error) {
-	return resource.Config.ReadConfig("app", "toml", &app.App)
-}
-
 func loadLogger() (err error) {
 	cfg := &serviceLogger.Config{}
 
-	if err = resource.Config.ReadConfig("log/service", "toml", &cfg); err != nil {
+	if err = config.ReadConfig("log/service", "toml", &cfg); err != nil {
 		return
 	}
 
-	if resource.ServiceLogger, err = serviceLogger.NewServiceLogger(app.App.AppName, cfg); err != nil {
+	if resource.ServiceLogger, err = serviceLogger.NewServiceLogger(app.Name(), cfg); err != nil {
 		return
 	}
 
@@ -139,11 +94,11 @@ func loadMysql(db string) (err error) {
 	cfg := &orm.Config{}
 	logCfg := &loggerGorm.GormConfig{}
 
-	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
+	if err = config.ReadConfig(db, "toml", cfg); err != nil {
 		return
 	}
 
-	if err = resource.Config.ReadConfig("log/gorm", "toml", logCfg); err != nil {
+	if err = config.ReadConfig("log/gorm", "toml", logCfg); err != nil {
 		return
 	}
 
@@ -168,10 +123,10 @@ func loadRedis(db string) (err error) {
 	cfg := &redis.Config{}
 	logCfg := &loggerRedis.RedisConfig{}
 
-	if err = resource.Config.ReadConfig(db, "toml", cfg); err != nil {
+	if err = config.ReadConfig(db, "toml", cfg); err != nil {
 		return
 	}
-	if err = resource.Config.ReadConfig("log/redis", "toml", &logCfg); err != nil {
+	if err = config.ReadConfig("log/redis", "toml", &logCfg); err != nil {
 		return
 	}
 
@@ -195,7 +150,7 @@ func loadRedis(db string) (err error) {
 
 func loadRabbitMQ(service string) (err error) {
 	cfg := &rabbitmq.Config{}
-	if err = resource.Config.ReadConfig(service, "toml", cfg); err != nil {
+	if err = config.ReadConfig(service, "toml", cfg); err != nil {
 		return
 	}
 
@@ -219,11 +174,11 @@ func loadCache() (err error) {
 func loadJaeger() (err error) {
 	cfg := &jaeger.Config{}
 
-	if err = resource.Config.ReadConfig("jaeger", "toml", cfg); err != nil {
+	if err = config.ReadConfig("jaeger", "toml", cfg); err != nil {
 		return
 	}
 
-	if _, _, err = jaeger.NewJaegerTracer(cfg, app.App.AppName); err != nil {
+	if _, _, err = jaeger.NewJaegerTracer(cfg, app.Name()); err != nil {
 		return
 	}
 
@@ -233,7 +188,7 @@ func loadJaeger() (err error) {
 func loadEtcd() (err error) {
 	cfg := &etcd.Config{}
 
-	if err = resource.Config.ReadConfig("etcd", "toml", cfg); err != nil {
+	if err = config.ReadConfig("etcd", "toml", cfg); err != nil {
 		return
 	}
 
@@ -253,7 +208,7 @@ func loadRegistry() (err error) {
 		cfg     = &registry.RegistryConfig{}
 	)
 
-	if err = resource.Config.ReadConfig("registry", "toml", cfg); err != nil {
+	if err = config.ReadConfig("registry", "toml", cfg); err != nil {
 		return
 	}
 
@@ -268,9 +223,9 @@ func loadRegistry() (err error) {
 
 	if resource.Registrar, err = etcdRegistry.NewRegistry(
 		etcdRegistry.WithRegistrarClient(resource.Etcd.Client),
-		etcdRegistry.WithRegistrarServiceName(app.App.AppName),
+		etcdRegistry.WithRegistrarServiceName(app.Name()),
 		etcdRegistry.WithRegistarHost(localIP),
-		etcdRegistry.WithRegistarPort(app.App.AppPort),
+		etcdRegistry.WithRegistarPort(app.Port()),
 		etcdRegistry.WithRegistrarLease(cfg.Lease)); err != nil {
 		return
 	}
@@ -288,7 +243,7 @@ func loadServices() (err error) {
 		files []string
 	)
 
-	if dir, err = filepath.Abs(confPath); err != nil {
+	if dir, err = filepath.Abs(config.Path()); err != nil {
 		return
 	}
 
@@ -303,7 +258,7 @@ func loadServices() (err error) {
 		if info, err = utilDir.GetPathInfo(f); err != nil {
 			return
 		}
-		if err = resource.Config.ReadConfig("services/"+info.BaseNoExt, info.ExtNoSpot, cfg); err != nil {
+		if err = config.ReadConfig("services/"+info.BaseNoExt, info.ExtNoSpot, cfg); err != nil {
 			return
 		}
 
@@ -331,7 +286,7 @@ func loadServices() (err error) {
 
 func loadClientHTTP() (err error) {
 	cfg := &loggerRPC.RPCConfig{}
-	if err = resource.Config.ReadConfig("log/rpc", "toml", cfg); err != nil {
+	if err = config.ReadConfig("log/rpc", "toml", cfg); err != nil {
 		return
 	}
 

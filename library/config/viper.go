@@ -1,30 +1,76 @@
 package config
 
 import (
+	"flag"
+	"log"
+	"os"
+
 	"github.com/spf13/viper"
 )
 
 type Viper struct {
-	viper *viper.Viper
+	*viper.Viper
+	path string
 }
 
-func InitConfig(path string, typ string) *Viper {
+var env = flag.String("env", "dev", "config path")
+
+var Env = map[string]struct{}{
+	"dev":      {},
+	"liantiao": {},
+	"qa":       {},
+	"online":   {},
+}
+
+var defaultConf = New(*env)
+
+func init() {
+	flag.Parse()
+}
+
+func ReadConfig(file, typ string, data interface{}) (err error) {
+	return defaultConf.ReadConfig(file, typ, data)
+}
+
+func Path() string {
+	return defaultConf.Path()
+}
+
+func Config() *Viper {
+	return defaultConf
+}
+
+func New(env string) *Viper {
+	log.Println("The environment is :" + env)
+
+	if _, ok := Env[env]; !ok {
+		panic(env + " error")
+	}
+
+	path := "conf/" + env
+	if _, err := os.Stat(path); err != nil {
+		panic(err)
+	}
+
 	config := viper.New()
 	config.AddConfigPath(path)
 
 	return &Viper{
-		viper: config,
+		Viper: config,
+		path:  path,
 	}
 }
 
-func (v *Viper) ReadConfig(file, typ string, data interface{}) error {
-	v.viper.SetConfigName(file)
-	v.viper.SetConfigType(typ)
-	v.viper.ReadInConfig()
+func (v *Viper) ReadConfig(file, typ string, data interface{}) (err error) {
+	v.SetConfigName(file)
+	v.SetConfigType(typ)
+	if err = v.ReadInConfig(); err != nil {
+		return
+	}
 
-	return v.viper.Unmarshal(&data)
+	return v.Unmarshal(&data)
 }
 
-func (v *Viper) GetString(key string) string {
-	return v.viper.GetString(key)
+func (v *Viper) Path() string {
+	return v.path
 }
