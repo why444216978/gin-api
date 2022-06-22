@@ -9,6 +9,7 @@ import (
 
 	"github.com/why444216978/gin-api/app/resource"
 	httpClient "github.com/why444216978/gin-api/client/http"
+	"github.com/why444216978/gin-api/client/http/transport"
 	"github.com/why444216978/gin-api/library/app"
 	redisCache "github.com/why444216978/gin-api/library/cache/redis"
 	"github.com/why444216978/gin-api/library/config"
@@ -248,9 +249,9 @@ func loadClientHTTP() (err error) {
 	}
 	server.RegisterCloseFunc(logger.Close())
 
-	resource.ClientHTTP = httpClient.New(
-		httpClient.WithLogger(logger),
-		httpClient.WithBeforePlugins(&httpClient.JaegerBeforePlugin{}))
+	resource.ClientHTTP = transport.New(
+		transport.WithLogger(logger),
+		transport.WithBeforePlugins(&httpClient.JaegerBeforePlugin{}))
 	if err != nil {
 		return
 	}
