@@ -85,3 +85,12 @@ func Reflect(key string, value interface{}) Field {
 func Error(err error) Field {
 	return &field{key: "error", value: err}
 }
+
+func Find(key string, fields []Field) interface{} {
+	for _, f := range fields {
+		if f.Key() == key {
+			return f.Value()
+		}
+	}
+	return ""
+}

@@ -21,7 +21,7 @@ import (
 )
 
 type RPC struct {
-	logger        *loggerRPC.RPCLogger
+	logger        logger.Logger
 	beforePlugins []BeforeRequestPlugin
 	afterPlugins  []AfterRequestPlugin
 }
@@ -91,24 +91,24 @@ func (r *RPC) Send(ctx context.Context, serviceName string, request Request, res
 		if r.logger == nil {
 			return
 		}
-		fields := logger.Fields{
-			ServiceName: serviceName,
-			Header:      request.Header,
-			Method:      request.Method,
-			API:         request.URI,
-			Request:     request.Body,
-			Response:    response.Body,
-			ServerIP:    node.Host,
-			ServerPort:  node.Port,
-			Code:        response.HTTPCode,
-			Cost:        cost,
-			Timeout:     request.Timeout,
+		fields := []logger.Field{
+			logger.Reflect(logger.ServiceName, serviceName),
+			logger.Reflect(logger.Header, request.Header),
+			logger.Reflect(logger.Method, request.Method),
+			logger.Reflect(logger.API, request.URI),
+			logger.Reflect(logger.Request, request.Body),
+			logger.Reflect(logger.Response, response.Body),
+			logger.Reflect(logger.ServerIP, node.Host),
+			logger.Reflect(logger.ServerPort, node.Port),
+			logger.Reflect(logger.Code, response.HTTPCode),
+			logger.Reflect(logger.Cost, cost),
+			logger.Reflect(logger.Timeout, request.Timeout),
 		}
 		if err == nil {
-			r.logger.Info(ctx, "rpc success", fields)
+			r.logger.Info(ctx, "rpc success", fields...)
 			return
 		}
-		r.logger.Error(ctx, err.Error(), fields)
+		r.logger.Error(ctx, err.Error(), fields...)
 	}()
 
 	reqReader, err := request.Codec.Encode(request.Body)

@@ -109,7 +109,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 		return
 	}
 
-	logFields := logger.ValueHTTPFields(ctx)
+	fields := logger.ValueFields(ctx)
 
 	elapsed := time.Since(begin)
 
@@ -120,24 +120,24 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 		api = sqlSlice[0]
 	}
 
-	fields := []zapcore.Field{
+	f := []zapcore.Field{
 		zap.String(logger.LogID, logger.ValueLogID(ctx)),
 		zap.String(logger.TraceID, logger.ValueTraceID(ctx)),
 		zap.Int64(logger.Cost, elapsed.Milliseconds()),
 		zap.String(logger.Request, sql),
 		zap.Int64(logger.Response, rows),
 		zap.String(logger.API, api),
-		zap.String(logger.ClientIP, logFields.ServerIP),
-		zap.Int(logger.ClientPort, logFields.ServerPort),
+		zap.Reflect(logger.ClientIP, logger.Find(logger.ServerIP, fields)),
+		zap.Reflect(logger.ClientPort, logger.Find(logger.ServerPort, fields)),
 	}
 
 	switch {
 	case err != nil && l.LogLevel >= gormLogger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
-		l.logger().Error(err.Error(), fields...)
+		l.logger().Error(err.Error(), f...)
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= gormLogger.Warn:
-		l.logger().Warn("warn", fields...)
+		l.logger().Warn("warn", f...)
 	case l.LogLevel >= gormLogger.Info:
-		l.logger().Info("info", fields...)
+		l.logger().Info("info", f...)
 	}
 }
 

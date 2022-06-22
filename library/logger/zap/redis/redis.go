@@ -153,21 +153,23 @@ func (rl *RedisLogger) fields(ctx context.Context, isPipeline bool, cmds []redis
 		method = cmds[0].Name()
 	}
 
-	logFields := logger.ValueHTTPFields(ctx)
-	logFields.Header = http.Header{}
-	logFields.Method = method
-	logFields.Request = args
-	logFields.Response = response
-	logFields.Code = 0
-	logFields.ClientIP = logFields.ServerIP
-	logFields.ClientPort = logFields.ServerPort
-	logFields.ServerIP = rl.config.Host
-	logFields.ServerPort = rl.config.Port
-	logFields.API = method
-	logFields.Cost = cost
+	fields := logger.ValueFields(ctx)
+	f := []logger.Field{
+		logger.Reflect(logger.Header, http.Header{}),
+		logger.Reflect(logger.Method, method),
+		logger.Reflect(logger.Request, args),
+		logger.Reflect(logger.Response, response),
+		logger.Reflect(logger.Code, 0),
+		logger.Reflect(logger.ClientIP, logger.Find(logger.ServerIP, fields)),
+		logger.Reflect(logger.ClientPort, logger.Find(logger.ServerPort, fields)),
+		logger.Reflect(logger.ServerIP, rl.config.Host),
+		logger.Reflect(logger.ServerPort, rl.config.Port),
+		logger.Reflect(logger.API, method),
+		logger.Reflect(logger.Cost, cost),
+	}
 
 	newCtx := context.WithValue(ctx, "rpc", "rpc")
-	newCtx = logger.WithHTTPFields(newCtx, logFields)
+	newCtx = logger.WithFields(newCtx, f)
 	return newCtx, []logger.Field{}
 }
 

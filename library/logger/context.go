@@ -42,17 +42,23 @@ func ValueTraceID(ctx context.Context) string {
 	return logID
 }
 
-// WithHTTPFields inject common http log fields to context
-func WithHTTPFields(ctx context.Context, fields Fields) context.Context {
+// WithFields inject common http log fields to context
+func WithFields(ctx context.Context, fields []Field) context.Context {
 	return context.WithValue(ctx, contextHTTPLogFields, fields)
 }
 
-// ValueHTTPFields extrect common http log fields from context
-func ValueHTTPFields(ctx context.Context) Fields {
+// ValueFields extrect common http log fields from context
+func ValueFields(ctx context.Context) []Field {
 	val := ctx.Value(contextHTTPLogFields)
-	fields, ok := val.(Fields)
+	fields, ok := val.([]Field)
 	if !ok {
-		return Fields{}
+		return []Field{}
 	}
 	return fields
+}
+
+func AddField(ctx context.Context, fields ...Field) context.Context {
+	f := ValueFields(ctx)
+	f = append(f, fields...)
+	return WithFields(ctx, f)
 }
