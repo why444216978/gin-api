@@ -12,28 +12,19 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 
+	"github.com/why444216978/gin-api/library/logger"
 	"github.com/why444216978/gin-api/server"
 	serverGRPC "github.com/why444216978/gin-api/server/grpc"
 )
 
-type (
-	RegisterGRPC             func(s *grpc.Server)
-	RegisterGRPCFromEndpoint func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error
-)
-
 type Option struct {
-	registerGRPC             RegisterGRPC
-	registerGRPCFromEndpoint RegisterGRPCFromEndpoint
+	logger logger.Logger
 }
 
 type OptionFunc func(*Option)
 
-func WithRegisterGRPCFunc(registerGRPC RegisterGRPC) OptionFunc {
-	return func(s *Option) { s.registerGRPC = registerGRPC }
-}
-
-func WithRegisterRegisterGRPCFromEndpoint(registerGRPCFromEndpoint RegisterGRPCFromEndpoint) OptionFunc {
-	return func(s *Option) { s.registerGRPCFromEndpoint = registerGRPCFromEndpoint }
+func WithLogger(l logger.Logger) OptionFunc {
+	return func(s *Option) { s.logger = l }
 }
 
 type H2CServer struct {
@@ -68,7 +59,7 @@ func NewH2C(endpoint string, registers []serverGRPC.Register, opts ...OptionFunc
 }
 
 func (s *H2CServer) Start() (err error) {
-	grpcServer := grpc.NewServer(serverGRPC.NewServerOption()...)
+	grpcServer := grpc.NewServer(serverGRPC.NewServerOption(serverGRPC.ServerOptionLogger(s.logger))...)
 
 	mux := http.NewServeMux()
 	gwmux := runtime.NewServeMux()

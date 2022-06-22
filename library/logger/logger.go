@@ -2,8 +2,6 @@ package logger
 
 import (
 	"context"
-
-	"go.uber.org/zap/zapcore"
 )
 
 type Logger interface {
@@ -12,6 +10,6 @@ type Logger interface {
 	Warn(ctx context.Context, msg string, fields ...Field)
 	Error(ctx context.Context, msg string, fields ...Field)
 	Fatal(ctx context.Context, msg string, fields ...Field)
-	GetLevel() zapcore.Level
+	GetLevel() Level
 	Close() error
 }

@@ -53,13 +53,11 @@ func UnaryServerInterceptor(l logger.Logger) grpc.UnaryServerInterceptor {
 		})
 
 		// TODO full fields
-		fields := logger.Fields{
-			LogID: logID,
+		fields := []logger.Field{
+			logger.Reflect(logger.LogID, logID),
+			logger.Reflect(logger.Cost, time.Since(start).Milliseconds()),
 		}
-
-		fields.Cost = time.Since(start).Milliseconds()
-
-		ctx = logger.WithHTTPFields(ctx, fields)
+		ctx = logger.WithFields(ctx, fields)
 		if err != nil {
 			l.Error(ctx, "grpc err", logger.Error(err))
 		} else {

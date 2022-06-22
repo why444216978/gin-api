@@ -45,21 +45,21 @@ func LoggerMiddleware(l logger.Logger) gin.HandlerFunc {
 		}
 		ctx = logger.WithTraceID(ctx, traceID)
 
-		fields := logger.Fields{
-			LogID:      logID,
-			TraceID:    traceID,
-			Header:     c.Request.Header,
-			Method:     c.Request.Method,
-			Request:    base64.StdEncoding.EncodeToString(req),
-			Response:   make(map[string]interface{}),
-			ClientIP:   c.ClientIP(),
-			ClientPort: 0,
-			ServerIP:   serverIP,
-			ServerPort: app.Port(),
-			API:        c.Request.RequestURI,
+		fields := []logger.Field{
+			logger.Reflect(logger.LogID, logID),
+			logger.Reflect(logger.TraceID, traceID),
+			logger.Reflect(logger.Header, c.Request.Header),
+			logger.Reflect(logger.Method, c.Request.Method),
+			logger.Reflect(logger.Request, base64.StdEncoding.EncodeToString(req)),
+			logger.Reflect(logger.Response, make(map[string]interface{})),
+			logger.Reflect(logger.ClientIP, c.ClientIP()),
+			logger.Reflect(logger.ClientPort, 0),
+			logger.Reflect(logger.ServerIP, serverIP),
+			logger.Reflect(logger.ServerPort, app.Port()),
+			logger.Reflect(logger.API, c.Request.RequestURI),
 		}
 		// Next之前这里需要写入ctx，否则会丢失log、断开trace
-		ctx = logger.WithHTTPFields(ctx, fields)
+		ctx = logger.WithFields(ctx, fields)
 		c.Request = c.Request.WithContext(ctx)
 
 		var doneFlag int32
@@ -71,15 +71,17 @@ func LoggerMiddleware(l logger.Logger) gin.HandlerFunc {
 			resp := responseWriter.Body.Bytes()
 			respString := string(resp)
 			if responseWriter.Body.Len() > 0 {
-				fields.Response, _ = conversion.JsonToMap(respString)
+				logResponse, _ := conversion.JsonToMap(respString)
+				ctx = logger.AddField(ctx, logger.Reflect(logger.Response, logResponse))
 			}
 
 			reqString, _ := conversion.JsonEncode(req)
 			jaegerHTTP.SetHTTPLog(span, reqString, respString)
 
-			fields.Code = c.Writer.Status()
-			fields.Cost = time.Since(start).Milliseconds()
-			ctx = logger.WithHTTPFields(ctx, fields)
+			ctx = logger.AddField(ctx,
+				logger.Reflect(logger.Code, c.Writer.Status()),
+				logger.Reflect(logger.Cost, time.Since(start).Milliseconds()),
+			)
 			l.Info(ctx, "request info")
 		}()
 
@@ -90,9 +92,10 @@ func LoggerMiddleware(l logger.Logger) gin.HandlerFunc {
 				if atomic.LoadInt32(&doneFlag) == 1 {
 					return
 				}
-				fields.Code = 499
-				fields.Cost = time.Since(start).Milliseconds()
-				ctx = logger.WithHTTPFields(ctx, fields)
+				ctx = logger.AddField(ctx,
+					logger.Reflect(logger.Code, 499),
+					logger.Reflect(logger.Cost, time.Since(start).Milliseconds()),
+				)
 				l.Warn(ctx, "client canceled")
 			}
 		}()

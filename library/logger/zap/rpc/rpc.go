@@ -51,38 +51,14 @@ func NewRPCLogger(config *RPCConfig, opts ...RPCOption) (rl *RPCLogger, err erro
 	return
 }
 
-func (rl *RPCLogger) Info(ctx context.Context, msg string, fields logger.Fields) {
-	newCtx, logFields := rl.fields(ctx, fields)
-	rl.logger().Info(newCtx, msg, logFields...)
-}
-
-func (rl *RPCLogger) Error(ctx context.Context, msg string, fields logger.Fields) {
-	newCtx, logFields := rl.fields(ctx, fields)
-	rl.logger().Error(newCtx, msg, logFields...)
-}
-
-func (rl *RPCLogger) fields(ctx context.Context, fields logger.Fields) (context.Context, []logger.Field) {
-	logFields := logger.ValueHTTPFields(ctx)
-
-	logFields.Header = fields.Header
-	logFields.Method = fields.Method
-	logFields.ClientIP = logFields.ServerIP
-	logFields.ClientPort = logFields.ServerPort
-	logFields.ServerIP = fields.ServerIP
-	logFields.ServerPort = fields.ServerPort
-	logFields.API = fields.API
-	logFields.Request = fields.Request
-	logFields.Response = fields.Response
-	logFields.Cost = fields.Cost
-	logFields.Code = fields.Code
-
+func (rl *RPCLogger) Info(ctx context.Context, msg string, fields ...logger.Field) {
 	newCtx := context.WithValue(ctx, "rpc", "rpc")
-	newCtx = logger.WithHTTPFields(newCtx, logFields)
+	rl.logger().Info(newCtx, msg, fields...)
+}
 
-	return newCtx, []logger.Field{
-		logger.Reflect(logger.ServiceName, fields.ServiceName),
-		logger.Reflect(logger.Timeout, fields.Timeout),
-	}
+func (rl *RPCLogger) Error(ctx context.Context, msg string, fields ...logger.Field) {
+	newCtx := context.WithValue(ctx, "rpc", "rpc")
+	rl.logger().Error(newCtx, msg, fields...)
 }
 
 func (rl *RPCLogger) logger() *zapLogger.ZapLogger {

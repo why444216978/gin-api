@@ -1,12 +1,10 @@
 package loader
 
 import (
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/why444216978/go-util/assert"
-	utilDir "github.com/why444216978/go-util/dir"
 	"github.com/why444216978/go-util/sys"
 
 	"github.com/why444216978/gin-api/app/resource"
@@ -28,8 +26,6 @@ import (
 	"github.com/why444216978/gin-api/library/redis"
 	"github.com/why444216978/gin-api/library/registry"
 	etcdRegistry "github.com/why444216978/gin-api/library/registry/etcd"
-	registryEtcd "github.com/why444216978/gin-api/library/registry/etcd"
-	"github.com/why444216978/gin-api/library/servicer"
 	"github.com/why444216978/gin-api/library/servicer/service"
 	"github.com/why444216978/gin-api/server"
 )
@@ -42,9 +38,6 @@ func Load() (err error) {
 	if err = loadLogger(); err != nil {
 		return
 	}
-	if err = loadServices(); err != nil {
-		return
-	}
 	if err = loadClientHTTP(); err != nil {
 		return
 	}
@@ -53,6 +46,9 @@ func Load() (err error) {
 	// 	return
 	// }
 	// if err = loadRedis("default_redis"); err != nil {
+	// 	return
+	// }
+	// if err = loadRabbitMQ("default_rabbitmq"); err != nil {
 	// 	return
 	// }
 	// if err = loadJaeger(); err != nil {
@@ -70,6 +66,9 @@ func Load() (err error) {
 	// if err = loadRegistry(); err != nil {
 	// 	return
 	// }
+	if err = service.LoadGlobPattern("services", "toml", resource.Etcd); err != nil {
+		return
+	}
 
 	return
 }
@@ -232,53 +231,6 @@ func loadRegistry() (err error) {
 
 	if err = server.RegisterCloseFunc(resource.Registrar.DeRegister); err != nil {
 		return
-	}
-
-	return
-}
-
-func loadServices() (err error) {
-	var (
-		dir   string
-		files []string
-	)
-
-	if dir, err = filepath.Abs(config.Path()); err != nil {
-		return
-	}
-
-	if files, err = filepath.Glob(filepath.Join(dir, "services", "*.toml")); err != nil {
-		return
-	}
-
-	var discover registry.Discovery
-	info := utilDir.FileInfo{}
-	cfg := &service.Config{}
-	for _, f := range files {
-		if info, err = utilDir.GetPathInfo(f); err != nil {
-			return
-		}
-		if err = config.ReadConfig("services/"+info.BaseNoExt, info.ExtNoSpot, cfg); err != nil {
-			return
-		}
-
-		if cfg.Type == servicer.TypeRegistry {
-			if assert.IsNil(resource.Etcd) {
-				return errors.New("loadServices resource.Etcd nil")
-			}
-			opts := []registryEtcd.DiscoverOption{
-				registryEtcd.WithServierName(cfg.ServiceName),
-				registryEtcd.WithRefreshDuration(cfg.RefreshSecond),
-				registryEtcd.WithDiscoverClient(resource.Etcd.Client),
-			}
-			if discover, err = registryEtcd.NewDiscovery(opts...); err != nil {
-				return
-			}
-		}
-
-		if err = service.LoadService(cfg, service.WithDiscovery(discover)); err != nil {
-			return
-		}
 	}
 
 	return

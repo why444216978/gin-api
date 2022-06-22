@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -34,6 +35,10 @@ func ReadConfig(file, typ string, data interface{}) (err error) {
 
 func Path() string {
 	return defaultConf.Path()
+}
+
+func Dir() (string, error) {
+	return filepath.Abs(Path())
 }
 
 func Config() *Viper {

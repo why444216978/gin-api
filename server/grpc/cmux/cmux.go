@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/why444216978/gin-api/library/logger"
 	"github.com/why444216978/gin-api/server"
 	serverGRPC "github.com/why444216978/gin-api/server/grpc"
 )
@@ -20,6 +21,7 @@ type (
 )
 
 type Option struct {
+	logger       logger.Logger
 	registerHTTP RegisterHTTP
 	httpServer   *http.Server
 }
@@ -77,7 +79,7 @@ func (s *CMUXServer) Start() (err error) {
 }
 
 func (s *CMUXServer) startGRPC() {
-	grpcServer := grpc.NewServer(serverGRPC.NewServerOption()...)
+	grpcServer := grpc.NewServer(serverGRPC.NewServerOption(serverGRPC.ServerOptionLogger(s.logger))...)
 
 	for _, r := range s.registers {
 		if r.RegisterGRPC == nil {

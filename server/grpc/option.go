@@ -17,8 +17,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 
-	"github.com/why444216978/gin-api/app/resource"
 	"github.com/why444216978/gin-api/library/jaeger"
+	"github.com/why444216978/gin-api/library/logger"
 	"github.com/why444216978/gin-api/server/grpc/middleware/log"
 )
 
@@ -66,36 +66,51 @@ func NewDialOption(opts ...DialOptionFunc) []grpc.DialOption {
 	}
 }
 
-type ServerOption struct{}
+type ServerOption struct {
+	logger logger.Logger
+}
 
 type ServerOptionFunc func(*ServerOption)
 
+func ServerOptionLogger(l logger.Logger) ServerOptionFunc {
+	return func(o *ServerOption) { o.logger = l }
+}
+
 func NewServerOption(opts ...ServerOptionFunc) []grpc.ServerOption {
+	opt := &ServerOption{}
+	for _, o := range opts {
+		o(opt)
+	}
+
+	interceptors := []grpc.UnaryServerInterceptor{
+		otgrpc.OpenTracingServerInterceptor(
+			opentracing.GlobalTracer(),
+			otgrpc.SpanDecorator(func(span opentracing.Span, method string, req, resp interface{}, err error) {
+				if assert.IsNil(span) {
+					return
+				}
+
+				bs, _ := json.Marshal(resp)
+				jaeger.SetResponse(span, string(bs))
+
+				if err != nil {
+					span.LogFields(opentracingLog.Error(err))
+				}
+			})),
+		grpc_recovery.UnaryServerInterceptor(
+			grpc_recovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
+				err = errors.WithStack(fmt.Errorf("%v", p))
+				return status.Errorf(codes.Internal, "%+v", err)
+			})),
+	}
+	if !assert.IsNil(opt.logger) {
+		interceptors = append(interceptors, log.UnaryServerInterceptor(opt.logger))
+	}
+
 	return []grpc.ServerOption{
 		grpc.KeepaliveEnforcementPolicy(kaep),
 		grpc.KeepaliveParams(kasp),
-		grpc.ChainUnaryInterceptor(
-			log.UnaryServerInterceptor(resource.ServiceLogger),
-			otgrpc.OpenTracingServerInterceptor(
-				opentracing.GlobalTracer(),
-				otgrpc.SpanDecorator(func(span opentracing.Span, method string, req, resp interface{}, err error) {
-					if assert.IsNil(span) {
-						return
-					}
-
-					bs, _ := json.Marshal(resp)
-					jaeger.SetResponse(span, string(bs))
-
-					if err != nil {
-						span.LogFields(opentracingLog.Error(err))
-					}
-				})),
-			grpc_recovery.UnaryServerInterceptor(
-				grpc_recovery.WithRecoveryHandlerContext(func(ctx context.Context, p interface{}) (err error) {
-					err = errors.WithStack(fmt.Errorf("%v", p))
-					return status.Errorf(codes.Internal, "%+v", err)
-				})),
-		),
+		grpc.ChainUnaryInterceptor(interceptors...),
 	}
 }
 

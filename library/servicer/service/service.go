@@ -4,18 +4,81 @@ import (
 	"context"
 	"errors"
 	"net"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/why444216978/go-util/assert"
+	utilDir "github.com/why444216978/go-util/dir"
 	"github.com/why444216978/go-util/validate"
 
+	"github.com/why444216978/gin-api/library/config"
+	"github.com/why444216978/gin-api/library/etcd"
 	"github.com/why444216978/gin-api/library/registry"
+	registryEtcd "github.com/why444216978/gin-api/library/registry/etcd"
 	"github.com/why444216978/gin-api/library/selector"
 	"github.com/why444216978/gin-api/library/selector/wr"
 	"github.com/why444216978/gin-api/library/servicer"
 )
+
+func LoadGlobPattern(path, suffix string, etcd *etcd.Etcd) (err error) {
+	var (
+		dir   string
+		files []string
+	)
+
+	if dir, err = config.Dir(); err != nil {
+		return
+	}
+
+	if files, err = filepath.Glob(filepath.Join(dir, path, "*."+suffix)); err != nil {
+		return
+	}
+
+	var discover registry.Discovery
+	info := utilDir.FileInfo{}
+	cfg := &Config{}
+	for _, f := range files {
+		if info, err = utilDir.GetPathInfo(f); err != nil {
+			return
+		}
+		if err = config.ReadConfig(filepath.Join("services", info.BaseNoExt), info.ExtNoSpot, cfg); err != nil {
+			return
+		}
+
+		if cfg.Type == servicer.TypeRegistry {
+			if assert.IsNil(etcd) {
+				return errors.New("LoadGlobPattern etcd nil")
+			}
+			opts := []registryEtcd.DiscoverOption{
+				registryEtcd.WithServierName(cfg.ServiceName),
+				registryEtcd.WithRefreshDuration(cfg.RefreshSecond),
+				registryEtcd.WithDiscoverClient(etcd.Client),
+			}
+			if discover, err = registryEtcd.NewDiscovery(opts...); err != nil {
+				return
+			}
+		}
+
+		if err = LoadService(cfg, WithDiscovery(discover)); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func LoadService(config *Config, opts ...Option) (err error) {
+	s, err := NewService(config, opts...)
+	if err != nil {
+		return
+	}
+
+	servicer.SetServicer(s)
+
+	return nil
+}
 
 type Config struct {
 	ServiceName   string `validate:"required"`
@@ -46,17 +109,6 @@ type Option func(*Service)
 
 func WithDiscovery(discovery registry.Discovery) Option {
 	return func(s *Service) { s.discovery = discovery }
-}
-
-func LoadService(config *Config, opts ...Option) (err error) {
-	s, err := NewService(config, opts...)
-	if err != nil {
-		return
-	}
-
-	servicer.SetServicer(s)
-
-	return nil
 }
 
 func NewService(config *Config, opts ...Option) (*Service, error) {
@@ -122,6 +174,10 @@ func (s *Service) Pick(ctx context.Context) (node *servicer.Node, err error) {
 func (s *Service) initSelector() (err error) {
 	if s.config.Type != servicer.TypeRegistry {
 		return nil
+	}
+
+	if assert.IsNil(s.discovery) {
+		return errors.New("discovery is nil")
 	}
 
 	switch s.config.Selector {

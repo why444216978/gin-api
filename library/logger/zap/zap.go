@@ -2,12 +2,10 @@ package zap
 
 import (
 	"context"
-	"errors"
 	"io"
 	"os"
 	"time"
 
-	"github.com/why444216978/go-util/conversion"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -17,12 +15,11 @@ import (
 
 type ZapLogger struct {
 	*zap.Logger
-	opts  *Options
-	level zapcore.Level
+	opts *Options
 }
 
 type Options struct {
-	level       string
+	level       logger.Level
 	callSkip    int
 	module      string
 	serviceName string
@@ -30,11 +27,13 @@ type Options struct {
 	errorWriter io.Writer
 }
 
+var _ logger.Logger = (*ZapLogger)(nil)
+
 type Option func(l *Options)
 
 func defaultOptions() *Options {
 	return &Options{
-		level:       "info",
+		level:       logger.InfoLevel,
 		callSkip:    1,
 		module:      "default",
 		serviceName: "default",
@@ -64,7 +63,7 @@ func WithErrorWriter(w io.Writer) Option {
 }
 
 func WithLevel(l string) Option {
-	return func(o *Options) { o.level = l }
+	return func(o *Options) { o.level = logger.StringToLevel(l) }
 }
 
 func NewLogger(options ...Option) (l *ZapLogger, err error) {
@@ -73,14 +72,8 @@ func NewLogger(options ...Option) (l *ZapLogger, err error) {
 		o(opts)
 	}
 
-	level, err := zapLevel(opts.level)
-	if err != nil {
-		return
-	}
-
 	l = &ZapLogger{
-		level: level,
-		opts:  opts,
+		opts: opts,
 	}
 
 	encoder := l.formatEncoder()
@@ -111,7 +104,7 @@ func NewLogger(options ...Option) (l *ZapLogger, err error) {
 
 func (l *ZapLogger) infoEnabler() zap.LevelEnablerFunc {
 	return zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		if lvl < l.level {
+		if lvl < zapLevel(l.opts.level) {
 			return false
 		}
 		return lvl <= zapcore.InfoLevel
@@ -120,7 +113,7 @@ func (l *ZapLogger) infoEnabler() zap.LevelEnablerFunc {
 
 func (l *ZapLogger) errorEnabler() zap.LevelEnablerFunc {
 	return zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		if lvl < l.level {
+		if lvl < zapLevel(l.opts.level) {
 			return false
 		}
 		return lvl >= zapcore.WarnLevel
@@ -146,28 +139,24 @@ func (l *ZapLogger) formatEncoder() zapcore.Encoder {
 	})
 }
 
-func (l *ZapLogger) GetLevel() zapcore.Level {
-	return l.level
+func (l *ZapLogger) GetLevel() logger.Level {
+	return l.opts.level
 }
 
-func zapLevel(level string) (zapcore.Level, error) {
+func zapLevel(level logger.Level) zapcore.Level {
 	switch level {
-	case "debug", "DEBUG":
-		return zapcore.DebugLevel, nil
-	case "info", "INFO", "":
-		return zapcore.InfoLevel, nil
-	case "warn", "WARN":
-		return zapcore.WarnLevel, nil
-	case "error", "ERROR":
-		return zapcore.ErrorLevel, nil
-	case "dpanic", "DPANIC":
-		return zapcore.DPanicLevel, nil
-	case "panic", "PANIC":
-		return zapcore.PanicLevel, nil
-	case "fatal", "FATAL":
-		return zapcore.FatalLevel, nil
+	case logger.DebugLevel:
+		return zapcore.DebugLevel
+	case logger.InfoLevel:
+		return zapcore.InfoLevel
+	case logger.WarnLevel:
+		return zapcore.WarnLevel
+	case logger.ErrorLevel:
+		return zapcore.ErrorLevel
+	case logger.FatalLevel:
+		return zapcore.FatalLevel
 	default:
-		return 0, errors.New("error level:" + level)
+		return zapcore.InfoLevel
 	}
 }
 
@@ -191,11 +180,12 @@ func (l *ZapLogger) Fatal(ctx context.Context, msg string, fields ...logger.Fiel
 	l.Logger.Fatal(msg, l.extractFields(ctx, fields...)...)
 }
 
+// extractFields extract context field and keep key unique, save fields
 func (l *ZapLogger) extractFields(ctx context.Context, fields ...logger.Field) []zap.Field {
-	fieldsMap, _ := conversion.StructToMap(logger.ValueHTTPFields(ctx))
-	target := make(map[string]zap.Field, len(fieldsMap))
-	for k, v := range fieldsMap {
-		target[k] = zap.Reflect(k, v)
+	ctxFields := logger.ValueFields(ctx)
+	target := map[string]zap.Field{}
+	for _, f := range ctxFields {
+		target[f.Key()] = zap.Reflect(f.Key(), f.Value())
 	}
 
 	for _, f := range fields {

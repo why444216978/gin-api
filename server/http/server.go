@@ -9,13 +9,12 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 
-	"github.com/why444216978/gin-api/app/response"
 	"github.com/why444216978/gin-api/server"
+	"github.com/why444216978/gin-api/server/http/response"
 )
 
 type Server struct {
 	*http.Server
-	ctx                context.Context
 	middlewares        []gin.HandlerFunc
 	registerRouterFunc RegisterRouter
 	pprofTurn          bool
@@ -106,7 +105,7 @@ func (s *Server) initHandler() *gin.Engine {
 	}
 
 	server.NoRoute(func(c *gin.Context) {
-		response.ResponseJSON(c, response.CodeUriNotFound, nil, nil)
+		response.ResponseJSON(c, http.StatusNotFound, nil, response.WrapToast(nil, http.StatusText(http.StatusNotFound)))
 		c.AbortWithStatus(http.StatusNotFound)
 	})
 
