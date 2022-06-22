@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"syscall"
 
 	"github.com/why444216978/gin-api/app/loader"
 	jobGRPC "github.com/why444216978/gin-api/app/module/test/job/grpc"
@@ -28,11 +27,7 @@ var (
 )
 
 func main() {
-	log.Printf("Actual pid is %d", syscall.Getpid())
-
 	var err error
-
-	flag.Parse()
 
 	if err = bootstrap.Init(loader.Load); err != nil {
 		log.Printf("bootstrap.Init err %s", err.Error())

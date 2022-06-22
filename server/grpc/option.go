@@ -35,6 +35,12 @@ var kasp = keepalive.ServerParameters{
 	Timeout:               1 * time.Second,  // Wait 1 second for the ping ack before assuming the connection is dead
 }
 
+var kacp = keepalive.ClientParameters{
+	Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
+	Timeout:             time.Second,      // wait 1 second for ping ack before considering the connection dead
+	PermitWithoutStream: true,             // send pings even without active streams
+}
+
 type DialOption struct{}
 
 type DialOptionFunc func(*DialOption)
@@ -45,6 +51,7 @@ func NewDialOption(opts ...DialOptionFunc) []grpc.DialOption {
 		// grpc.WithResolvers(resolver),
 		grpc.WithTimeout(10 * time.Second),
 		grpc.WithInsecure(),
+		grpc.WithKeepaliveParams(kacp),
 		grpc.WithChainUnaryInterceptor(
 			log.UnaryClientInterceptor(),
 			otgrpc.OpenTracingClientInterceptor(

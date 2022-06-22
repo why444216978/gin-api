@@ -25,10 +25,6 @@ var Env = map[string]struct{}{
 
 var defaultConf = New(*env)
 
-func init() {
-	flag.Parse()
-}
-
 func ReadConfig(file, typ string, data interface{}) (err error) {
 	return defaultConf.ReadConfig(file, typ, data)
 }

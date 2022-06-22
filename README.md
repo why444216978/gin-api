@@ -210,7 +210,7 @@ service gin-api  put key: gin-api.192.168.1.104.777 val: {"Host":"192.168.1.104"
 2022/06/12 04:41:32 The environment is :dev
 2022/06/12 04:41:32 start grpc, port 8777
 
-[why@bogon] ~/Desktop$curl http://localhost:8888/v1/example/echo
+[why@bogon] ~/Desktop$curl http://localhost:8777/v1/example/echo
 {"message":" world"}
 
 [why@bogon] ~/Desktop/go/gin-api/app$go run main.go -job grpc-test
