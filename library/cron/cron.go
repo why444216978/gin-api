@@ -13,7 +13,6 @@ import (
 	"github.com/why444216978/go-util/assert"
 	"github.com/why444216978/go-util/snowflake"
 	"github.com/why444216978/go-util/sys"
-	"go.uber.org/zap"
 
 	"github.com/why444216978/gin-api/library/lock"
 	"github.com/why444216978/gin-api/library/logger"
@@ -137,10 +136,10 @@ func (c *Cron) handle(ctx context.Context, cmd cron.Job, funcName, spec, ip, loc
 		if !assert.IsNil(c.lock) {
 			if err = c.lock.Lock(ctx, lockKey, random, ttl); err != nil {
 				c.logger.Error(ctx, errors.Wrap(err, "crontab fun Lock err").Error(),
-					zap.String("spec", spec),
-					zap.String(logger.ClientIP, ip),
-					zap.String(logger.API, c.name),
-					zap.String(logger.Method, funcName))
+					logger.Reflect("spec", spec),
+					logger.Reflect(logger.ClientIP, ip),
+					logger.Reflect(logger.API, c.name),
+					logger.Reflect(logger.Method, funcName))
 				return
 			}
 		}
@@ -150,30 +149,30 @@ func (c *Cron) handle(ctx context.Context, cmd cron.Job, funcName, spec, ip, loc
 			defer func() {
 				if err := recover(); err != nil {
 					c.logger.Error(ctx, "crontab handler panic",
-						zap.Any("panic", err),
-						zap.String("spec", spec),
-						zap.String(logger.ClientIP, ip),
-						zap.String(logger.API, c.name),
-						zap.String(logger.Method, funcName))
+						logger.Reflect("panic", err),
+						logger.Reflect("spec", spec),
+						logger.Reflect(logger.ClientIP, ip),
+						logger.Reflect(logger.API, c.name),
+						logger.Reflect(logger.Method, funcName))
 				}
 			}()
 			cmd.Run()
 		}()
 
 		c.logger.Info(ctx, "handle "+c.name,
-			zap.Int("cost", int(time.Since(start))),
-			zap.String("spec", spec),
-			zap.String(logger.ClientIP, ip),
-			zap.String(logger.API, c.name),
-			zap.String(logger.Method, funcName))
+			logger.Reflect("spec", spec),
+			logger.Reflect(logger.Cost, time.Since(start).Milliseconds()),
+			logger.Reflect(logger.ClientIP, ip),
+			logger.Reflect(logger.API, c.name),
+			logger.Reflect(logger.Method, funcName))
 
 		if !assert.IsNil(c.lock) {
 			if err = c.lock.Unlock(ctx, lockKey, random); err != nil {
 				c.logger.Error(ctx, errors.Wrap(err, "crontab fun Unlock err").Error(),
-					zap.String("spec", spec),
-					zap.String(logger.ClientIP, ip),
-					zap.String(logger.API, c.name),
-					zap.String(logger.Method, funcName))
+					logger.Reflect("spec", spec),
+					logger.Reflect(logger.ClientIP, ip),
+					logger.Reflect(logger.API, c.name),
+					logger.Reflect(logger.Method, funcName))
 				return
 			}
 		}

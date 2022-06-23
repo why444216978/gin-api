@@ -17,6 +17,7 @@ development
 __debug_bin
 cover.out
 cover.html
+cover.txt
 .apollo_config
 go.work
 *.log

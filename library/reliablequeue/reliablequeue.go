@@ -9,6 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 
+	"github.com/why444216978/go-util/assert"
 	"github.com/why444216978/go-util/conversion"
 	"github.com/why444216978/go-util/orm"
 	"github.com/why444216978/go-util/snowflake"
@@ -53,7 +54,7 @@ func WithRetryDelaySecondMultiple(i int64) ReliableQueueOption {
 }
 
 func NewReliableQueue(q queue.Queue, opts ...ReliableQueueOption) (*ReliableQueue, error) {
-	if q == nil {
+	if assert.IsNil(q) {
 		return nil, errors.New("Queue is nil")
 	}
 

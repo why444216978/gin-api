@@ -1,17 +1,17 @@
 package bootstrap
 
 import (
-	"flag"
 	"log"
 	"syscall"
 
 	"github.com/why444216978/gin-api/library/app"
+	"github.com/why444216978/gin-api/library/config"
 )
 
-func Init(load func() error) (err error) {
-	flag.Parse()
-
+func Init(env string, load func() error) (err error) {
 	log.Printf("Actual pid is %d", syscall.Getpid())
+
+	config.Init(env)
 
 	if err = app.InitApp(); err != nil {
 		return

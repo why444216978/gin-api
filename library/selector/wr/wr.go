@@ -18,8 +18,10 @@ type Node struct {
 	statistics selector.Statistics
 }
 
-var _ selector.Node = (*Node)(nil)
-var _ selector.NewNodeFunc = NewNode
+var (
+	_ selector.Node        = (*Node)(nil)
+	_ selector.NewNodeFunc = NewNode
+)
 
 func NewNode(host string, port, weight int, meta selector.Meta) selector.Node {
 	return &Node{

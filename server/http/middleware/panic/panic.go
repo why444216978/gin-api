@@ -22,8 +22,10 @@ func ThrowPanic(l logger.Logger) gin.HandlerFunc {
 				// 	debugStack[k] = v
 				// }
 
-				fields := logger.ValueFields(c.Request.Context())
-				ctx := logger.AddField(c.Request.Context(),
+				ctx := c.Request.Context()
+
+				fields := logger.ValueFields(ctx)
+				ctx = logger.AddField(ctx,
 					logger.Reflect(logger.Code, http.StatusInternalServerError),
 					logger.Reflect(logger.Response, map[string]interface{}{
 						"code":   http.StatusInternalServerError,

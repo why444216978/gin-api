@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,8 +13,6 @@ type Viper struct {
 	path string
 }
 
-var env = flag.String("env", "dev", "config path")
-
 var Env = map[string]struct{}{
 	"dev":      {},
 	"liantiao": {},
@@ -23,7 +20,7 @@ var Env = map[string]struct{}{
 	"online":   {},
 }
 
-var defaultConf = New(*env)
+var defaultConf *Viper
 
 func ReadConfig(file, typ string, data interface{}) (err error) {
 	return defaultConf.ReadConfig(file, typ, data)
@@ -39,6 +36,10 @@ func Dir() (string, error) {
 
 func Config() *Viper {
 	return defaultConf
+}
+
+func Init(env string) {
+	defaultConf = New(env)
 }
 
 func New(env string) *Viper {

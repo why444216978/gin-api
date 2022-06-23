@@ -34,6 +34,7 @@ type HandleInfo struct {
 	Node Node
 	Err  error
 }
+
 type Selector interface {
 	ServiceName() string
 	AddNode(node Node) (err error)
