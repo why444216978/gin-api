@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	lockmock "github.com/why444216978/gin-api/library/lock/mock"
-	"github.com/why444216978/gin-api/library/logger"
+	zapLogger "github.com/why444216978/gin-api/library/logger/zap"
 )
 
 func JobFunc() {
@@ -17,7 +17,7 @@ func JobFunc() {
 }
 
 func TestCron_AddJob(t *testing.T) {
-	logger, err := logger.NewLogger(&logger.Config{})
+	logger, err := zapLogger.NewLogger()
 	assert.Equal(t, err, nil)
 
 	ctl := gomock.NewController(t)
@@ -25,7 +25,7 @@ func TestCron_AddJob(t *testing.T) {
 	locker.EXPECT().Lock(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 	locker.EXPECT().Unlock(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 
-	cron, err := NewCron("JobFunc", WithLocker(locker), WithLogger(logger))
+	cron, err := NewCron("JobFunc", logger, WithLocker(locker))
 	assert.Equal(t, err, nil)
 
 	entryID, err := cron.AddJob("*/3 * * * * *", JobFunc)

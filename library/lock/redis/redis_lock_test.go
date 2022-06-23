@@ -7,6 +7,7 @@ import (
 	"time"
 
 	redismock "github.com/go-redis/redismock/v8"
+	"github.com/why444216978/gin-api/library/lock"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -30,11 +31,9 @@ func TestNew(t *testing.T) {
 			So(_err, ShouldEqual, err)
 		})
 		Convey("fail", func() {
-			err := ErrClientNil
-
 			_rc, _err := New(nil)
 			So(_rc, ShouldEqual, nil)
-			So(_err, ShouldEqual, err)
+			So(_err, ShouldEqual, lock.ErrClientNil)
 		})
 	})
 }

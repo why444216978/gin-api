@@ -7,8 +7,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
 	"github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/why444216978/gin-api/library/selector"
 )
 
@@ -28,35 +28,27 @@ func TestNewNode(t *testing.T) {
 }
 
 func TestNode_Address(t *testing.T) {
-
 }
 
 func TestNode_Meta(t *testing.T) {
-
 }
 
 func TestNode_Statistics(t *testing.T) {
-
 }
 
 func TestNode_Weight(t *testing.T) {
-
 }
 
 func TestNode_incrSuccess(t *testing.T) {
-
 }
 
 func TestNode_incrFail(t *testing.T) {
-
 }
 
 func TestWithServiceName(t *testing.T) {
-
 }
 
 func TestNewSelector(t *testing.T) {
-
 }
 
 func TestSelector_ServiceName(t *testing.T) {
@@ -70,31 +62,24 @@ func TestSelector_ServiceName(t *testing.T) {
 }
 
 func TestSelector_AddNode(t *testing.T) {
-
 }
 
 func TestSelector_DeleteNode(t *testing.T) {
-
 }
 
 func TestSelector_GetNodes(t *testing.T) {
-
 }
 
 func TestSelector_Select(t *testing.T) {
-
 }
 
 func TestSelector_AfterHandle(t *testing.T) {
-
 }
 
 func TestSelector_checkSameWeight(t *testing.T) {
-
 }
 
 func TestSelector_sortOffset(t *testing.T) {
-
 }
 
 func TestSelector_node2WRNode(t *testing.T) {

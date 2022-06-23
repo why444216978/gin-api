@@ -22,14 +22,17 @@ import (
 )
 
 var (
+	env    = flag.String("env", "dev", "config path")
 	job    = flag.String("job", "", "is job")
 	server = flag.String("server", "http", "is server type")
 )
 
 func main() {
+	flag.Parse()
+
 	var err error
 
-	if err = bootstrap.Init(loader.Load); err != nil {
+	if err = bootstrap.Init(*env, loader.Load); err != nil {
 		log.Printf("bootstrap.Init err %s", err.Error())
 		return
 	}
